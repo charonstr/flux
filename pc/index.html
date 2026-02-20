@@ -7,23 +7,89 @@
     <link rel="stylesheet" href="/pc/style.css">
 </head>
 <body>
-    <div class="langbar">
-        <a href="/set/tr" class="langbtn">TR</a>
-        <a href="/set/en" class="langbtn">EN</a>
-    </div>
     <main class="wrap">
-        <h1>{{ t.get("welcome", "Welcome") }}</h1>
-        <p>{{ t.get("subtitle", "Site is ready") }}</p>
+        <header class="sidebar">
+            <a href="/profile" data-nav="soft" class="profilebadge">
+                <img src="{{ avatar }}" class="avatar" alt="avatar">
+                <span>{{ username or t.get("profile", "Profile") }}</span>
+            </a>
+            <nav class="topnav">
+                <a href="/set/tr" data-nav="soft" class="langbtn">TR</a>
+                <a href="/set/en" data-nav="soft" class="langbtn">EN</a>
+                <a href="/dm" data-nav="soft" class="linkbtn">{{ t.get("dm", "DM") }}</a>
+                <a href="/servers" data-nav="soft" class="linkbtn">{{ t.get("servers", "Servers") }}</a>
+                
+                <a href="/settings" data-nav="soft" class="linkbtn">{{ t.get("settings", "Settings") }}</a>
+                <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
+            </nav>
+        </header>
+
+        <section class="panel">
+            <h1>{{ t.get("welcome", "Welcome") }}</h1>
+            <p>{{ t.get("subtitle", "Site is ready") }}</p>
+        </section>
+
         {% if username %}
-        <p>{{ t.get("username", "Username") }}: <strong>{{ username }}</strong></p>
-        <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
-        {% else %}
-        <div class="picker">
-            <a href="/login" data-nav="soft" class="linkbtn">{{ t.get("login", "Login") }}</a>
-            <a href="/register" data-nav="soft" class="linkbtn">{{ t.get("register", "Register") }}</a>
-        </div>
+        <section class="panel">
+            <h2>{{ t.get("dmrequests", "Message requests") }}</h2>
+            {% if dmpending %}
+                {% for p in dmpending %}
+                <div class="cardrow">
+                    <div class="who"><img src="{{ p.avatar }}" class="avatar sm" alt="a"> {{ p.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/dm/request/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn">{{ t.get("accept", "Accept") }}</button></form>
+                        <form method="post" action="/dm/request/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn">{{ t.get("reject", "Reject") }}</button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>{{ t.get("norequests", "No requests") }}</p>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <h2>{{ t.get("requests", "Friend requests") }}</h2>
+            {% if pending %}
+                {% for p in pending %}
+                <div class="cardrow">
+                    <div class="who"><img src="{{ p.avatar }}" class="avatar sm" alt="a"> {{ p.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn">{{ t.get("accept", "Accept") }}</button></form>
+                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn">{{ t.get("reject", "Reject") }}</button></form>
+                        <form method="post" action="/social/block/{{ p.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("block", "Block") }}</button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>{{ t.get("norequests", "No requests") }}</p>
+            {% endif %}
+        </section>
+
+        <section class="panel">
+            <h2>{{ t.get("suggested", "Suggested users") }}</h2>
+            {% for s in suggestions %}
+            <div class="cardrow">
+                <div class="who"><img src="{{ s.avatar }}" class="avatar sm" alt="a"> {{ s.username }}</div>
+                <div class="acts">
+                    {% if s.status == 'friend' %}
+                    <form method="post" action="/social/remove/{{ s.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("removefriend", "Remove friend") }}</button></form>
+                    {% elif s.status == 'sent' %}
+                    <button class="linkbtn" disabled>{{ t.get("sent", "Sent") }}</button>
+                    {% elif s.status == 'incoming' %}
+                    <button class="linkbtn" disabled>{{ t.get("incoming", "Incoming request") }}</button>
+                    {% else %}
+                    <form method="post" action="/social/request/{{ s.id }}" data-nav="soft"><button class="pickbtn">{{ t.get("addfriend", "Add friend") }}</button></form>
+                    {% endif %}
+                    <form method="post" action="/social/block/{{ s.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("block", "Block") }}</button></form>
+                </div>
+            </div>
+            {% endfor %}
+        </section>
         {% endif %}
     </main>
     <script src="/pc/app.js"></script>
 </body>
 </html>
+
+
+

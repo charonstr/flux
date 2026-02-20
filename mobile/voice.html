@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ channel[2] }}</title><link rel="stylesheet" href="/mobile/style.css"></head>
+<body>
+<main class="wrap" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
+<header class="sidebar"><a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge"><img src="{{ '/media/' + server[3] if server[3] else '/mobile/avatar.svg' }}" class="avatar" alt="avatar"><span>{{ server[2] }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back","Back") }}</button></nav></header>
+<section class="panel">
+<h2>Sesli Kanal: {{ channel[2] }}</h2>
+<p class="hint">Mikrofon izni verip kanala katıl.</p>
+<button id="voicejoin" class="pickbtn">Kanala bağlan</button>
+<button id="voicemute" class="linkbtn">Mikrofon kapat/aç</button>
+</section>
+<section class="panel">
+<h3>Kanaldakiler</h3>
+<div id="voiceusers">
+{% for u in users %}<div class="cardrow"><div class="who"><img src="{{ u.avatar }}" class="avatar sm"> {{ u.username }}</div></div>{% endfor %}
+</div>
+</section>
+<section class="panel">
+<h3>Ses Akışları</h3>
+<div id="audios"></div>
+</section>
+</main>
+<script src="/mobile/app.js?v=3"></script>
+<script src="/mobile/voice.js?v=1"></script>
+</body>
+</html>
+

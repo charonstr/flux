@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ channel[2] }}</title><link rel="stylesheet" href="/pc/style.css"></head>
+<body>
+<main class="wrap">
+<header class="sidebar"><a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge"><img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" alt="avatar"><span>{{ server[2] }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back","Back") }}</button></nav></header>
+<section class="panel"><h2># {{ channel[2] }} ({{ channel[4] }})</h2>{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<div class="chatbox">{% for e in entries %}<div class="msg"><strong>{{ users.get(e[1], 'user') }}</strong>: {% if e[2]=='text' %}{{ e[3] }}{% elif e[2]=='image' %}<img src="/media/{{ e[4] }}" class="chatimg">{% elif e[2]=='video' %}<video controls class="chatvid" src="/media/{{ e[4] }}"></video>{% elif e[2]=='audio' %}<audio controls src="/media/{{ e[4] }}"></audio>{% else %}<a href="/media/{{ e[4] }}" target="_blank">file</a>{% endif %}</div>{% endfor %}</div>
+{% if canwrite %}
+<form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
+<input name="text" type="text" placeholder="{{ t.get('message','Message') }}">
+{% if canshare %}<input name="file" type="file">{% endif %}
+<button class="pickbtn" type="submit">{{ t.get('send','Send') }}</button>
+</form>
+{% endif %}
+</section>
+</main>
+<script src="/pc/app.js?v=3"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-{
+﻿{
   "welcome": "Hoş geldin",
   "subtitle": "Site hazır",
   "choose": "Dil seç",
@@ -10,8 +10,91 @@
   "password": "Şifre",
   "show": "Göster",
   "hide": "Gizle",
+  "remember": "Bu cihazı kayıtlı tut",
+  "profile": "Profil",
+  "dm": "DM",
+  "dmbox": "Mesaj kutusu",
+  "message": "Mesaj",
+  "send": "Gönder",
+  "selectdm": "Sohbet seçin",
+  "unread": "Okunmadı",
+  "read": "Okundu",
+  "active": "Aktif",
+  "image": "Görsel",
+  "video": "Video",
+  "audio": "Ses",
+  "settings": "Ayarlar",
+  "friendships": "Arkadaşlıklar",
+  "blockedusers": "Engellenen kullanıcılar",
+  "unblock": "Engeli kaldır",
+  "friends": "Arkadaşlar",
+  "suggested": "Önerilen kullanıcılar",
+  "requests": "Arkadaşlık istekleri",
+  "addfriend": "Arkadaş ekle",
+  "removefriend": "Arkadaşlıktan çıkar",
+  "accept": "Kabul et",
+  "reject": "Reddet",
+  "block": "Engelle",
+  "sent": "İstek gönderildi",
+  "incoming": "Gelen istek",
+  "norequests": "İstek yok",
+  "oldpassword": "Eski şifre",
+  "newpassword": "Yeni şifre",
+  "confirmpassword": "Yeni şifre tekrar",
+  "avatar": "Profil fotoğrafı",
+  "cropauto": "Fotoğraf seçildi. Kare kırp uygulayabilir veya orijinal devam edebilirsiniz.",
+  "cropapply": "Kırp uygula",
+  "cropkeep": "Orijinal devam et",
+  "save": "Kaydet",
+  "saved": "Kaydedildi",
+  "renamewait": "Kullanıcı adı değişimi 7 günde bir yapılabilir",
   "erroruser": "Kullanıcı adı en az 3 karakter olmalı",
   "errorpass": "Şifre en az 6 karakter olmalı",
   "errorexists": "Bu kullanıcı adı zaten kayıtlı",
-  "errorlogin": "Kullanıcı adı veya şifre hatalı"
+  "errorlogin": "Kullanıcı adı veya şifre hatalı",
+  "errorold": "Eski şifre yanlış",
+  "errormatch": "Şifreler aynı değil",
+  "erroravatar": "Profil fotoğrafı yüklenemedi",
+  "errorrenamewait": "Kullanıcı adını yalnızca 7 günde bir değiştirebilirsiniz",
+  "errorimglimit": "Görsel 200MB sınırını aşamaz",
+  "errorvidlimit": "Video 300MB sınırını aşamaz",
+  "errorfilelimit": "Arşiv dosyası 500MB sınırını aşamaz",
+  "errorfriendonly": "Sadece arkadaşlarına mesaj gönderebilirsin",
+  "errorusernotfound": "Kullanıcı bulunamadı",
+  "errorupload": "Dosya yükleme başarısız",
+  "privacy": "Gizlilik ve güvenlik",
+  "changepassword": "Şifre değiştir",
+  "home": "Ana sayfa",
+  "file": "Dosya",
+  "filehelp": "Arşiv en fazla 500MB, görsel en fazla 200MB, video en fazla 300MB",
+  "downloadfile": "Dosyayı indir",
+  "recordvoice": "Ses kaydet",
+  "stoprecord": "Kaydı durdur",
+  "back": "Geri",
+  "startbyname": "Kullanıcı adıyla başlat",
+  "selectfriend": "Arkadaş seç",
+  "startchat": "Sohbet başlat",
+  "messagebutton": "Mesaj"
+  ,"servers": "Sunucular"
+  ,"dmrequests": "Mesaj istekleri"
+  ,"dmsentrequest": "Mesaj isteği gönderildi"
+  ,"createserver": "Sunucu oluştur"
+  ,"joinserver": "Sunucuya katıl"
+  ,"servername": "Sunucu adı"
+  ,"public": "Herkese açık"
+  ,"private": "Gizli"
+  ,"openjoin": "Doğrudan katılım"
+  ,"approvaljoin": "Onay gerekli"
+  ,"codejoin": "Kod veya link ile"
+  ,"invitecode": "Davet kodu"
+  ,"publicservers": "Açık sunucular"
+  ,"myservers": "Sunucularım"
+  ,"noservers": "Sunucu yok"
+  ,"join": "Katıl"
+  ,"create": "Oluştur"
+  ,"errorservername": "Sunucu adı çok kısa"
+  ,"errorservernotfound": "Sunucu bulunamadı"
+  ,"serverpermissions": "Sunucu izinleri"
+  ,"serverpermhint": "Rol, kategori ve kanal izinlerini bu ekrandan adım adım yönetebilirsin."
+  ,"joinrequests": "Katılma istekleri"
 }

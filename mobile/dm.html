@@ -1,0 +1,22 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ t.get("dm", "DM") }}</title><link rel="stylesheet" href="/mobile/style.css"></head>
+<body>
+<main class="wrap" id="dmpage" data-peer="{{ peer.id if peer else '' }}" data-convid="{{ convid if convid else '' }}" data-last="{{ lastid if lastid else 0 }}">
+<header class="sidebar"><a href="/profile" data-nav="soft" class="profilebadge"><img src="{{ avatar }}" class="avatar" alt="avatar"><span>{{ username }}</span></a><nav class="topnav">                <button type="button" class="linkbtn" data-go-back="1">{{ t.get("back", "Back") }}</button><a href="/dm" data-nav="soft" class="linkbtn">{{ t.get("dm", "DM") }}</a><a href="/profile" data-nav="soft" class="linkbtn">{{ t.get("profile", "Profile") }}</a></nav></header>
+<section class="panel"><h2>{{ t.get("dmbox", "Messages") }}</h2><form method="post" action="/dm/start" data-nav="soft" class="form"><input name="username" type="text" placeholder="{{ t.get("startbyname", "Start with username") }}"><select name="peerid"><option value="">{{ t.get("selectfriend", "Select friend") }}</option>{% for p in peers %}<option value="{{ p.id }}">{{ p.username }}</option>{% endfor %}</select><button class="pickbtn" type="submit">{{ t.get("startchat", "Start chat") }}</button></form>{% for p in peers %}<a href="/dm/{{ p.id }}" data-nav="soft" class="dmpeer"><img src="{{ p.avatar }}" class="avatar sm"> {{ p.username }} <small>({{ p.unread }})</small> <small>{{ p.status if p.status != 'active' else t.get('active','Active') }}</small></a>{% endfor %}</section>
+<section class="panel">
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+{% if peer %}
+<h2>{{ peer.username }} - {{ peer.status if peer.status != 'active' else t.get('active','Active') }}</h2>
+<div class="chatbox">{% for m in messages %}<div class="msg {% if m.sender == myid %}mine{% endif %}" data-mid="{{ m.id }}">{% if m.kind == 'text' %}<p>{{ m.body }}</p>{% elif m.kind == 'image' %}<img src="/media/{{ m.path }}" class="chatimg">{% elif m.kind == 'video' %}<video controls class="chatvid" src="/media/{{ m.path }}"></video>{% elif m.kind == 'audio' %}<audio controls src="/media/{{ m.path }}"></audio>{% elif m.kind == 'file' %}<a href="/media/{{ m.path }}" target="_blank" rel="noopener">{{ t.get('downloadfile','Download file') }}</a>{% endif %}{% if m.sender == myid %}<small>{{ t.get('read','Read') if m.read else t.get('unread','Unread') }}</small>{% endif %}</div>{% endfor %}</div>
+<form id="dmform" method="post" enctype="multipart/form-data" data-nav="soft" class="form"><input name="text" type="text" placeholder="{{ t.get('message', 'Message') }}"><label>{{ t.get("file", "File") }} ({{ t.get("filehelp", "Archive max 500MB, image max 200MB, video max 300MB") }})</label><input name="file" type="file" accept=".zip,.rar,.7z,.tar,.gz,.bz2,.xz,image/*,video/*"><button id="voicerecord" type="button" class="pickbtn" data-start="{{ t.get('recordvoice','Record voice') }}" data-stop="{{ t.get('stoprecord','Stop recording') }}">{{ t.get('recordvoice','Record voice') }}</button><div id="voicewave" class="voicewave"></div><button class="pickbtn" type="submit">{{ t.get("send", "Send") }}</button></form>
+{% else %}<p>{{ t.get("selectdm", "Select a chat") }}</p>{% endif %}
+</section>
+</main>
+<script src="/mobile/app.js?v=3"></script>
+</body>
+</html>
+
+
+
