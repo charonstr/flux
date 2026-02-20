@@ -1,0 +1,29 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ t.get("welcome", "Welcome") }}</title>
+    <link rel="stylesheet" href="/mobile/style.css">
+</head>
+<body>
+    <div class="langbar">
+        <a href="/set/tr" class="langbtn">TR</a>
+        <a href="/set/en" class="langbtn">EN</a>
+    </div>
+    <main class="wrap">
+        <h1>{{ t.get("welcome", "Welcome") }}</h1>
+        <p>{{ t.get("subtitle", "Site is ready") }}</p>
+        {% if username %}
+        <p>{{ t.get("username", "Username") }}: <strong>{{ username }}</strong></p>
+        <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
+        {% else %}
+        <div class="picker">
+            <a href="/login" data-nav="soft" class="linkbtn">{{ t.get("login", "Login") }}</a>
+            <a href="/register" data-nav="soft" class="linkbtn">{{ t.get("register", "Register") }}</a>
+        </div>
+        {% endif %}
+    </main>
+    <script src="/mobile/app.js"></script>
+</body>
+</html>

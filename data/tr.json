@@ -1,0 +1,17 @@
+{
+  "welcome": "Hoş geldin",
+  "subtitle": "Site hazır",
+  "choose": "Dil seç",
+  "choosehelp": "Lütfen devam etmek için dil seçiniz",
+  "login": "Giriş yap",
+  "register": "Kayıt ol",
+  "logout": "Çıkış yap",
+  "username": "Kullanıcı adı",
+  "password": "Şifre",
+  "show": "Göster",
+  "hide": "Gizle",
+  "erroruser": "Kullanıcı adı en az 3 karakter olmalı",
+  "errorpass": "Şifre en az 6 karakter olmalı",
+  "errorexists": "Bu kullanıcı adı zaten kayıtlı",
+  "errorlogin": "Kullanıcı adı veya şifre hatalı"
+}

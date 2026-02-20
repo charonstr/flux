@@ -1,0 +1,17 @@
+{
+  "welcome": "Welcome",
+  "subtitle": "Site is ready",
+  "choose": "Choose language",
+  "choosehelp": "Please select a language to continue",
+  "login": "Login",
+  "register": "Register",
+  "logout": "Logout",
+  "username": "Username",
+  "password": "Password",
+  "show": "Show",
+  "hide": "Hide",
+  "erroruser": "Username must be at least 3 characters",
+  "errorpass": "Password must be at least 6 characters",
+  "errorexists": "This username already exists",
+  "errorlogin": "Username or password is incorrect"
+}
