@@ -1,0 +1,284 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Case Open - Euphorium</title>
+  <link rel="stylesheet" href="/pc/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { background: radial-gradient(circle at 50% 0%, #1a2235 0, #0b1220 70%); }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 24px; color: #e5e7eb; }
+    .top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; gap: 12px; }
+    .badge { color:#f59e0b; font-weight:800; }
+
+    .case-controls { display:flex; align-items:center; justify-content:center; gap: 12px; margin: 12px 0 16px; flex-wrap: wrap; }
+    .qty { display:flex; gap: 8px; }
+    .qty button {
+      width: 42px; height: 42px; border-radius: 10px; border: 1px solid rgba(255,255,255,.2);
+      background: #111a2e; color: #e5e7eb; font-weight: 800; cursor: pointer;
+    }
+    .qty button.active { border-color: #f59e0b; color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.2) inset; }
+
+    .open { padding: 14px 30px; border-radius:12px; border:none; font-weight:900; background: linear-gradient(135deg, #f59e0b, #d97706); color:#fff; cursor:pointer; }
+    .open:disabled { opacity: .6; cursor:not-allowed; }
+
+    .lane-stack { display:flex; flex-direction:column; gap: 10px; }
+    .lane { width:100%; height:180px; background:#06090f; border:2px solid #1e293b; border-radius:8px; overflow:hidden; position:relative; }
+    .line { position:absolute; left:50%; top:0; width:4px; height:100%; transform:translateX(-50%); background:#facc15; z-index:9; }
+    .track { display:flex; height:100%; width:max-content; will-change: transform; transform: translate3d(0,0,0); backface-visibility: hidden; }
+    .item { width:200px; height:100%; flex-shrink:0; display:flex; flex-direction:column; justify-content:center; align-items:center; border-bottom:6px solid; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.4)); }
+    .item img { max-width: 85%; max-height: 95px; object-fit: contain; pointer-events: none; user-select: none; }
+    .item .n { font-size: 0.86rem; font-weight:700; margin-top:8px; padding:0 8px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:100%; }
+
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+    .panel { background:#111a2e; border:1px solid #1e293b; border-radius:12px; padding:14px; }
+    .row { display:grid; grid-template-columns: 1fr 1.5fr 1fr; gap:8px; padding:8px 0; border-bottom:1px solid rgba(148,163,184,.16); align-items:center; }
+    .row img { height: 28px; object-fit:contain; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <a href="/casino/case" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Kasalar</a>
+      <h1 id="title">Kasa</h1>
+      <div class="badge"><i class="fa-solid fa-coins"></i> <span id="balance">0</span></div>
+    </div>
+
+    <section class="case-controls">
+      <div class="qty" id="qtyPicker">
+        <button type="button" data-q="1" class="active">1</button>
+        <button type="button" data-q="2">2</button>
+        <button type="button" data-q="3">3</button>
+        <button type="button" data-q="4">4</button>
+        <button type="button" data-q="5">5</button>
+      </div>
+      <button id="openBtn" class="open" type="button">Ac</button>
+    </section>
+    <section class="case-controls" style="margin-top:0;">
+      <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
+        <div class="badge" style="color:#10b981;">Toplam Kazanc: <span id="sumWin">0</span></div>
+        <div class="badge" style="color:#ef4444;">Toplam Zarar: <span id="sumLose">0</span></div>
+        <div class="badge" style="color:#f59e0b;">Net: <span id="sumNet">0</span></div>
+      </div>
+    </section>
+
+    <section id="laneStack" class="lane-stack"></section>
+
+    <div class="grid">
+      <section class="panel">
+        <h3>Skinler ve Oranlar</h3>
+        <div id="odds"></div>
+      </section>
+      <section class="panel">
+        <h3>Son Cikanlar</h3>
+        <div id="history"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/pc/js/app.js"></script>
+  <script>
+    (function(){
+      const caseId = {{ caseid|tojson }};
+      const laneStack = document.getElementById('laneStack');
+      const openBtn = document.getElementById('openBtn');
+      const balanceEl = document.getElementById('balance');
+      const titleEl = document.getElementById('title');
+      const oddsEl = document.getElementById('odds');
+      const historyEl = document.getElementById('history');
+      const qtyPicker = document.getElementById('qtyPicker');
+      const sumWinEl = document.getElementById('sumWin');
+      const sumLoseEl = document.getElementById('sumLose');
+      const sumNetEl = document.getElementById('sumNet');
+
+      let constants = { case: { price: 0 }, items: [] };
+      let balance = 0;
+      let busy = false;
+      let quantity = 1;
+      let totalWin = 0;
+      let totalLose = 0;
+
+      function idem(){ return 'case_' + Date.now() + '_' + Math.random().toString(16).slice(2,10); }
+      function rItem(item){ return '<div class="item" style="border-color:' + item.color + '"><img src="' + item.img + '" alt=""><div class="n" style="color:' + item.color + '">' + item.name + '</div></div>'; }
+      function syncButton(){
+        const total = Number(constants.case?.price || 0) * quantity;
+        openBtn.textContent = quantity + 'x Ac (' + total + ' Altin)';
+        openBtn.disabled = busy || balance < total;
+      }
+      function renderTotals(){
+        if (sumWinEl) sumWinEl.textContent = String(totalWin);
+        if (sumLoseEl) sumLoseEl.textContent = String(totalLose);
+        if (sumNetEl) sumNetEl.textContent = String(totalWin - totalLose);
+      }
+
+      function setQuantity(q){
+        quantity = Math.max(1, Math.min(5, Number(q || 1)));
+        qtyPicker.querySelectorAll('button[data-q]').forEach(function(b){ b.classList.toggle('active', Number(b.dataset.q) === quantity); });
+        buildLanes(quantity);
+        syncButton();
+      }
+
+      function buildLanes(count){
+        let html = '';
+        for(let i=0;i<count;i++){
+          html += '<div class="lane" data-lane="' + i + '"><div class="line"></div><div class="track" data-track="' + i + '"></div></div>';
+        }
+        laneStack.innerHTML = html;
+        fillDummy();
+      }
+
+      function tracks(){ return Array.from(laneStack.querySelectorAll('.track')); }
+
+      function fillDummy(){
+        tracks().forEach(function(t){
+          let html = '';
+          for(let i=0;i<45;i++){
+            const items = constants.items || [];
+            if(items.length){ const x = items[Math.floor(Math.random()*items.length)]; html += rItem(x); }
+            else { html += '<div class="item" style="border-color:#4b69ff"><div class="n">?</div></div>'; }
+          }
+          t.innerHTML = html;
+          t.style.transition='none';
+          t.style.transform='translateX(0px)';
+        });
+      }
+
+      function renderOdds(){
+        const m = new Map();
+        (constants.items || []).forEach(function(i){ if(!m.has(i.rarity)) m.set(i.rarity,{w:0,c:i.color}); m.get(i.rarity).w += Number(i.weight || 0); });
+        oddsEl.innerHTML = Array.from(m.entries()).map(function(e){ return '<div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:'+e[1].c+'">'+e[0]+'</span><b>%'+e[1].w.toFixed(4)+'</b></div>'; }).join('');
+      }
+
+      function renderHistory(rows){
+        if(!rows || !rows.length){ historyEl.innerHTML = '<div>Gecmis yok</div>'; return; }
+        historyEl.innerHTML = rows.slice(0, 3).map(function(r){ return '<div class="row"><div><img src="'+r.item.img+'" alt=""></div><div style="color:'+r.item.color+'">'+r.item.name+'</div><div style="color:#10b981;font-weight:800">+'+Number(r.payout||0)+'</div></div>'; }).join('');
+      }
+
+      async function waitTrackImages(track, maxWaitMs){
+        const imgs = Array.from(track.querySelectorAll('img'));
+        if(!imgs.length) return;
+        const tasks = imgs.map(function(img){
+          if (img.complete) return Promise.resolve();
+          return new Promise(function(resolve){
+            const done = function(){ resolve(); };
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+          });
+        });
+        await Promise.race([
+          Promise.all(tasks),
+          new Promise(function(resolve){ setTimeout(resolve, maxWaitMs || 900); })
+        ]);
+      }
+
+      async function loadState(){
+        const res = await fetch('/api/casino/case/state?case=' + encodeURIComponent(caseId), { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
+        const data = await res.json();
+        if(!res.ok || !data.ok) return;
+        constants = data.constants || constants;
+        balance = Number(data.balance || 0);
+        balanceEl.textContent = String(balance);
+        titleEl.textContent = String(constants.case?.name || 'Kasa');
+        renderOdds();
+        renderHistory(data.history || []);
+        buildLanes(quantity);
+        syncButton();
+      }
+
+      async function openSingle(){
+        const res = await fetch('/api/casino/case/open', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-Requested-With':'fetch'},
+          body: JSON.stringify({ case: caseId, idempotency_key: idem() })
+        });
+        const data = await res.json();
+        return { ok: res.ok && data && data.ok, data: data || {} };
+      }
+
+      async function animateLane(track, state, delayMs){
+        track.innerHTML = (state.sequence || []).map(rItem).join('');
+        await waitTrackImages(track, 1000);
+        await new Promise(function(r){ setTimeout(r, delayMs || 0); });
+
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+        void track.offsetWidth;
+
+        const itemWidth = 200;
+        const winnerIndex = 35;
+        const lane = track.parentElement;
+        const containerWidth = lane ? lane.offsetWidth : 1000;
+        const targetX = -(winnerIndex * itemWidth) + (containerWidth / 2) - (itemWidth / 2) + (Math.floor(Math.random()*160)-80);
+
+        track.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.2, 1)';
+        track.style.transform = 'translateX(' + targetX + 'px)';
+
+        await new Promise(function(r){ setTimeout(r, 6100); });
+      }
+
+      async function openCases(){
+        if(busy) return;
+        const casePrice = Number(constants.case?.price || 0);
+        const total = casePrice * quantity;
+        if(balance < total) return;
+
+        busy = true;
+        balance = Math.max(0, balance - total);
+        balanceEl.textContent = String(balance);
+        syncButton();
+
+        const laneTracks = tracks();
+        const results = [];
+
+        for(let i=0;i<quantity;i++){
+          const r = await openSingle();
+          results.push(r);
+        }
+
+        let refund = 0;
+        const animJobs = [];
+
+        results.forEach(function(r, i){
+          if(!r.ok){ refund += casePrice; return; }
+          const st = r.data.state || {};
+          const t = laneTracks[i];
+          if(!t){ refund += casePrice; return; }
+          animJobs.push((async function(){
+            await animateLane(t, st, i * 120);
+            const payout = Number(st.payout || 0);
+            const delta = payout - casePrice;
+            if (delta >= 0) totalWin += delta;
+            else totalLose += Math.abs(delta);
+            renderTotals();
+            balance += payout;
+            balanceEl.textContent = String(balance);
+          })());
+        });
+
+        if(refund > 0){
+          balance += refund;
+          balanceEl.textContent = String(balance);
+        }
+
+        await Promise.all(animJobs);
+        await loadState().catch(function(){});
+
+        busy = false;
+        syncButton();
+      }
+
+      qtyPicker.addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-q]');
+        if(!btn || busy) return;
+        setQuantity(btn.dataset.q);
+      });
+
+      openBtn.addEventListener('click', openCases);
+      loadState().then(function(){ setQuantity(1); renderTotals(); }).catch(function(){});
+    })();
+  </script>
+</body>
+</html>
+

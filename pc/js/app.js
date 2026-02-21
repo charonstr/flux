@@ -86,6 +86,9 @@
 
   window.triggerBackgroundRefresh = async function() {
       if (globalRefreshing) return;
+      const p = window.location.pathname || '';
+      // Keep case opening page stable; background refresh can reset multi-open controls.
+      if (p.startsWith('/casino/case/')) return;
       
       const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'block');
       const ctxOpen = document.getElementById('ctxMenu') && document.getElementById('ctxMenu').style.display === 'flex';

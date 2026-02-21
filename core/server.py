@@ -17,6 +17,7 @@ from core.config import load
 from core.casino.blackjack import MANAGER as BLACKJACK
 from core.casino.multiplier import MANAGER as MULTIPLIER
 from core.casino.roulette import MANAGER as ROULETTE
+from core.casino.cs2case import MANAGER as CS2CASE
 from core.database import (
     acceptdmrequest,
     acceptrequest,
@@ -563,6 +564,107 @@ def casinoroulette():
     content = texts(current)
     initialize_user_economy(account[0])
     return render_template(viewfile("casino/roulette.html"), **navcontext(content, current))
+
+
+@app.route("/casino/case")
+def casinocasehome():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template("pc/casino/case_home.html", **navcontext(content, current))
+
+
+@app.route("/casino/case/<caseid>")
+def casinocaseopen(caseid: str):
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    if caseid not in {"afet", "kristal"}:
+        return redirect(url_for("casinocasehome"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template("pc/casino/case_open.html", caseid=caseid, **navcontext(content, current))
+
+
+def caseconstants(userid: int, caseid: str) -> dict:
+    base = CS2CASE.constants(caseid)
+    base["cases"] = CS2CASE.list_cases()
+    base["balance"] = int(get_balance(userid))
+    return base
+
+
+@app.route("/api/casino/case/state")
+def casinocasestate():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    caseid = str(request.args.get("case", "afet") or "afet").strip().lower()
+    if caseid not in {"afet", "kristal"}:
+        return {"ok": False, "error": "invalid_case"}, 400
+    return {
+        "ok": True,
+        "constants": caseconstants(me[0], caseid),
+        "balance": int(get_balance(me[0])),
+        "history": CS2CASE.history(me[0], caseid),
+    }
+
+
+@app.route("/api/casino/case/open", methods=["POST"])
+def casinocaseopenapi():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    payload = request.get_json(silent=True) or {}
+    caseid = str(payload.get("case", "afet") or "afet").strip().lower()
+    if caseid not in {"afet", "kristal"}:
+        return {"ok": False, "error": "invalid_case"}, 400
+    idem = str(payload.get("idempotency_key", "")).strip()
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+
+    def settle_cs2(uid, rid, bet, payout):
+        bet_ref = f"cs2case:{rid}:bet"
+        payout_ref = f"cs2case:{rid}:payout"
+        try:
+            with connect("accounts") as db:
+                db.execute("BEGIN IMMEDIATE")
+                db.execute("INSERT OR IGNORE INTO wallets (user_id, balance) VALUES (?, 0)", (uid,))
+                row = db.execute("SELECT COALESCE(SUM(amount), 0) FROM ledger WHERE user_id = ?", (uid,)).fetchone()
+                balance = int(row[0]) if row else 0
+                db.execute("UPDATE wallets SET balance = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?", (balance, uid))
+                if balance < bet:
+                    db.execute("ROLLBACK")
+                    return False, "insufficient_balance"
+                db.execute("INSERT INTO ledger (user_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)", (uid, -bet, "cs2case_bet", "cs2 case bet", bet_ref))
+                db.execute("INSERT INTO ledger (user_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)", (uid, payout, "cs2case_payout", "cs2 case payout", payout_ref))
+                db.execute("UPDATE wallets SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?", (payout - bet, uid))
+                db.execute("COMMIT")
+            return True, ""
+        except Exception:
+            return False, "settlement_failed"
+
+    ok, data = CS2CASE.open_case(me[0], caseid, idem, settle_cs2)
+    if ok and not bool(data.get("idempotent_replay")):
+        state = data.get("state", {})
+        price = int(CS2CASE.constants(caseid).get("case", {}).get("price", 0))
+        recordcasinogame(me[0], f"case:{caseid}", int(state.get("payout", 0)) - price)
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": caseconstants(me[0], caseid), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/casino/cs2case")
+def legacycs2page():
+    return redirect(url_for("casinocaseopen", caseid="afet"))
 
 
 def rouletteconstants(userid: int) -> dict:
@@ -1720,7 +1822,7 @@ def serverleave(serverid: int):
         with connect("servers") as db:
             owner = db.execute("SELECT ownerid FROM servers WHERE id = ?", (serverid,)).fetchone()
             if owner and owner[0] != me[0]:
-                db.execute("DELETE FROM server_members WHERE serverid = ? AND userid = ?", (serverid, me[0]))
+                db.execute("DELETE FROM members WHERE serverid = ? AND userid = ?", (serverid, me[0]))
         emit(me[0])
         emit_server(serverid)
     return redirect(url_for("servers"))
@@ -1734,7 +1836,7 @@ def deletechannel(serverid: int, channelid: int):
         if hasserverperm(server, me[0], "managechannels"):
             from core.database import connect
             with connect("servers") as db:
-                db.execute("DELETE FROM server_channels WHERE id = ? AND serverid = ?", (channelid, serverid))
+                db.execute("DELETE FROM channels WHERE id = ? AND serverid = ?", (channelid, serverid))
             emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
@@ -1747,8 +1849,8 @@ def deletecategory(serverid: int, categoryid: int):
         if hasserverperm(server, me[0], "managechannels"):
             from core.database import connect
             with connect("servers") as db:
-                db.execute("DELETE FROM server_categories WHERE id = ? AND serverid = ?", (categoryid, serverid))
-                db.execute("UPDATE server_channels SET categoryid = 0 WHERE categoryid = ? AND serverid = ?", (categoryid, serverid))
+                db.execute("DELETE FROM categories WHERE id = ? AND serverid = ?", (categoryid, serverid))
+                db.execute("UPDATE channels SET categoryid = 0 WHERE categoryid = ? AND serverid = ?", (categoryid, serverid))
             emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 

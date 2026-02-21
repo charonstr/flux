@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS2 Kasa Acilisi - Euphorium</title>
+  <link rel="stylesheet" href="/pc/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --cs-bg: #0b1220;
+      --cs-panel: #111a2e;
+      --cs-text: #e5e7eb;
+      --cs-gold: #f59e0b;
+    }
+    body { background: radial-gradient(circle at 50% 0%, #1a2235 0, #0b1220 70%); color: var(--cs-text); overflow-x: hidden; }
+    .mx-wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .mx-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .mx-title { font-size: 1.8rem; font-weight: 900; letter-spacing: 0.6px; margin: 0; display: flex; align-items: center; gap: 12px;}
+    .mx-title img { height: 40px; }
+    .mx-badge { display: inline-flex; gap: 8px; align-items: center; background: rgba(245, 158, 11, 0.13); border: 1px solid rgba(245, 158, 11, 0.35); color: var(--cs-gold); border-radius: 999px; padding: 10px 14px; font-weight: 800; }
+
+    .case-area { background: #0e1420; border: 1px solid #1f2937; border-radius: 16px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-bottom: 24px; text-align: center; }
+    .case-viewport { width: 100%; height: 220px; background: #06090f; border: 2px solid #1e293b; border-radius: 8px; overflow: hidden; position: relative; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); margin-bottom: 24px; }
+    
+    .case-center-line { position: absolute; top: 0; left: 50%; width: 4px; height: 100%; background: #facc15; transform: translateX(-50%); z-index: 10; box-shadow: 0 0 15px #facc15, 0 0 5px #fff; pointer-events: none; }
+    
+    .case-track { display: flex; height: 100%; width: max-content; transform: translateX(0); will-change: transform; }
+    
+    .case-item { width: 200px; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; flex-shrink: 0; border-bottom: 6px solid; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.4)); box-sizing: border-box; position: relative; }
+    .case-item::after { content: ''; position: absolute; right: 0; top: 10%; height: 80%; width: 1px; background: rgba(255,255,255,0.05); }
+    .case-item img { max-width: 85%; max-height: 110px; object-fit: contain; margin-bottom: 12px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); transition: transform 0.3s; }
+    .case-item .name { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; padding: 0 10px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 100%; }
+    .case-item .rarity { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+
+    .btn-open { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; padding: 16px 48px; font-size: 1.25rem; font-weight: 900; border-radius: 12px; cursor: pointer; text-transform: uppercase; box-shadow: 0 10px 20px rgba(217, 119, 6, 0.3); transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; }
+    .btn-open:hover:not(:disabled) { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 25px rgba(217, 119, 6, 0.4); }
+    .btn-open:disabled { background: #334155; color: #94a3b8; box-shadow: none; cursor: not-allowed; transform: none; }
+
+    .win-popup { display: none; margin-top: 24px; padding: 20px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .win-popup.show { display: block; }
+    .win-popup img { max-height: 150px; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
+    .win-popup h3 { margin: 0; font-size: 1.5rem; }
+    .win-popup .payout { font-size: 1.8rem; font-weight: 900; color: #10b981; margin-top: 10px; }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .info-card { background: var(--cs-panel); border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+    .info-card h4 { margin: 0 0 15px 0; font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .odds-list { display: flex; flex-direction: column; gap: 8px; }
+    .odd-item { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.95rem; }
+    .odd-color { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+    
+    .mx-history { margin-top: 14px; max-height: 280px; overflow: auto; }
+    .mx-row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; padding: 10px 8px; border-bottom: 1px solid rgba(148, 163, 184, 0.16); font-size: 0.95rem; align-items: center;}
+    .mx-row img { height: 30px; object-fit: contain; }
+    .mx-hdr { color: #94a3b8; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main class="mx-wrap">
+    <div class="mx-top">
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menu</a>
+      <h1 class="mx-title"><i class="fa-solid fa-box-open"></i> CS2 Kasa</h1>
+      <div class="mx-badge"><i class="fa-solid fa-coins"></i> <span id="csBalance">0</span></div>
+    </div>
+
+    <section class="case-area">
+      <div class="case-viewport" id="viewport">
+        <div class="case-center-line"></div>
+        <div class="case-track" id="caseTrack">
+          </div>
+      </div>
+      
+      <button class="btn-open" id="btnOpen">
+        <i class="fa-solid fa-key"></i> KASA AÃ‡ (250 AltÄ±n)
+      </button>
+
+      <div class="win-popup" id="winPopup">
+        <img id="winImg" src="" alt="Skin">
+        <h3 id="winName">Skin Name</h3>
+        <div id="winRarity" style="font-weight: 700; margin-top:5px;">Rarity</div>
+        <div class="payout">+<span id="winPayout">0</span> <i class="fa-solid fa-coins" style="font-size:1.2rem;"></i></div>
+      </div>
+    </section>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h4>Kasa Ä°Ã§eriÄŸi ve Oranlar</h4>
+        <div class="odds-list" id="oddsList">
+          </div>
+      </div>
+      <div class="info-card">
+        <h4>Son Ã‡Ä±kanlar</h4>
+        <div class="mx-history" id="historyWrap">
+          </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/pc/js/app.js"></script>
+  <script>
+    (function () {
+      const btnOpen = document.getElementById("btnOpen");
+      const caseTrack = document.getElementById("caseTrack");
+      const viewport = document.getElementById("viewport");
+      const balanceText = document.getElementById("csBalance");
+      const winPopup = document.getElementById("winPopup");
+      const historyWrap = document.getElementById("historyWrap");
+      const oddsList = document.getElementById("oddsList");
+
+      let isOpening = false;
+      let balance = 0;
+      let constants = { case_price: 250, items: [] };
+
+      function idem() { return "cs2_" + Date.now() + "_" + Math.random().toString(16).slice(2, 10); }
+
+      function updateBalance(v) {
+        balance = Number(v || 0);
+        balanceText.textContent = String(balance);
+      }
+
+      function renderItem(item) {
+        return `
+          <div class="case-item" style="border-color: ${item.color};">
+            <img src="${item.img}" alt="skin">
+            <div class="name" style="color: ${item.color};">${item.name}</div>
+            <div class="rarity">${item.rarity}</div>
+          </div>
+        `;
+      }
+
+      function populateOdds() {
+        if (!constants.items) return;
+        const map = new Map();
+        constants.items.forEach(i => {
+            if(!map.has(i.rarity)) map.set(i.rarity, {color: i.color, weight: 0});
+            map.get(i.rarity).weight += i.weight;
+        });
+        
+        let html = "";
+        map.forEach((data, rarity) => {
+            html += `<div class="odd-item"><span style="color:${data.color}"><span class="odd-color" style="background:${data.color}"></span>${rarity}</span> <span>%${data.weight.toFixed(2)}</span></div>`;
+        });
+        oddsList.innerHTML = html;
+      }
+
+      function renderHistory(rows) {
+        if (!rows || !rows.length) {
+            historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr" style="grid-column:1/-1">Oyun gecmisi yok</div></div>';
+            return;
+        }
+        let html = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>';
+        rows.forEach(r => {
+            html += `<div class="mx-row">
+                <div><img src="${r.item.img}" alt="img"></div>
+                <div style="color:${r.item.color}; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${r.item.name}</div>
+                <div style="color:#10b981; font-weight:800;">+${r.payout}</div>
+            </div>`;
+        });
+        historyWrap.innerHTML = html;
+      }
+
+      // Initial dummy track
+      function setupDummyTrack() {
+        let html = "";
+        // fill with default items if no constants yet, else random
+        for(let i=0; i<45; i++) {
+            if(constants.items && constants.items.length) {
+                const rand = constants.items[Math.floor(Math.random() * constants.items.length)];
+                html += renderItem(rand);
+            } else {
+                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name">?</div></div>`;
+            }
+        }
+        caseTrack.innerHTML = html;
+        caseTrack.style.transition = 'none';
+        caseTrack.style.transform = `translateX(0px)`;
+      }
+
+      async function openCase() {
+        if (isOpening) return;
+        if (balance < constants.case_price) {
+            alert("Yetersiz bakiye!");
+            return;
+        }
+
+        isOpening = true;
+        btnOpen.disabled = true;
+        winPopup.classList.remove("show");
+
+        try {
+            const res = await fetch("/api/casino/cs2case/open", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Requested-With": "fetch" },
+                body: JSON.stringify({ idempotency_key: idem() })
+            });
+            const data = await res.json();
+            
+            if(data.constants) constants = data.constants;
+            if(data.balance !== undefined) updateBalance(data.balance);
+
+            if (!res.ok || !data.ok) {
+                alert("Kasa aÃ§Ä±lamadÄ±: " + (data.error || "Bilinmeyen hata"));
+                isOpening = false;
+                btnOpen.disabled = false;
+                return;
+            }
+
+            const state = data.state;
+            
+            // Build the track with the sequence from server
+            let html = "";
+            state.sequence.forEach(item => {
+                html += renderItem(item);
+            });
+            caseTrack.innerHTML = html;
+            
+            // Reset position
+            caseTrack.style.transition = 'none';
+            caseTrack.style.transform = `translateX(0px)`;
+            
+            // Force reflow
+            void caseTrack.offsetWidth;
+
+            // Calculate translation (Item width is 200px. Winner is index 35)
+            // Center of screen is viewport width / 2
+            const itemWidth = 200;
+            const winnerIndex = 35;
+            const containerWidth = viewport.offsetWidth;
+            
+            // Add a random offset so it doesn't land perfectly in the center every time
+            const randomOffset = Math.floor(Math.random() * 160) - 80; 
+            
+            const targetX = -(winnerIndex * itemWidth) + (containerWidth / 2) - (itemWidth / 2) + randomOffset;
+
+            // Animate
+            caseTrack.style.transition = 'transform 6s cubic-bezier(0.1, 0.9, 0.2, 1)';
+            caseTrack.style.transform = `translateX(${targetX}px)`;
+
+            // Wait for animation to finish
+            setTimeout(() => {
+                // Show win popup
+                document.getElementById("winImg").src = state.item.img;
+                document.getElementById("winName").textContent = state.item.name;
+                document.getElementById("winName").style.color = state.item.color;
+                document.getElementById("winRarity").textContent = state.item.rarity;
+                document.getElementById("winRarity").style.color = state.item.color;
+                document.getElementById("winPayout").textContent = state.payout;
+                winPopup.style.borderColor = state.item.color;
+                winPopup.classList.add("show");
+
+                // Update history display (we don't strictly need to fetch, just refresh logic if there was an endpoint, but server returns it usually. Let's just refetch info or keep an array. I'll make a quick hack to insert it)
+                const currentHtml = historyWrap.innerHTML;
+                const newRow = `<div class="mx-row">
+                    <div><img src="${state.item.img}" alt="img"></div>
+                    <div style="color:${state.item.color}; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${state.item.name}</div>
+                    <div style="color:#10b981; font-weight:800;">+${state.payout}</div>
+                </div>`;
+                if(currentHtml.includes("Oyun gecmisi yok")) {
+                    historyWrap.innerHTML = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>' + newRow;
+                } else {
+                    const parts = currentHtml.split('</div></div>');
+                    // insert right after header
+                    historyWrap.innerHTML = parts[0] + '</div></div>' + newRow + parts.slice(1).join('</div></div>');
+                }
+
+                isOpening = false;
+                btnOpen.disabled = false;
+            }, 6100);
+
+        } catch (err) {
+            alert("AÄŸ hatasÄ± oluÅŸtu.");
+            isOpening = false;
+            btnOpen.disabled = false;
+        }
+      }
+
+      btnOpen.addEventListener("click", openCase);
+
+      (async function init() {
+          setupDummyTrack();
+          try {
+            const res = await fetch("/api/casino/cs2case/state", {
+                headers: { "X-Requested-With": "fetch" },
+                cache: "no-store"
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error || "state_failed");
+            if (data.constants) {
+                constants = data.constants;
+                populateOdds();
+                setupDummyTrack();
+            }
+            if (data.balance !== undefined) updateBalance(data.balance);
+            if (Array.isArray(data.history)) renderHistory(data.history);
+            btnOpen.innerHTML = `<i class="fa-solid fa-key"></i> KASA AÇ (${constants.case_price} Altın)`;
+          } catch(e){
+            console.log("cs2 state load error", e);
+          }
+      })();
+
+    })();
+  </script>
+</body>
+</html>
