@@ -1,7 +1,9 @@
-﻿import json
+import json
 import time
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from threading import Lock
 from uuid import uuid4
 
 from flask import Flask, Response, abort, redirect, render_template, request, send_from_directory, session, url_for
@@ -100,6 +102,21 @@ app = Flask(__name__)
 app.template_folder = str(ROOT)
 app.secret_key = "changeme"
 app.permanent_session_lifetime = timedelta(days=30)
+
+EVENT_LOCK = Lock()
+EVENT_VERSIONS: dict[int, int] = defaultdict(int)
+
+
+def emit(*userids: int) -> None:
+    with EVENT_LOCK:
+        for uid in userids:
+            if uid:
+                EVENT_VERSIONS[int(uid)] += 1
+
+
+def eventversion(userid: int) -> int:
+    with EVENT_LOCK:
+        return int(EVENT_VERSIONS.get(int(userid), 0))
 
 
 def nowiso() -> str:
@@ -275,7 +292,11 @@ def savemedium(file, kind: str) -> tuple[str, int]:
 
 
 def dmpanel(meid: int):
+    # Show existing DM peers first, then friends without an active conversation.
     ids = dmpeers(meid)
+    for fid in friendids(meid):
+        if fid not in ids:
+            ids.append(fid)
     peers = []
     for row in accountsbasic(ids):
         convo = conversation(meid, row[0])
@@ -383,7 +404,7 @@ def candom(meid: int, peer: int) -> bool:
     return peer in ids
 
 
-@app.route("/")
+@app.route("/home")
 def home():
     current = userlanguage()
     if not current:
@@ -404,7 +425,12 @@ def home():
         ctx["suggestions"] = []
         ctx["pending"] = []
         ctx["dmpending"] = []
-    return render_template(viewfile("index.html"), **ctx)
+    return render_template(viewfile("home.html"), **ctx)
+
+
+@app.route("/")
+def root():
+    return redirect(url_for("home"))
 
 
 @app.route("/choose", methods=["GET", "POST"])
@@ -540,6 +566,18 @@ def settingspage():
     return render_template(viewfile("settings.html"), **navcontext(content, current))
 
 
+@app.route("/sitesettings")
+def sitesettings():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    return render_template(viewfile("sitesettings.html"), **navcontext(content, current))
+
+
 @app.route("/privacy")
 def privacy():
     current = userlanguage()
@@ -617,6 +655,7 @@ def dmchat(peer: int):
         try:
             if text:
                 addtext(convid, me[0], text)
+                emit(me[0], peer)
             if upload and upload.filename:
                 ext = Path(secure_filename(upload.filename)).suffix.lower()
                 imageext = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
@@ -625,17 +664,21 @@ def dmchat(peer: int):
                 if ext in imageext:
                     rel, size = savemedium(upload, "image")
                     addfile(convid, me[0], "image", rel, size)
+                    emit(me[0], peer)
                 elif ext in videoext:
                     rel, size = savemedium(upload, "video")
                     addfile(convid, me[0], "video", rel, size)
+                    emit(me[0], peer)
                 elif ext in fileext:
                     rel, size = savemedium(upload, "file")
                     addfile(convid, me[0], "file", rel, size)
+                    emit(me[0], peer)
                 else:
                     raise ValueError("invalid")
             if voice and voice.filename:
                 rel, size = savemedium(voice, "audio")
                 addfile(convid, me[0], "audio", rel, size)
+                emit(me[0], peer)
         except ValueError as ex:
             if str(ex) == "imglimit":
                 err = content.get("errorimglimit", "Image cannot be larger than 200MB")
@@ -707,11 +750,41 @@ def presenceping():
     return {"ok": True}
 
 
+@app.route("/events/stream")
+def eventstream():
+    me = currentaccount()
+    if not me:
+        return Response("", status=401)
+    uid = int(me[0])
+    last = int(request.args.get("last", "0"))
+    current = eventversion(uid)
+    if last <= 0:
+        last = current
+
+    def gen():
+        nonlocal last
+        idle = 0
+        while idle < 55:
+            cur = eventversion(uid)
+            if cur > last:
+                last = cur
+                payload = json.dumps({"type": "refresh", "version": cur})
+                yield f"data: {payload}\n\n"
+                idle = 0
+            else:
+                idle += 1
+                yield "data: {\"type\":\"ping\"}\n\n"
+            time.sleep(1)
+
+    return Response(gen(), mimetype="text/event-stream")
+
+
 @app.route("/social/request/<int:target>", methods=["POST"])
 def socialrequest(target: int):
     me = currentaccount()
     if me and me[0] != target and not isblocked(me[0], target) and not isblocked(target, me[0]) and not arefriends(me[0], target):
         sendrequest(me[0], target)
+        emit(me[0], target)
     return redirect(url_for("home"))
 
 
@@ -719,7 +792,14 @@ def socialrequest(target: int):
 def socialaccept(reqid: int):
     me = currentaccount()
     if me:
+        row = pendingreceived(me[0])
+        sender = 0
+        for rid, sid in row:
+            if int(rid) == int(reqid):
+                sender = int(sid)
+                break
         acceptrequest(reqid, me[0])
+        emit(me[0], sender)
     return redirect(url_for("home"))
 
 
@@ -727,7 +807,14 @@ def socialaccept(reqid: int):
 def socialreject(reqid: int):
     me = currentaccount()
     if me:
+        row = pendingreceived(me[0])
+        sender = 0
+        for rid, sid in row:
+            if int(rid) == int(reqid):
+                sender = int(sid)
+                break
         rejectrequest(reqid, me[0])
+        emit(me[0], sender)
     return redirect(url_for("home"))
 
 
@@ -736,6 +823,7 @@ def socialremove(target: int):
     me = currentaccount()
     if me and me[0] != target:
         removefriend(me[0], target)
+        emit(me[0], target)
     return redirect(url_for("home"))
 
 
@@ -744,6 +832,7 @@ def socialblock(target: int):
     me = currentaccount()
     if me and me[0] != target:
         blockuser(me[0], target)
+        emit(me[0], target)
     return redirect(url_for("home"))
 
 
@@ -752,6 +841,7 @@ def socialunblock(target: int):
     me = currentaccount()
     if me and me[0] != target:
         unblockuser(me[0], target)
+        emit(me[0], target)
     return redirect(url_for("friendships"))
 
 
@@ -759,7 +849,13 @@ def socialunblock(target: int):
 def dmrequestaccept(reqid: int):
     me = currentaccount()
     if me:
+        sender = 0
+        for rid, sid in pendingdmreceived(me[0]):
+            if int(rid) == int(reqid):
+                sender = int(sid)
+                break
         acceptdmrequest(reqid, me[0])
+        emit(me[0], sender)
     return redirect(url_for("home"))
 
 
@@ -767,7 +863,13 @@ def dmrequestaccept(reqid: int):
 def dmrequestreject(reqid: int):
     me = currentaccount()
     if me:
+        sender = 0
+        for rid, sid in pendingdmreceived(me[0]):
+            if int(rid) == int(reqid):
+                sender = int(sid)
+                break
         rejectdmrequest(reqid, me[0])
+        emit(me[0], sender)
     return redirect(url_for("home"))
 
 
@@ -818,6 +920,7 @@ def dmstart():
         return redirect(url_for("dmhome", error="errorusernotfound"))
     if not candom(me[0], target):
         senddmrequest(me[0], target)
+        emit(me[0], target)
         return redirect(url_for("dmhome", error="dmsentrequest"))
     return redirect(url_for("dmchat", peer=target))
 
@@ -1250,6 +1353,7 @@ def voicestream(serverid: int, channelid: int):
             time.sleep(1)
 
     return Response(gen(), mimetype="text/event-stream")
+
 
 
 

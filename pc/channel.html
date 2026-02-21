@@ -1,20 +1,109 @@
 <!doctype html>
 <html lang="{{ current }}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ channel[2] }}</title><link rel="stylesheet" href="/pc/style.css"></head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <title>{{ channel[2] }}</title>
+    <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { position: relative; background-color: var(--bg); overflow: hidden; min-height: 100vh; }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; }
+        .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -10%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
+        .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -10%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+        @keyframes driftPrimary { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10vw, 10vh) scale(1.1); } }
+        @keyframes driftPurple { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-10vw, -10vh) scale(1.2); } }
+
+        .topbar { background: rgba(var(--panel-rgb), 0.65) !important; backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; position: fixed; width: 100%; top: 0; z-index: 1000; display:flex; justify-content:space-between; padding: 12px 25px; align-items:center;}
+
+        .channel-wrap { max-width: 1200px; margin: 0 auto; padding: 90px 20px 20px 20px; height: 100vh; display: flex; flex-direction: column; }
+        
+        .chat-panel { flex-grow: 1; background: rgba(var(--panel-rgb), 0.7) !important; backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.5s ease forwards; }
+        body[data-theme="dark"] .chat-panel { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .chat-header { padding: 20px 25px; border-bottom: 1px solid rgba(var(--text-rgb), 0.05); display: flex; align-items: center; gap: 15px; background: rgba(var(--bg-rgb), 0.3); }
+        .chat-header h2 { margin: 0; font-size: 1.3rem; display:flex; align-items:center; gap:10px; }
+        .chat-header h2 i { color: var(--primary); }
+
+        .chatbox { flex-grow: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .chatbox::-webkit-scrollbar { width: 8px; } .chatbox::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 10px; }
+
+        .msg-row { display: flex; gap: 15px; animation: fadeIn 0.3s ease; }
+        .msg-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); display:grid; place-items:center; color:white; font-weight:bold; flex-shrink:0; }
+        .msg-content { display: flex; flex-direction: column; gap: 5px; background: rgba(var(--bg-rgb), 0.6); padding: 12px 18px; border-radius: 0 16px 16px 16px; border: 1px solid rgba(var(--line-rgb), 0.3); max-width: 80%; }
+        .msg-author { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+        .msg-text { font-size: 0.95rem; line-height: 1.5; margin:0; }
+        .chatimg { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+        .chatvid { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+
+        .chat-input { padding: 20px; background: rgba(var(--bg-rgb), 0.4); border-top: 1px solid rgba(var(--text-rgb), 0.05); }
+        .chat-input form { display: flex; gap: 12px; align-items: center; background: rgba(var(--panel-rgb), 0.8); padding: 8px; border-radius: 16px; border: 1px solid rgba(var(--line-rgb), 0.5); transition: border 0.3s; }
+        .chat-input form:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+        .chat-input input[type="text"] { flex-grow: 1; background: transparent; border: none; box-shadow: none; padding: 10px; font-size: 1rem; color: var(--text); }
+        .chat-input input[type="text"]:focus { outline:none; }
+        .chat-input .action-btn { width: 45px; height: 45px; border-radius: 12px; display: grid; place-items: center; border: none; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; }
+        .btn-attach { background: transparent; color: var(--muted); position:relative; overflow:hidden; } .btn-attach:hover { color: var(--text); background: rgba(var(--text-rgb), 0.1); }
+        .btn-attach input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .btn-send { background: var(--primary); color: #fff; } .btn-send:hover { transform: scale(1.05); background: var(--primary-hover); }
+    </style>
+</head>
 <body>
-<main class="wrap">
-<header class="sidebar"><a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge"><img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" alt="avatar"><span>{{ server[2] }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back","Back") }}</button></nav></header>
-<section class="panel"><h2># {{ channel[2] }} ({{ channel[4] }})</h2>{% if error %}<p class="error">{{ error }}</p>{% endif %}
-<div class="chatbox">{% for e in entries %}<div class="msg"><strong>{{ users.get(e[1], 'user') }}</strong>: {% if e[2]=='text' %}{{ e[3] }}{% elif e[2]=='image' %}<img src="/media/{{ e[4] }}" class="chatimg">{% elif e[2]=='video' %}<video controls class="chatvid" src="/media/{{ e[4] }}"></video>{% elif e[2]=='audio' %}<audio controls src="/media/{{ e[4] }}"></audio>{% else %}<a href="/media/{{ e[4] }}" target="_blank">file</a>{% endif %}</div>{% endfor %}</div>
-{% if canwrite %}
-<form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
-<input name="text" type="text" placeholder="{{ t.get('message','Message') }}">
-{% if canshare %}<input name="file" type="file">{% endif %}
-<button class="pickbtn" type="submit">{{ t.get('send','Send') }}</button>
-</form>
-{% endif %}
-</section>
+<div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <button type="button" class="navbtn" data-go-back="1" style="margin-right:10px;"><i class="fa-solid fa-arrow-left"></i></button>
+        <a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:600;">
+            <img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" style="width:35px;height:35px;" alt="avatar">
+            <span>{{ server[2] }}</span>
+        </a>
+    </div>
+</header>
+
+<main class="wrap channel-wrap">
+    <section class="chat-panel">
+        <div class="chat-header">
+            <h2><i class="fa-solid fa-hashtag"></i> {{ channel[2] }} <span style="font-size:0.8rem; color:var(--muted); font-weight:normal; margin-left:10px;">({{ channel[4] }})</span></h2>
+        </div>
+        
+        {% if error %}<p class="error" style="margin:20px;">{{ error }}</p>{% endif %}
+        
+        <div class="chatbox">
+            {% for e in entries %}
+            <div class="msg-row">
+                <div class="msg-avatar">{{ users.get(e[1], 'U')[0]|upper }}</div>
+                <div class="msg-content">
+                    <span class="msg-author">{{ users.get(e[1], 'user') }}</span>
+                    {% if e[2]=='text' %}<p class="msg-text">{{ e[3] }}</p>
+                    {% elif e[2]=='image' %}<img src="/media/{{ e[4] }}" class="chatimg">
+                    {% elif e[2]=='video' %}<video controls class="chatvid" src="/media/{{ e[4] }}"></video>
+                    {% elif e[2]=='audio' %}<audio controls src="/media/{{ e[4] }}"></audio>
+                    {% else %}<a href="/media/{{ e[4] }}" target="_blank" style="color:var(--primary); font-weight:600;"><i class="fa-solid fa-file"></i> Dosya İndir</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if canwrite %}
+        <div class="chat-input">
+            <form method="post" enctype="multipart/form-data" data-nav="soft">
+                {% if canshare %}
+                <div class="action-btn btn-attach" title="Dosya Ekle">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <input name="file" type="file">
+                </div>
+                {% endif %}
+                <input name="text" type="text" placeholder="{{ t.get('message','Type your message here...') }}" autocomplete="off">
+                <button class="action-btn btn-send" type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+        {% endif %}
+    </section>
 </main>
 <script src="/pc/app.js?v=3"></script>
 </body>
 </html>
+

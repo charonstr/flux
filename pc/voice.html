@@ -1,27 +1,107 @@
 <!doctype html>
 <html lang="{{ current }}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ channel[2] }}</title><link rel="stylesheet" href="/pc/style.css"></head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <title>{{ channel[2] }}</title>
+    <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100vh; }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.4; will-change: transform; }
+        /* Ses kanalına özel, daha dinamik ve yeşil/mavi parlamalar */
+        .orb-1 { width: 55vw; height: 55vw; background: #10b981; top: -10%; left: -10%; animation: pulseActive 8s ease-in-out infinite alternate; }
+        .orb-2 { width: 45vw; height: 45vw; background: var(--primary); bottom: -10%; right: -10%; animation: pulseActive 10s ease-in-out infinite alternate-reverse; }
+        @keyframes pulseActive { 0% { transform: scale(0.9); opacity:0.3; } 100% { transform: scale(1.1); opacity:0.6; } }
+
+        .topbar { background: rgba(var(--panel-rgb), 0.65) !important; backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; position: fixed; width: 100%; top: 0; z-index: 1000; display:flex; justify-content:space-between; align-items:center; padding: 12px 25px; }
+
+        .voice-wrap { max-width: 900px; margin: 0 auto; padding: 100px 20px 40px 20px; display: flex; flex-direction: column; gap: 24px; align-items: center; }
+
+        .panel { background: rgba(var(--panel-rgb), 0.7) !important; backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px !important; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1) !important; padding: 40px !important; text-align: center; width: 100%; animation: slideUp 0.5s ease forwards; }
+        body[data-theme="dark"] .panel { box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Ana Bağlantı Kartı */
+        .voice-radar { width: 120px; height: 120px; background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; border-radius: 50%; margin: 0 auto 20px auto; display: grid; place-items: center; position: relative; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
+        .voice-radar i { font-size: 3rem; color: #10b981; z-index: 2; }
+        .voice-radar::before { content: ''; position: absolute; inset: -20px; border-radius: 50%; border: 1px solid rgba(16, 185, 129, 0.5); animation: ripple 2s linear infinite; z-index: 1; }
+        @keyframes ripple { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        .panel h2 { font-size: 1.8rem; margin-bottom: 10px; }
+        .panel p.hint { color: var(--muted); margin-bottom: 30px; font-size: 1.1rem; }
+
+        .voice-controls { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .btn-join { background: #10b981; color: white; border: none; padding: 14px 28px; border-radius: 14px; font-size: 1.1rem; font-weight: 600; display:flex; align-items:center; gap:10px; cursor:pointer; transition:all 0.2s; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+        .btn-join:hover { background: #059669; transform: translateY(-2px); }
+        .btn-join:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; box-shadow:none; transform:none; }
+        
+        .btn-mute { background: rgba(var(--bg-rgb), 0.5); color: var(--text); border: 1px solid var(--line); padding: 14px 28px; border-radius: 14px; font-size: 1.1rem; font-weight: 600; display:flex; align-items:center; gap:10px; cursor:pointer; transition:all 0.2s; }
+        .btn-mute:hover { background: var(--line); }
+
+        /* Kullanıcılar Grid */
+        .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; width: 100%; margin-top: 20px; }
+        .user-voice-card { background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; transition: all 0.3s; position:relative; overflow:hidden;}
+        .user-voice-card::after { content:''; position:absolute; bottom:0; left:0; height:3px; width:100%; background: #10b981; opacity: 0; transition: opacity 0.3s;}
+        .user-voice-card.speaking::after { opacity: 1; animation: speakPulse 0.5s infinite alternate; }
+        @keyframes speakPulse { from { opacity: 0.5; } to { opacity: 1; box-shadow: 0 -5px 15px rgba(16,185,129,0.5); } }
+
+        .user-voice-card img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid transparent; }
+        .user-voice-card.speaking img { border-color: #10b981; }
+        .user-voice-card .name { font-weight: 600; font-size: 1.05rem; }
+
+        /* Ses Akışları Gizli */
+        #audios { display: none; }
+    </style>
+</head>
 <body>
-<main class="wrap" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
-<header class="sidebar"><a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge"><img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" alt="avatar"><span>{{ server[2] }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back","Back") }}</button></nav></header>
-<section class="panel">
-<h2>Sesli Kanal: {{ channel[2] }}</h2>
-<p class="hint">Mikrofon izni verip kanala katıl.</p>
-<button id="voicejoin" class="pickbtn">Kanala bağlan</button>
-<button id="voicemute" class="linkbtn">Mikrofon kapat/aç</button>
-</section>
-<section class="panel">
-<h3>Kanaldakiler</h3>
-<div id="voiceusers">
-{% for u in users %}<div class="cardrow"><div class="who"><img src="{{ u.avatar }}" class="avatar sm"> {{ u.username }}</div></div>{% endfor %}
-</div>
-</section>
-<section class="panel">
-<h3>Ses Akışları</h3>
-<div id="audios"></div>
-</section>
+<div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>
+
+<header class="topbar">
+    <div class="topbar-left">
+        <button type="button" class="navbtn" data-go-back="1" style="margin-right:10px;"><i class="fa-solid fa-arrow-left"></i></button>
+        <a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:600;">
+            <img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" style="width:35px;height:35px;" alt="avatar">
+            <span>{{ server[2] }}</span>
+        </a>
+    </div>
+</header>
+
+<main class="wrap voice-wrap" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
+    
+    <section class="panel">
+        <div class="voice-radar">
+            <i class="fa-solid fa-microphone-lines"></i>
+        </div>
+        <h2>{{ channel[2] }}</h2>
+        <p class="hint">Mikrofon izni verip sohbete dahil olun.</p>
+        
+        <div class="voice-controls">
+            <button id="voicejoin" class="btn-join"><i class="fa-solid fa-phone-volume"></i> Kanala Bağlan</button>
+            <button id="voicemute" class="btn-mute"><i class="fa-solid fa-microphone-slash"></i> Sustur</button>
+        </div>
+    </section>
+
+    <section class="panel" style="padding: 30px !important;">
+        <h3 style="margin-bottom: 0; text-align:left; font-size:1.2rem; border-bottom:1px solid rgba(var(--text-rgb),0.05); padding-bottom:15px;"><i class="fa-solid fa-users"></i> Odadakiler</h3>
+        <div id="voiceusers" class="users-grid">
+            {% for u in users %}
+            <div class="user-voice-card">
+                <img src="{{ u.avatar }}" alt="a">
+                <div class="name">{{ u.username }}</div>
+            </div>
+            {% else %}
+            <p style="color:var(--muted); text-align:left; margin-top:20px;">Şu an kanalda kimse yok.</p>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <div id="audios"></div>
+
 </main>
 <script src="/pc/app.js?v=3"></script>
 <script src="/pc/voice.js?v=1"></script>
 </body>
 </html>
+

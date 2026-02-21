@@ -1,53 +1,433 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("profile", "Profile") }}</title>
     <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* === Minimal ve Kompakt Profil Tasarımı === */
+
+        body {
+            position: relative;
+            background-color: var(--bg);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Arka Plan Dokusu ve Yavaş Işıklar */
+        .bg-texture {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -2;
+            opacity: 0.3;
+            will-change: transform;
+        }
+
+        .orb-1 {
+            width: 45vw; height: 45vw;
+            max-width: 600px; max-height: 600px;
+            background: var(--primary);
+            top: -10%; left: -10%;
+            animation: driftPrimary 30s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 40vw; height: 40vw;
+            max-width: 500px; max-height: 500px;
+            background: #818cf8;
+            bottom: -10%; right: -10%;
+            animation: driftPurple 25s ease-in-out infinite alternate;
+        }
+
+        @keyframes driftPrimary {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 10vh) scale(1.1); }
+        }
+
+        @keyframes driftPurple {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-10vw, -10vh) scale(1.2); }
+        }
+
+        /* Topbar */
+        .topbar {
+            background: rgba(var(--panel-rgb), 0.65) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        /* --- TEKİL KOMPAKT PROFİL KARTI --- */
+        .profile-container {
+            max-width: 600px; /* Sadece profil olduğu için genişliği biraz daha daraltıp mükemmel odak sağladık */
+            margin: 0 auto;
+            padding: 30px 20px 60px 20px;
+        }
+
+        .profile-card {
+            background: rgba(var(--panel-rgb), 0.8) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding: 35px !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body[data-theme="dark"] .profile-card {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Üst Kısım: Profil Başlığı (Kompakt) --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding-bottom: 25px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.08);
+        }
+
+        .profile-avatar-wrapper {
+            position: relative;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(var(--primary-rgb), 0.5);
+            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.2);
+            transition: transform 0.3s;
+        }
+
+        .profile-avatar-wrapper:hover .profile-avatar {
+            transform: scale(1.05);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h1 {
+            font-size: 1.6rem;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .friend-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .friend-badge:hover {
+            color: var(--primary);
+        }
+
+        .friend-badge i {
+            font-size: 0.85rem;
+        }
+
+        /* --- Alt Kısım: Form Düzenleme --- */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i { color: var(--primary); }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+        }
+
+        /* Kibar Avatar Yükleme Şeridi */
+        .compact-upload-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border: 1px dashed rgba(var(--text-rgb), 0.2);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .compact-upload-wrapper:hover {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.05);
+        }
+
+        .compact-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .upload-text {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .upload-text i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .upload-btn-fake {
+            background: var(--line);
+            color: var(--text);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            pointer-events: none;
+        }
+
+        /* Kırpma Arayüzü */
+        .cropbox {
+            margin-top: 15px;
+            background: rgba(var(--bg-rgb), 0.5);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .cropbox p {
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .crop-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .crop-actions button {
+            flex: 1;
+            padding: 8px !important;
+            font-size: 0.9rem !important;
+            border-radius: 8px !important;
+        }
+
+        /* Uyarı Mesajları */
+        .alert-box {
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-error { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .alert-success { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+
+        .hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #fbbf24;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        .action-area {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 1px solid rgba(var(--text-rgb), 0.05);
+        }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 600px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <main class="wrap">
-        <header class="sidebar">
-            <a href="/profile" data-nav="soft" class="profilebadge">
-                <img src="{{ avatar }}" class="avatar" alt="avatar"><span>{{ username }}</span>
-            </a>
-            <nav class="topnav">                <button type="button" class="linkbtn" data-go-back="1">{{ t.get("back", "Back") }}</button>
-                <a href="/set/tr" data-nav="soft" class="langbtn">TR</a>
-                <a href="/set/en" data-nav="soft" class="langbtn">EN</a>
-                <a href="/dm" data-nav="soft" class="linkbtn">{{ t.get("dm", "DM") }}</a>
-                
-                <a href="/settings" data-nav="soft" class="linkbtn">{{ t.get("settings", "Settings") }}</a>
-                <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
-            </nav>
-        </header>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
 
-        <section class="panel authwrap">
-            <h1>{{ t.get("profile", "Profile") }}</h1>
-            <p><a href="/friends" data-nav="soft" class="linkbtn">{{ t.get("friends", "Friends") }}: {{ friendcount }}</a></p><form method="post" action="/dm/start" data-nav="soft" class="form"><input name="username" type="text" placeholder="{{ t.get("startbyname", "Start with username") }}"><button type="submit" class="linkbtn">{{ t.get("messagebutton", "Message") }}</button></form>
-            {% if error %}<p class="error">{{ error }}</p>{% endif %}
-            {% if success %}<p class="ok">{{ success }}</p>{% endif %}
-            <form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
-                <label>{{ t.get("username", "Username") }}</label>
-                <input name="username" type="text" value="{{ username }}" {% if not canchangeusername %}disabled{% endif %}>
-                {% if not canchangeusername %}<p class="hint">{{ t.get("renamewait", "Username can be changed once every 7 days") }}</p>{% endif %}
-                <label>{{ t.get("avatar", "Profile photo") }}</label>
-                <input id="avatarfile" name="avatar" type="file" accept="image/*">
-                <input id="cropval" name="crop" type="hidden" value="0">
-                <div id="croppanel" class="cropbox" style="display:none;">
-                    <p>{{ t.get("cropauto", "Photo selected. You can apply square crop or continue original.") }}</p>
-                    <button type="button" class="linkbtn" onclick="setcrop(1)">{{ t.get("cropapply", "Apply crop") }}</button>
-                    <button type="button" class="linkbtn" onclick="setcrop(0)">{{ t.get("cropkeep", "Keep original") }}</button>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <button class="profile-btn" id="profileBtn">
+                <img src="{{ avatar }}" class="avatar" alt="avatar">
+            </button>
+            <span style="font-weight: 600; margin-left: 10px; color: var(--text);">{{ t.get("profile", "Profile") }}</span>
+        </div>
+        <nav class="topbar-right">
+            <a href="/dm" data-nav="soft" class="navbtn" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
+        </nav>
+    </header>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+             <div class="lang-switcher">
+                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+            </div>
+            <a href="/settings" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-cog"></i>
+                <span>{{ t.get("settings", "Settings") }}</span>
+            </a>
+            <a href="/logout" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>{{ t.get("logout", "Logout") }}</span>
+            </a>
+        </div>
+    </div>
+
+    <main class="wrap profile-container">
+        
+        <section class="profile-card">
+            
+            <div class="profile-header">
+                <div class="profile-avatar-wrapper">
+                    <img src="{{ avatar }}" alt="avatar" class="profile-avatar">
                 </div>
-                <button type="submit" class="pickbtn">{{ t.get("save", "Save") }}</button>
-            </form>
+                
+                <div class="profile-info">
+                    <h1>{{ username }}</h1>
+                    <a href="/friends" data-nav="soft" class="friend-badge">
+                        <i class="fa-solid fa-user-group"></i> {{ t.get("friends", "Friends") }}: {{ friendcount }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="profile-body">
+                <h2 class="section-title"><i class="fa-solid fa-sliders"></i> {{ t.get("edit_profile", "Edit Profile Settings") }}</h2>
+                
+                {% if error %}
+                <div class="alert-box alert-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>{{ error }}</span>
+                </div>
+                {% endif %}
+                
+                {% if success %}
+                <div class="alert-box alert-success">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>{{ success }}</span>
+                </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
+                    
+                    <div class="form-group">
+                        <label class="input-label">{{ t.get("username", "Username") }}</label>
+                        <div class="input-group">
+                            <i class="fa-solid fa-at"></i>
+                            <input name="username" type="text" value="{{ username }}" {% if not canchangeusername %}disabled{% endif %}>
+                        </div>
+                        {% if not canchangeusername %}
+                        <div class="hint">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>{{ t.get("renamewait", "Username can be changed once every 7 days") }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="input-label">{{ t.get("avatar", "Profile photo") }}</label>
+                        
+                        <div class="compact-upload-wrapper">
+                            <input id="avatarfile" name="avatar" type="file" accept="image/*">
+                            <div class="upload-text">
+                                <i class="fa-regular fa-image"></i>
+                                <span>{{ t.get("choose_image", "Click here to upload a new image") }}</span>
+                            </div>
+                            <div class="upload-btn-fake">{{ t.get("browse", "Browse") }}</div>
+                        </div>
+                        
+                        <input id="cropval" name="crop" type="hidden" value="0">
+                        
+                        <div id="croppanel" class="cropbox" style="display:none;">
+                            <p><i class="fa-solid fa-crop-simple"></i> {{ t.get("cropauto", "Apply square crop or continue original?") }}</p>
+                            <div class="crop-actions">
+                                <button type="button" class="pickbtn" onclick="setcrop(1)">{{ t.get("cropapply", "Crop") }}</button>
+                                <button type="button" class="linkbtn" onclick="setcrop(0)">{{ t.get("cropkeep", "Keep") }}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-area">
+                        <button type="submit" class="pickbtn"><i class="fa-solid fa-floppy-disk"></i> {{ t.get("save", "Save Changes") }}</button>
+                    </div>
+
+                </form>
+            </div>
+            
         </section>
+
     </main>
     <script src="/pc/app.js"></script>
 </body>
 </html>
-
-
-
 
 

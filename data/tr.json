@@ -1,6 +1,6 @@
-﻿{
+{
   "welcome": "Hoş geldin",
-  "subtitle": "Site hazır",
+  "subtitle": "Euphorium'a hoşgeldin",
   "choose": "Dil seç",
   "choosehelp": "Lütfen devam etmek için dil seçiniz",
   "login": "Giriş yap",
@@ -62,6 +62,10 @@
   "errorfriendonly": "Sadece arkadaşlarına mesaj gönderebilirsin",
   "errorusernotfound": "Kullanıcı bulunamadı",
   "errorupload": "Dosya yükleme başarısız",
+  "erroraudlimit": "Ses dosyası 200MB sınırını aşamaz",
+  "errornoperm": "Bu işlem için yetkin yok",
+  "errornopermshare": "Dosya paylaşma yetkin yok",
+  "errorcontentmode": "Bu kanal içerik kısıtlı",
   "privacy": "Gizlilik ve güvenlik",
   "changepassword": "Şifre değiştir",
   "home": "Ana sayfa",
@@ -74,27 +78,30 @@
   "startbyname": "Kullanıcı adıyla başlat",
   "selectfriend": "Arkadaş seç",
   "startchat": "Sohbet başlat",
-  "messagebutton": "Mesaj"
-  ,"servers": "Sunucular"
-  ,"dmrequests": "Mesaj istekleri"
-  ,"dmsentrequest": "Mesaj isteği gönderildi"
-  ,"createserver": "Sunucu oluştur"
-  ,"joinserver": "Sunucuya katıl"
-  ,"servername": "Sunucu adı"
-  ,"public": "Herkese açık"
-  ,"private": "Gizli"
-  ,"openjoin": "Doğrudan katılım"
-  ,"approvaljoin": "Onay gerekli"
-  ,"codejoin": "Kod veya link ile"
-  ,"invitecode": "Davet kodu"
-  ,"publicservers": "Açık sunucular"
-  ,"myservers": "Sunucularım"
-  ,"noservers": "Sunucu yok"
-  ,"join": "Katıl"
-  ,"create": "Oluştur"
-  ,"errorservername": "Sunucu adı çok kısa"
-  ,"errorservernotfound": "Sunucu bulunamadı"
-  ,"serverpermissions": "Sunucu izinleri"
-  ,"serverpermhint": "Rol, kategori ve kanal izinlerini bu ekrandan adım adım yönetebilirsin."
-  ,"joinrequests": "Katılma istekleri"
+  "messagebutton": "Mesaj",
+  "servers": "Sunucular",
+  "dmrequests": "Mesaj istekleri",
+  "dmsentrequest": "Mesaj isteği gönderildi",
+  "createserver": "Sunucu oluştur",
+  "joinserver": "Sunucuya katıl",
+  "servername": "Sunucu adı",
+  "public": "Herkese açık",
+  "private": "Gizli",
+  "openjoin": "Doğrudan katılım",
+  "approvaljoin": "Onay gerekli",
+  "codejoin": "Kod veya link ile",
+  "invitecode": "Davet kodu",
+  "publicservers": "Açık sunucular",
+  "myservers": "Sunucularım",
+  "noservers": "Sunucu yok",
+  "join": "Katıl",
+  "create": "Oluştur",
+  "errorservername": "Sunucu adı çok kısa",
+  "errorservernotfound": "Sunucu bulunamadı",
+  "serverpermissions": "Sunucu izinleri",
+  "serverpermhint": "Rol, kategori ve kanal izinlerini bu ekrandan adım adım yönetebilirsin.",
+  "joinrequests": "Katılma istekleri",
+  "sitesettings": "Site ayarları",
+  "sitesettingsdesc": "Dil ve genel site tercihleri.",
+  "language": "Dil"
 }

@@ -1,7 +1,69 @@
 (function () {
   let dmSource = null;
+  let eventSource = null;
   let presenceTimer = null;
   let dmRefreshing = false;
+  let navMask = null;
+  let lastEventVersion = 0;
+
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r}, ${g}, ${b}`;
+  }
+
+  function applyTheme(theme) {
+    const mode = theme === 'light' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', mode);
+    localStorage.setItem('theme', mode);
+
+    const styles = getComputedStyle(document.body);
+    const panelColor = styles.getPropertyValue('--panel').trim();
+    const primaryColor = styles.getPropertyValue('--primary').trim();
+    
+    document.documentElement.style.setProperty('--panel-rgb', hexToRgb(panelColor));
+    document.documentElement.style.setProperty('--primary-rgb', hexToRgb(primaryColor));
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+      applyTheme(saved);
+      return;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      applyTheme('light');
+      return;
+    }
+    applyTheme('dark');
+  }
+
+  function ensureNavMask() {
+    if (navMask) return navMask;
+    navMask = document.createElement('div');
+    navMask.id = 'navmask';
+    navMask.style.position = 'fixed';
+    navMask.style.inset = '0';
+    navMask.style.background = getComputedStyle(document.body).getPropertyValue('--bg') || '#1a202c';
+    navMask.style.opacity = '0';
+    navMask.style.pointerEvents = 'none';
+    navMask.style.transition = 'opacity 120ms ease';
+    navMask.style.zIndex = '99999';
+    document.body.appendChild(navMask);
+    return navMask;
+  }
+
+  function showNavMask() {
+    const m = ensureNavMask();
+    m.style.background = getComputedStyle(document.body).getPropertyValue('--bg') || '#1a202c';
+    m.style.opacity = '1';
+  }
+  
+  function hideNavMask() {
+    if (!navMask) return;
+    navMask.style.opacity = '0';
+  }
 
   function startPresence() {
     if (presenceTimer) clearInterval(presenceTimer);
@@ -78,6 +140,7 @@
         recorder.ondataavailable = (e) => chunks.push(e.data);
         recorder.onstop = () => {
           blob = new Blob(chunks, { type: 'audio/webm' });
+          form._voiceBlob = blob;
           wave.classList.remove('recording');
         };
         recorder.start();
@@ -89,16 +152,30 @@
       }
     };
 
-    form.addEventListener('submit', async (e) => {
-      if (!blob) return;
-      e.preventDefault();
-      const fd = new FormData(form);
-      fd.append('voice', blob, 'voice.webm');
-      const res = await fetch(form.action || window.location.href, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch' } });
-      const html = await res.text();
-      blob = null;
-      swapFromHtml(html, res.url || window.location.href, false);
-    });
+    form._voiceBlob = blob;
+  }
+  
+  function initModal(profileBtn, profileModal, modalOverlay) {
+      if (!profileBtn || !profileModal || !modalOverlay) return;
+
+      profileBtn.onclick = (event) => {
+          event.stopPropagation();
+          const isVisible = profileModal.style.display === 'block';
+          if (isVisible) {
+              closeModal(profileModal, modalOverlay);
+          } else {
+              const rect = profileBtn.getBoundingClientRect();
+              profileModal.style.left = rect.left + 'px';
+              profileModal.style.top = rect.bottom + 5 + 'px';
+              profileModal.style.display = 'block';
+              modalOverlay.style.display = 'block';
+          }
+      };
+  }
+
+  function closeModal(profileModal, modalOverlay) {
+      profileModal.style.display = 'none';
+      modalOverlay.style.display = 'none';
   }
 
   function swapFromHtml(html, url, replaceOnly) {
@@ -110,14 +187,35 @@
       window.location.href = url;
       return;
     }
-    currentMain.replaceWith(nextMain);
     document.title = doc.title;
+    
+    const nextTopBar = doc.querySelector('.topbar');
+    const currentTopBar = document.querySelector('.topbar');
+    if(nextTopBar && currentTopBar) currentTopBar.replaceWith(nextTopBar);
+
+    const nextModal = doc.querySelector('.modal');
+    const currentModal = document.querySelector('.modal');
+    if(nextModal && currentModal) currentModal.replaceWith(nextModal);
+
+    const styleNodes = Array.from(doc.head.querySelectorAll('style'))
+      .filter((s) => !/themeboot/i.test(s.textContent || '') && !/html\s*\{\s*background/i.test(s.textContent || ''));
+    const combined = styleNodes.map((s) => s.textContent || '').join('\n');
+    let pageStyle = document.head.querySelector('style#page-style');
+    if (!pageStyle) {
+      pageStyle = document.createElement('style');
+      pageStyle.id = 'page-style';
+      document.head.appendChild(pageStyle);
+    }
+    pageStyle.textContent = combined;
+    
+    currentMain.replaceWith(nextMain);
 
     const nextUrl = new URL(url, window.location.origin);
     const tgt = nextUrl.pathname + nextUrl.search;
     const now = window.location.pathname + window.location.search;
     if (!replaceOnly && now !== tgt) history.pushState({}, '', tgt);
     bind();
+    hideNavMask();
   }
 
   async function softNavigate(url, replaceOnly) {
@@ -138,36 +236,118 @@
 
   function bind() {
     document.querySelectorAll('a[data-nav="soft"]').forEach((a) => {
-      a.onclick = async (e) => { e.preventDefault(); await softNavigate(a.href, false); };
+      a.onclick = async (e) => {
+        e.preventDefault();
+        showNavMask();
+        await softNavigate(a.href, false);
+      };
     });
     document.querySelectorAll('form[data-nav="soft"]').forEach((form) => {
-      form.onsubmit = async (e) => { e.preventDefault(); await softSubmit(form); };
+      if (form.id === 'dmform') {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const fd = new FormData(form);
+          if (form._voiceBlob) {
+            fd.append('voice', form._voiceBlob, 'voice.webm');
+            form._voiceBlob = null;
+          }
+          await fetch(form.action || window.location.href, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch' } });
+          const textInput = form.querySelector('input[name="text"]');
+          if (textInput) textInput.value = '';
+          const fileInput = form.querySelector('input[type="file"]');
+          if (fileInput) fileInput.value = '';
+        };
+      } else {
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          showNavMask();
+          await softSubmit(form);
+        };
+      }
     });
     document.querySelectorAll('[data-go-back="1"]').forEach((btn) => {
       btn.onclick = () => window.goback();
     });
+    document.querySelectorAll('[data-theme-set]').forEach((btn) => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        applyTheme(btn.getAttribute('data-theme-set'))
+      };
+    });
+
+    const profileBtn = document.getElementById('profileBtn');
+    const profileModal = document.getElementById('profileModal');
+    const modalOverlay = document.getElementById('modalOverlay');
+    
+    initModal(profileBtn, profileModal, modalOverlay);
+    
+    const globalClose = () => closeModal(profileModal, modalOverlay);
+    if(modalOverlay) modalOverlay.onclick = globalClose;
+    window.onscroll = globalClose;
 
     initProfileCrop();
     initDmStream();
     initRecorder();
+    initEventStream();
     startPresence();
+  }
+
+  function initEventStream() {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+    eventSource = new EventSource(`/events/stream?last=${encodeURIComponent(String(lastEventVersion || 0))}`);
+    eventSource.onmessage = async (evt) => {
+      try {
+        const data = JSON.parse(evt.data || '{}');
+        if (data.type !== 'refresh') return;
+        lastEventVersion = Number(data.version || lastEventVersion || 0);
+      } catch {
+        return;
+      }
+      if (document.hidden) return;
+      const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (window.location.pathname.startsWith('/dm')) return;
+      await softNavigate(window.location.href, true);
+    };
+    eventSource.onerror = () => {
+      if (eventSource) eventSource.close();
+      eventSource = null;
+      setTimeout(initEventStream, 2000);
+    };
   }
 
   window.goback = function () {
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      softNavigate('/', false);
+      window.location.href = '/home';
     }
   };
 
-  window.togglepass = function () {
+  window.togglepass = function (button) {
     const input = document.getElementById('password');
     if (!input) return;
-    input.type = input.type === 'password' ? 'text' : 'password';
+    const icon = button.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    } else {
+        input.type = 'password';
+        if (icon) {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
   };
 
-  window.addEventListener('popstate', () => softNavigate(window.location.href, true));
+  window.addEventListener('popstate', () => window.location.reload());
+  window.addEventListener('beforeunload', () => showNavMask());
+  document.addEventListener('DOMContentLoaded', initTheme);
   bind();
 })();
-

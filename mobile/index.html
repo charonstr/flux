@@ -5,32 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ t.get("welcome", "Welcome") }}</title>
     <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <main class="wrap">
-        <header class="sidebar">
-            <a href="/profile" data-nav="soft" class="profilebadge">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="profile-btn" id="profileBtn">
                 <img src="{{ avatar }}" class="avatar" alt="avatar">
+            </button>
+        </div>
+        <nav class="topbar-right">
+            <a href="/dm" data-nav="soft" class="navbtn" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
+            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
+        </nav>
+    </header>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <a href="/profile" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-user"></i>
                 <span>{{ username or t.get("profile", "Profile") }}</span>
             </a>
-            <nav class="topnav">                <button type="button" class="linkbtn" data-go-back="1">{{ t.get("back", "Back") }}</button>
-                <a href="/set/tr" data-nav="soft" class="langbtn">TR</a>
-                <a href="/set/en" data-nav="soft" class="langbtn">EN</a>
-                <a href="/dm" data-nav="soft" class="linkbtn">{{ t.get("dm", "DM") }}</a>
-                <a href="/servers" data-nav="soft" class="linkbtn">{{ t.get("servers", "Servers") }}</a>
-                
-                <a href="/settings" data-nav="soft" class="linkbtn">{{ t.get("settings", "Settings") }}</a>
-                <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
-            </nav>
-        </header>
+            <a href="/settings" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-cog"></i>
+                <span>{{ t.get("settings", "Settings") }}</span>
+            </a>
+            <a href="/logout" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>{{ t.get("logout", "Logout") }}</span>
+            </a>
+            <div class="lang-switcher">
+                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+            </div>
+        </div>
+    </div>
 
-        <section class="panel">
-            <h1>{{ t.get("welcome", "Welcome") }}</h1>
-            <p>{{ t.get("subtitle", "Site is ready") }}</p>
+    <main class="wrap">
+        <section class="panel" style="animation: fadeIn 0.5s ease-out;">
+            <h1>{{ t.get("welcome", "Welcome!") }} 👋</h1>
+            <p>{{ t.get("subtitle", "This is your dashboard. You can see your friend requests and suggestions below.") }}</p>
         </section>
 
         {% if username %}
-        <section class="panel">
+        <section class="panel" style="animation: fadeIn 0.7s ease-out;">
             <h2>{{ t.get("dmrequests", "Message requests") }}</h2>
             {% if dmpending %}
                 {% for p in dmpending %}
@@ -43,11 +62,11 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <p>{{ t.get("norequests", "No requests") }}</p>
+                <p>{{ t.get("norequests", "No message requests.") }}</p>
             {% endif %}
         </section>
 
-        <section class="panel">
+        <section class="panel" style="animation: fadeIn 0.9s ease-out;">
             <h2>{{ t.get("requests", "Friend requests") }}</h2>
             {% if pending %}
                 {% for p in pending %}
@@ -61,11 +80,11 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <p>{{ t.get("norequests", "No requests") }}</p>
+                <p>{{ t.get("norequests", "No friend requests.") }}</p>
             {% endif %}
         </section>
 
-        <section class="panel">
+        <section class="panel" style="animation: fadeIn 1.1s ease-out;">
             <h2>{{ t.get("suggested", "Suggested users") }}</h2>
             {% for s in suggestions %}
             <div class="cardrow">

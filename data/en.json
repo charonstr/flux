@@ -1,6 +1,6 @@
-﻿{
+{
   "welcome": "Welcome",
-  "subtitle": "Site is ready",
+  "subtitle": "Welcome to Euphorium",
   "choose": "Choose language",
   "choosehelp": "Please select a language to continue",
   "login": "Login",
@@ -62,6 +62,10 @@
   "errorfriendonly": "You can only message your friends",
   "errorusernotfound": "User not found",
   "errorupload": "Upload failed",
+  "erroraudlimit": "Audio cannot be larger than 200MB",
+  "errornoperm": "You do not have permission for this action",
+  "errornopermshare": "You do not have file sharing permission",
+  "errorcontentmode": "This channel has content restrictions",
   "privacy": "Privacy and security",
   "changepassword": "Change password",
   "home": "Home",
@@ -96,5 +100,8 @@
   "errorservernotfound": "Server not found",
   "serverpermissions": "Server permissions",
   "serverpermhint": "Manage role, category and channel permissions step by step from this panel.",
-  "joinrequests": "Join requests"
+  "joinrequests": "Join requests",
+  "sitesettings": "Site settings",
+  "sitesettingsdesc": "Language and general site preferences.",
+  "language": "Language"
 }

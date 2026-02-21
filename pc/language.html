@@ -1,22 +1,26 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>Language</title>
     <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <main class="wrap">
-        <h1>Choose language</h1>
-        <p>Please select one option.</p>
-        <form method="post" class="picker">
-            <button type="submit" name="language" value="tr" class="pickbtn">Türkçe</button>
-            <button type="submit" name="language" value="en" class="pickbtn">English</button>
-        </form>
+    <header class="topbar">
+        <div class="topbar-left"><span style="font-weight:600;">{{ t.get("choose", "Choose language") }}</span></div>
+        <nav class="topbar-right"></nav>
+    </header>
+    <main class="wrap" style="max-width:640px; padding-top:40px;">
+        <section class="panel authwrap" style="max-width:640px; margin:0 auto;">
+            <h1><i class="fa-solid fa-language"></i> {{ t.get("choose", "Choose language") }}</h1>
+            <p>{{ t.get("choosehelp", "Please select one option.") }}</p>
+            <form method="post" class="form">
+                <button type="submit" name="language" value="tr" class="pickbtn">Türkçe</button>
+                <button type="submit" name="language" value="en" class="pickbtn">English</button>
+            </form>
+        </section>
     </main>
 </body>
 </html>
-
-
-
