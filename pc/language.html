@@ -2,25 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
-    <title>Language</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script>
+    <title>Euphorium - {% if t is defined %}{{ t.get("choose", "Language") }}{% else %}Language{% endif %}</title>
     <link rel="stylesheet" href="/pc/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { 
+            position: relative; 
+            background-color: var(--bg); 
+            overflow: hidden; 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0; 
+        }
+        
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.3; will-change: transform; }
+        .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -15%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
+        .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+        
+        @keyframes driftPrimary { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10vw, 10vh) scale(1.1); } }
+        @keyframes driftPurple { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-10vw, -10vh) scale(1.2); } }
+
+        .lang-panel {
+            background: rgba(var(--panel-rgb), 0.6) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+            padding: 40px;
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            z-index: 10;
+        }
+        
+        body[data-theme="dark"] .lang-panel {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.03) !important;
+        }
+        
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        .lang-panel h1 { 
+            font-size: 2rem; 
+            margin-bottom: 10px; 
+            color: var(--text); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+        }
+        
+        .lang-panel h1 i { color: var(--primary); }
+        .lang-panel p { color: var(--muted); font-size: 1.05rem; margin-bottom: 30px; }
+
+        .lang-grid { display: grid; gap: 15px; }
+        
+        .lang-btn {
+            background: rgba(var(--bg-rgb), 0.5);
+            border: 1px solid rgba(var(--line-rgb), 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text);
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            width: 100%;
+        }
+        
+        .lang-btn:hover {
+            background: rgba(var(--primary-rgb), 0.15);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.2);
+        }
+        
+        .lang-btn .lang-name { flex-grow: 1; text-align: left; }
+        .lang-btn i { color: var(--muted); transition: color 0.3s; }
+        .lang-btn:hover i { color: var(--primary); }
+    </style>
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left"><span style="font-weight:600;">{{ t.get("choose", "Choose language") }}</span></div>
-        <nav class="topbar-right"></nav>
-    </header>
-    <main class="wrap" style="max-width:640px; padding-top:40px;">
-        <section class="panel authwrap" style="max-width:640px; margin:0 auto;">
-            <h1><i class="fa-solid fa-language"></i> {{ t.get("choose", "Choose language") }}</h1>
-            <p>{{ t.get("choosehelp", "Please select one option.") }}</p>
-            <form method="post" class="form">
-                <button type="submit" name="language" value="tr" class="pickbtn">Türkçe</button>
-                <button type="submit" name="language" value="en" class="pickbtn">English</button>
-            </form>
-        </section>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <main class="lang-panel">
+        <h1><i class="fa-solid fa-earth-americas"></i> {% if t is defined %}{{ t.get("choose", "Language") }}{% else %}Language{% endif %}</h1>
+        <p>{% if t is defined %}{{ t.get("choosehelp", "Please select one option.") }}{% else %}Please select a language to continue.{% endif %}</p>
+        
+        <form method="post" class="lang-grid">
+            <button type="submit" name="language" value="tr" class="lang-btn">
+                <span style="font-size: 1.5rem;">🇹🇷</span>
+                <span class="lang-name">Türkçe</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button type="submit" name="language" value="en" class="lang-btn">
+                <span style="font-size: 1.5rem;">🇺🇸</span>
+                <span class="lang-name">English</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </form>
     </main>
+    <script src="/pc/app.js"></script>
 </body>
 </html>

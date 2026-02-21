@@ -1,4 +1,6 @@
-﻿import sqlite3
+import secrets
+import sqlite3
+import string
 from pathlib import Path
 
 
@@ -629,11 +631,41 @@ def rejectdmrequest(reqid: int, receiver: int) -> None:
         db.execute("UPDATE requests SET status = 'rejected' WHERE id = ? AND receiver = ? AND status = 'pending'", (reqid, receiver))
 
 
+_JOINCODE_ALPHABET = string.ascii_lowercase + string.digits
+
+
+def _normalize_joincode(value: str) -> str:
+    cleaned = "".join(ch for ch in (value or "").strip().lower() if ch.isalnum() or ch in ("-", "_"))
+    return cleaned[:32]
+
+
+def _random_joincode(length: int = 8) -> str:
+    return "".join(secrets.choice(_JOINCODE_ALPHABET) for _ in range(length))
+
+
+def _generate_unique_joincode(db: sqlite3.Connection, preferred: str = "", exclude_serverid: int = 0) -> str:
+    base = _normalize_joincode(preferred)
+    for _ in range(64):
+        if base:
+            candidate = base
+            base = f"{base}-{_random_joincode(4)}" if len(base) <= 27 else f"{base[:27]}-{_random_joincode(4)}"
+        else:
+            candidate = _random_joincode(8)
+        row = db.execute(
+            "SELECT 1 FROM servers WHERE lower(joincode) = ? AND id != ? LIMIT 1",
+            (candidate.lower(), int(exclude_serverid or 0)),
+        ).fetchone()
+        if not row:
+            return candidate
+    return _random_joincode(12)
+
+
 def servercreate(ownerid: int, name: str, avatar: str, visibility: str, joinmode: str, joincode: str) -> int:
     with connect("servers") as db:
+        code = _generate_unique_joincode(db, preferred=joincode)
         db.execute(
             "INSERT INTO servers (ownerid, name, avatar, visibility, joinmode, joincode) VALUES (?, ?, ?, ?, ?, ?)",
-            (ownerid, name, avatar, visibility, joinmode, joincode),
+            (ownerid, name, avatar, visibility, joinmode, code),
         )
         sid = db.execute("SELECT last_insert_rowid()").fetchone()[0]
         db.execute("INSERT OR IGNORE INTO members (serverid, userid, roleid, status) VALUES (?, ?, 0, 'active')", (sid, ownerid))
@@ -642,10 +674,20 @@ def servercreate(ownerid: int, name: str, avatar: str, visibility: str, joinmode
 
 def serverbyid(serverid: int):
     with connect("servers") as db:
-        return db.execute(
+        row = db.execute(
             "SELECT id, ownerid, name, avatar, visibility, joinmode, joincode, visibleperms, writeperms, shareperms FROM servers WHERE id = ?",
             (serverid,),
         ).fetchone()
+        if not row:
+            return None
+        if not (row[6] or "").strip():
+            new_code = _generate_unique_joincode(db, exclude_serverid=serverid)
+            db.execute("UPDATE servers SET joincode = ? WHERE id = ?", (new_code, serverid))
+            row = db.execute(
+                "SELECT id, ownerid, name, avatar, visibility, joinmode, joincode, visibleperms, writeperms, shareperms FROM servers WHERE id = ?",
+                (serverid,),
+            ).fetchone()
+        return row
 
 
 def serverlist(userid: int):
@@ -839,3 +881,5 @@ def getvoicesignals(serverid: int, channelid: int, userid: int, afterid: int):
             "SELECT id, sender, target, kind, payload FROM voicesignals WHERE serverid = ? AND channelid = ? AND id > ? AND (target = ? OR target = 0) ORDER BY id ASC",
             (serverid, channelid, afterid, userid),
         ).fetchall()
+
+

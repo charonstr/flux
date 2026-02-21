@@ -2,28 +2,60 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
-    <title>{{ channel[2] }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ channel[2] }} - {{ server[2] }}</title>
     <link rel="stylesheet" href="/pc/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100vh; }
+        /* === Premium İletişim Platformu (Dual Pane) Düzeni === */
+        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100vh; padding-top: 0; margin: 0; }
         .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
-        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.4; will-change: transform; }
-        /* Ses kanalına özel, daha dinamik ve yeşil/mavi parlamalar */
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; }
+        
+        /* Ses kanalına özel yeşil parlamalar */
         .orb-1 { width: 55vw; height: 55vw; background: #10b981; top: -10%; left: -10%; animation: pulseActive 8s ease-in-out infinite alternate; }
         .orb-2 { width: 45vw; height: 45vw; background: var(--primary); bottom: -10%; right: -10%; animation: pulseActive 10s ease-in-out infinite alternate-reverse; }
-        @keyframes pulseActive { 0% { transform: scale(0.9); opacity:0.3; } 100% { transform: scale(1.1); opacity:0.6; } }
+        @keyframes pulseActive { 0% { transform: scale(0.9); opacity:0.2; } 100% { transform: scale(1.1); opacity:0.4; } }
 
-        .topbar { background: rgba(var(--panel-rgb), 0.65) !important; backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; position: fixed; width: 100%; top: 0; z-index: 1000; display:flex; justify-content:space-between; align-items:center; padding: 12px 25px; }
+        .server-main { padding: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; height: 100vh !important; overflow: hidden !important; }
+        
+        /* SOL SÜTUN: SUNUCU MENÜSÜ */
+        .server-sidebar { position: relative; width: 260px; background: rgba(var(--panel-rgb), 0.4); border-right: 1px solid rgba(var(--line-rgb), 0.3); display: flex; flex-direction: column; z-index: 10; flex-shrink: 0; }
+        .server-sidebar-header { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--bg-rgb), 0.4); cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .server-sidebar-header h2 { margin: 0; font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+        .server-sidebar-header:hover { background: rgba(var(--line-rgb), 0.3); }
+        
+        .server-dropdown { position: absolute; top: 60px; left: 10px; width: 240px; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); padding: 8px; z-index: 1000; display: none; flex-direction: column; gap: 4px; animation: dropFade 0.2s ease; }
+        @keyframes dropFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .voice-wrap { max-width: 900px; margin: 0 auto; padding: 100px 20px 40px 20px; display: flex; flex-direction: column; gap: 24px; align-items: center; }
+        .sidebar-channels { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 12px; }
+        .sidebar-channels::-webkit-scrollbar { width: 4px; }
+        .sidebar-channels::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 4px; }
+        
+        .cat-group { display: flex; flex-direction: column; gap: 2px; }
+        .cat-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; padding: 4px 8px; margin-bottom: 2px; cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s; }
+        .cat-title:hover { color: var(--text); }
+        
+        .chan-link { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: all 0.1s; }
+        .chan-link:hover { background: rgba(var(--text-rgb), 0.05); color: var(--text); }
+        .chan-link.active { background: rgba(16, 185, 129, 0.2); color: #10b981; } /* Ses kanalı aktif rengi */
+        .chan-link i { font-size: 1.1rem; opacity: 0.7; }
+        .chan-link.active i { opacity: 1; }
 
-        .panel { background: rgba(var(--panel-rgb), 0.7) !important; backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px !important; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1) !important; padding: 40px !important; text-align: center; width: 100%; animation: slideUp 0.5s ease forwards; }
-        body[data-theme="dark"] .panel { box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* SAĞ SÜTUN: SESLİ SOHBET ALANI */
+        .chat-content { flex: 1; display: flex; flex-direction: column; position: relative; background: rgba(var(--bg-rgb), 0.6); backdrop-filter: blur(12px); }
+        .chat-header { height: 56px; padding: 0 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--panel-rgb), 0.2); z-index: 5; }
+        .chat-header h3 { margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600; color: #10b981; }
+        
+        .chat-messages { flex: 1; overflow-y: auto; padding: 40px 24px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
 
-        /* Ana Bağlantı Kartı */
+        /* Sesli Sohbet Panelleri */
+        .panel { background: rgba(var(--panel-rgb), 0.7) !important; backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important; padding: 40px !important; text-align: center; width: 100%; max-width: 650px; animation: slideUpFade 0.5s ease forwards; }
+        body[data-theme="dark"] .panel { box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important; }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .voice-radar { width: 120px; height: 120px; background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; border-radius: 50%; margin: 0 auto 20px auto; display: grid; place-items: center; position: relative; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); }
         .voice-radar i { font-size: 3rem; color: #10b981; z-index: 2; }
         .voice-radar::before { content: ''; position: absolute; inset: -20px; border-radius: 50%; border: 1px solid rgba(16, 185, 129, 0.5); animation: ripple 2s linear infinite; z-index: 1; }
@@ -40,68 +72,462 @@
         .btn-mute { background: rgba(var(--bg-rgb), 0.5); color: var(--text); border: 1px solid var(--line); padding: 14px 28px; border-radius: 14px; font-size: 1.1rem; font-weight: 600; display:flex; align-items:center; gap:10px; cursor:pointer; transition:all 0.2s; }
         .btn-mute:hover { background: var(--line); }
 
-        /* Kullanıcılar Grid */
         .users-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; width: 100%; margin-top: 20px; }
         .user-voice-card { background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 16px; padding: 15px; display: flex; align-items: center; gap: 15px; transition: all 0.3s; position:relative; overflow:hidden;}
         .user-voice-card::after { content:''; position:absolute; bottom:0; left:0; height:3px; width:100%; background: #10b981; opacity: 0; transition: opacity 0.3s;}
         .user-voice-card.speaking::after { opacity: 1; animation: speakPulse 0.5s infinite alternate; }
         @keyframes speakPulse { from { opacity: 0.5; } to { opacity: 1; box-shadow: 0 -5px 15px rgba(16,185,129,0.5); } }
-
         .user-voice-card img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid transparent; }
         .user-voice-card.speaking img { border-color: #10b981; }
         .user-voice-card .name { font-weight: 600; font-size: 1.05rem; }
 
-        /* Ses Akışları Gizli */
         #audios { display: none; }
+        
+        /* Modallar (Evrensel tasarım) */
+        .modal-content { background: var(--panel) !important; border-radius: 16px !important; padding: 0 !important; overflow: hidden; border: 1px solid rgba(var(--line-rgb), 0.5) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important; display: flex; flex-direction: column; }
+        .modal-header { padding: 20px 25px; background: rgba(var(--bg-rgb), 0.5); border-bottom: 1px solid rgba(var(--line-rgb), 0.5); display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .modal-header h2 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
+        .modal-body { padding: 25px; }
+        .modal-close-btn { background: transparent; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s; padding: 5px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .modal-close-btn:hover { background: rgba(var(--text-rgb), 0.1); color: #ef4444; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
+        .form-group { flex: 1; min-width: 150px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--muted); font-size: 0.9rem; }
+        .form-group input, .form-group select { width: 100%; background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.8); border-radius: 10px; padding: 12px 15px; color: var(--text); outline: none; transition: all 0.3s; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
+        .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; background: rgba(var(--bg-rgb), 0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.3); margin-bottom: 15px; max-height: 200px; overflow-y: auto;}
+        .perm-grid label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text); }
+        .perm-grid input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; }
+
+        .context-menu { position: fixed; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 8px; min-width: 200px; z-index: 999999; display: none; flex-direction: column; gap: 4px; }
+        .ctx-item { padding: 10px 15px; color: var(--text); cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; font-weight: 500; transition: 0.2s; }
+        .ctx-item i { width: 16px; text-align: center; color: var(--primary); transition: 0.2s; }
+        .ctx-item:hover { background: var(--primary); color: #fff; }
+        .ctx-item:hover i { color: #fff; }
+
+        .settings-layout { display: flex; min-height: 500px; }
+        .settings-sidebar { width: 220px; border-right: 1px solid rgba(var(--line-rgb), 0.5); padding: 20px 10px; display: flex; flex-direction: column; gap: 8px; background: rgba(var(--bg-rgb), 0.2); }
+        .tab-side-btn { background: transparent; border: none; padding: 12px 15px; color: var(--muted); font-size: 1rem; font-weight: 600; text-align: left; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px;}
+        .tab-side-btn:hover { background: rgba(var(--line-rgb), 0.5); color: var(--text); }
+        .tab-side-btn.active { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
+        .settings-content { flex: 1; padding: 30px; overflow-y: auto; max-height: 70vh; }
+        .settings-tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .settings-tab-content.active { display: block; }
+        
+        .modern-user-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 14px; margin-bottom: 10px; transition: 0.2s;}
+        .modern-user-card:hover { border-color: var(--primary); }
+        .modern-user-card .who { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .modern-user-card .who img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        
+        .inline-edit-form { display: flex; gap: 10px; align-items: center; background: rgba(var(--bg-rgb), 0.5); padding: 12px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.5); margin-bottom: 10px; flex-wrap: wrap; }
+        .inline-edit-form > * { flex: 1; min-width: 120px; }
+        .inline-edit-form button { flex: 0 0 auto; padding: 12px 20px; border-radius: 10px; border: none; background: var(--line); color: var(--text); font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .inline-edit-form button:hover { background: var(--primary); color: #fff; }
     </style>
 </head>
 <body>
-<div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>
-
-<header class="topbar">
-    <div class="topbar-left">
-        <button type="button" class="navbtn" data-go-back="1" style="margin-right:10px;"><i class="fa-solid fa-arrow-left"></i></button>
-        <a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:600;">
-            <img src="{{ '/media/' + server[3] if server[3] else '/pc/avatar.svg' }}" class="avatar" style="width:35px;height:35px;" alt="avatar">
-            <span>{{ server[2] }}</span>
-        </a>
-    </div>
-</header>
-
-<main class="wrap voice-wrap" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
+    {% set can_manage_channels = 'true' if canmanagechannels else 'false' %}
     
-    <section class="panel">
-        <div class="voice-radar">
-            <i class="fa-solid fa-microphone-lines"></i>
-        </div>
-        <h2>{{ channel[2] }}</h2>
-        <p class="hint">Mikrofon izni verip sohbete dahil olun.</p>
+    <div class="server-shell">
+        <aside class="server-rail"></aside>
+
+        <main class="server-main" oncontextmenu="window.showGeneralCtx(event, this)" data-canmanage="{{ can_manage_channels }}">
+            
+            <aside class="server-sidebar">
+                <div class="server-sidebar-header" onclick="window.toggleServerDropdown(event)">
+                    <h2>{{ server[2] }}</h2>
+                    <i class="fa-solid fa-chevron-down" style="font-size:0.8rem; color:var(--muted); transition: 0.2s;" id="serverHeaderIcon"></i>
+                </div>
+                
+                <div id="serverDropdown" class="server-dropdown">
+                    <div class="ctx-item" onclick="window.showInvite()" style="color: var(--primary);">
+                        <i class="fa-solid fa-user-plus"></i> İnsanları Davet Et
+                    </div>
+                    {% if canmanageroles or canmanagechannels or pending %}
+                    <div class="ctx-item" onclick="window.openServerSettings()">
+                        <i class="fa-solid fa-gear"></i> Sunucu Ayarları
+                    </div>
+                    {% endif %}
+                    {% if canmanagechannels %}
+                    <div class="ctx-item" onclick="window.openCreateCat()">
+                        <i class="fa-solid fa-folder-plus"></i> Kategori Oluştur
+                    </div>
+                    <div class="ctx-item" onclick="window.openCreateChan('')">
+                        <i class="fa-solid fa-hashtag"></i> Kanal Oluştur
+                    </div>
+                    {% endif %}
+                    
+                    {% if server[1] != myid %}
+                    <div style="height: 1px; background: rgba(var(--line-rgb), 0.5); margin: 4px 0;"></div>
+                    <form method="post" action="/servers/{{ server[0] }}/leave" data-nav="soft" style="margin:0; padding:0; display:block;">
+                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('Ayrılmak istediğinize emin misiniz?');">
+                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan Ayrıl
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <div class="sidebar-channels">
+                    {% for c in categories %}
+                        <div class="cat-group" data-id="{{ c[0] }}" data-name="{{ c[1] }}" data-kind="{{ c[2] }}" data-canmanage="{{ can_manage_channels }}" oncontextmenu="window.showCatCtx(event, this)">
+                            <div class="cat-title">
+                                <i class="fa-solid fa-chevron-right" style="font-size:0.6rem; margin-right:5px;"></i> {{ c[1] }}
+                            </div>
+                            {% for ch in channels %}
+                                {% if ch[1] == c[0] %}
+                                    <a href="/servers/{{ server[0] }}/{{ 'voice' if ch[3] == 'voice' else 'channels' }}/{{ ch[0] }}" 
+                                       data-nav="soft" 
+                                       id="chan_{{ ch[0] }}"
+                                       class="chan-link {% if channel and ch[0] == channel[0] %}active{% endif %}"
+                                       data-id="{{ ch[0] }}" data-catid="{{ ch[1] }}" data-name="{{ ch[2] }}" data-kind="{{ ch[3] }}" data-cm="{{ ch[4] }}" data-vp="{{ ch[5] }}" data-wp="{{ ch[6] }}" data-sp="{{ ch[7] }}" data-canmanage="{{ can_manage_channels }}" oncontextmenu="window.showChanCtx(event, this)">
+                                        <i class="fa-solid {{ 'fa-volume-high' if ch[3] == 'voice' else 'fa-hashtag' }}"></i>
+                                        <span>{{ ch[2] }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <section class="chat-content">
+                <div class="chat-header">
+                    <h3><i class="fa-solid fa-volume-high"></i> {{ channel[2] }}</h3>
+                </div>
+                
+                <div class="chat-messages" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
+                    <section class="panel">
+                        <div class="voice-radar">
+                            <i class="fa-solid fa-microphone-lines"></i>
+                        </div>
+                        <h2>{{ channel[2] }}</h2>
+                        <p class="hint">Mikrofon izni verip sohbete dahil olun.</p>
+                        
+                        <div class="voice-controls">
+                            <button id="voicejoin" class="btn-join"><i class="fa-solid fa-phone-volume"></i> Kanala Bağlan</button>
+                            <button id="voicemute" class="btn-mute"><i class="fa-solid fa-microphone-slash"></i> Sustur</button>
+                        </div>
+                    </section>
+
+                    <section class="panel" style="padding: 30px !important;">
+                        <h3 style="margin-bottom: 0; text-align:left; font-size:1.2rem; border-bottom:1px solid rgba(var(--text-rgb),0.05); padding-bottom:15px;">
+                            <i class="fa-solid fa-users"></i> Odadakiler
+                        </h3>
+                        <div id="voiceusers" class="users-grid">
+                            {% for u in users %}
+                            <div class="user-voice-card">
+                                <img src="{{ u.avatar }}" alt="a">
+                                <div class="name">{{ u.username }}</div>
+                            </div>
+                            {% else %}
+                            <p style="color:var(--muted); text-align:left; margin-top:20px;">Şu an kanalda kimse yok.</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    
+                    <div id="audios"></div>
+                </div>
+            </section>
+        </main>
         
-        <div class="voice-controls">
-            <button id="voicejoin" class="btn-join"><i class="fa-solid fa-phone-volume"></i> Kanala Bağlan</button>
-            <button id="voicemute" class="btn-mute"><i class="fa-solid fa-microphone-slash"></i> Sustur</button>
-        </div>
-    </section>
+        <div id="ctxMenu" class="context-menu"></div>
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal" id="profileModal"><div class="modal-content"></div></div>
 
-    <section class="panel" style="padding: 30px !important;">
-        <h3 style="margin-bottom: 0; text-align:left; font-size:1.2rem; border-bottom:1px solid rgba(var(--text-rgb),0.05); padding-bottom:15px;"><i class="fa-solid fa-users"></i> Odadakiler</h3>
-        <div id="voiceusers" class="users-grid">
-            {% for u in users %}
-            <div class="user-voice-card">
-                <img src="{{ u.avatar }}" alt="a">
-                <div class="name">{{ u.username }}</div>
+        {% if canmanageroles or canmanagechannels or pending %}
+        <div class="modal" id="serverSettingsModal">
+            <div class="modal-content" style="max-width: 900px; width: 90%;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu Ayarları</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('serverSettingsModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="settings-layout">
+                    <div class="settings-sidebar">
+                        {% if pending %}
+                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> Katılım İstekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
+                        {% endif %}
+                        {% if canmanageroles %}
+                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol Yönetimi</button>
+                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Üyeler</button>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="settings-content">
+                        {% if pending %}
+                        <div id="tab-req" class="settings-tab-content active">
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-user-clock"></i> Onay Bekleyenler</h3>
+                            {% for p in pending %}
+                            <div class="modern-user-card">
+                                <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
+                                <div style="display:flex; gap:10px;">
+                                    <form method="post" action="/servers/accept/{{ p.joinid }}" data-nav="soft"><button class="pickbtn" style="padding:10px 15px;"><i class="fa-solid fa-check"></i> Kabul Et</button></form>
+                                    <form method="post" action="/servers/reject/{{ p.joinid }}" data-nav="soft"><button class="linkbtn" style="padding:10px 15px; border-color:#ef4444; color:#ef4444;"><i class="fa-solid fa-xmark"></i> Reddet</button></form>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>İstek bulunmuyor.</span></div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if canmanageroles %}
+                        <div id="tab-roles" class="settings-tab-content {% if not pending %}active{% endif %}">
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol Oluştur</h3>
+                            <form method="post" action="/servers/{{ server[0] }}/roles/create" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.4); padding: 20px; border-radius: 12px; border: 1px dashed rgba(var(--line-rgb), 0.8); margin-bottom: 25px;">
+                                <div class="form-group">
+                                    <input name="name" type="text" placeholder="Rol adı" required>
+                                </div>
+                                <div class="perm-grid">
+                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluşturma</label>
+                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yönetimi</label>
+                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> Başkasının mesajını silme</label>
+                                    <label><input type="checkbox" name="perm_kick" value="1"> Sunucudan At (Kick)</label>
+                                    <label><input type="checkbox" name="perm_ban" value="1"> Yasakla (Ban)</label>
+                                    <label><input type="checkbox" name="perm_timeout" value="1"> Sustur (Timeout)</label>
+                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasağı</label>
+                                    <label><input type="checkbox" name="perm_voicetimeout" value="1"> Sesli timeout</label>
+                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldır</label>
+                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldır</label>
+                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldır</label>
+                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yönetimi</label>
+                                </div>
+                                <button class="pickbtn" type="submit" style="width:100%;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
+                            </form>
+
+                            <h3><i class="fa-solid fa-tags"></i> Mevcut Roller</h3>
+                            {% for r in roles %}
+                            <form method="post" action="/servers/{{ server[0] }}/roles/{{ r[0] }}/edit" data-nav="soft" class="inline-edit-form">
+                                <span style="font-weight:bold; color:var(--primary); width:30px; text-align:center;"><i class="fa-solid fa-circle" style="font-size:0.6rem;"></i></span>
+                                <input name="name" type="text" value="{{ r[1] }}" style="margin-bottom:0; background:transparent; border:none; padding:5px;">
+                                <button type="submit">Güncelle</button>
+                            </form>
+                            {% endfor %}
+                        </div>
+
+                        <div id="tab-members" class="settings-tab-content">
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Üye Yetkilendirme</h3>
+                            {% for m in members %}
+                            <div class="modern-user-card">
+                                <div class="who"><img src="{{ m.avatar }}" alt="a"> {{ m.username }}</div>
+                                <form method="post" action="/servers/{{ server[0] }}/members/{{ m.id }}/role" data-nav="soft" style="display:flex; gap:10px; align-items:center;">
+                                    <select name="roleid" style="margin-bottom:0; min-width:180px;">
+                                        <option value="0">Varsayılan Üye</option>
+                                        {% for r in roles %}
+                                        <option value="{{ r[0] }}" {% if m.roleid == r[0] %}selected{% endif %}>{{ r[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="pickbtn" style="padding:12px 20px;"><i class="fa-solid fa-check"></i> Ata</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>Henüz üye yok.</span></div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            {% else %}
-            <p style="color:var(--muted); text-align:left; margin-top:20px;">Şu an kanalda kimse yok.</p>
-            {% endfor %}
         </div>
-    </section>
-    
-    <div id="audios"></div>
+        {% endif %}
 
-</main>
-<script src="/pc/app.js?v=3"></script>
-<script src="/pc/voice.js?v=1"></script>
+        <div class="modal" id="createCatModal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori Oluştur</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createCatModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="/servers/{{ server[0] }}/categories/create" data-nav="soft">
+                        <div class="form-group">
+                            <label>Kategori Adı</label>
+                            <input name="name" type="text" placeholder="Yeni kategori..." required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tür</label>
+                            <select name="kind">
+                                <option value="text">Mesajlaşma</option>
+                                <option value="voice">Sesli</option>
+                            </select>
+                        </div>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="editCatModal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi Düzenle</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editCatModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="/servers/{{ server[0] }}/categories/0/edit" data-nav="soft">
+                        <div class="form-group">
+                            <label>Kategori Adı</label>
+                            <input name="name" type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tür</label>
+                            <select name="kind">
+                                <option value="text">Mesaj</option>
+                                <option value="voice">Sesli</option>
+                            </select>
+                        </div>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="createChanModal">
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal Oluştur</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createChanModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="/servers/{{ server[0] }}/channels/create" data-nav="soft">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kanal Adı</label>
+                                <input name="name" type="text" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kategori</label>
+                                <select name="categoryid">
+                                    <option value="0">Kategorisiz</option>
+                                    {% for c in categories %}<option value="{{ c[0] }}">{{ c[1] }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kanal Türü</label>
+                                <select name="kind">
+                                    <option value="text">Mesaj</option>
+                                    <option value="voice">Sesli</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>İçerik Kısıtlaması</label>
+                                <select name="contentmode">
+                                    <option value="all">Tümü</option>
+                                    <option value="image">Sadece görsel</option>
+                                    <option value="video">Sadece video</option>
+                                    <option value="audio">Sadece ses</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="perm-grid">
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller (Boş = Herkes)</div>
+                            {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
+                        </div>
+                        <div class="perm-grid">
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (Boş = Herkes)</div>
+                            {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
+                        </div>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="editChanModal">
+            <div class="modal-content" style="max-width: 550px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kanalı Düzenle</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editChanModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="/servers/{{ server[0] }}/channels/0/edit" data-nav="soft">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kanal Adı</label>
+                                <input name="name" type="text" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Kategori</label>
+                                <select name="categoryid">
+                                    <option value="0">Kategorisiz</option>
+                                    {% for c in categories %}<option value="{{ c[0] }}">{{ c[1] }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kanal Türü</label>
+                                <select name="kind">
+                                    <option value="text">Mesaj</option>
+                                    <option value="voice">Sesli</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>İçerik Kısıtlaması</label>
+                                <select name="contentmode">
+                                    <option value="all">Tümü</option>
+                                    <option value="image">Sadece görsel</option>
+                                    <option value="video">Sadece video</option>
+                                    <option value="audio">Sadece ses</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="perm-grid">
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller</div>
+                            {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
+                        </div>
+                        <div class="perm-grid">
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller</div>
+                            {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
+                        </div>
+                        <div class="perm-grid">
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya Paylaşabilecek Roller</div>
+                            {% for r in roles %}<label><input type="checkbox" name="shareperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
+                        </div>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="inviteModal">
+            <div class="modal-content" style="max-width: 480px;">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> Arkadaşlarını Davet Et</h2>
+                    <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('inviteModal')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body" style="text-align: left;">
+                    <p style="color:var(--muted); margin-bottom: 20px;">Arkadaşlarınızı bu sunucuya davet etmek için aşağıdaki linki veya kodu paylaşabilirsiniz.</p>
+                    
+                    <label style="display:block; font-weight:600; color:var(--muted); font-size:0.85rem; margin-bottom:5px; text-transform:uppercase;">Davet Linki</label>
+                    <div style="background: rgba(var(--bg-rgb), 0.8); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(var(--primary-rgb), 0.4); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <span class="invite-link-span" data-code="{{ server[6] }}" style="font-family: monospace; font-size: 0.95rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;"></span>
+                        <button type="button" class="pickbtn" style="padding: 8px 12px; font-size: 0.85rem;" onclick="window.copyInviteCode(document.querySelector('#inviteModal .invite-link-span').innerText, this)">
+                            <i class="fa-solid fa-copy"></i> Kopyala
+                        </button>
+                    </div>
+
+                    <label style="display:block; font-weight:600; color:var(--muted); font-size:0.85rem; margin-bottom:5px; text-transform:uppercase;">Davet Kodu</label>
+                    <div style="background: rgba(var(--bg-rgb), 0.8); padding: 10px 15px; border-radius: 12px; border: 1px dashed rgba(var(--primary-rgb), 0.4); display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="font-family: monospace; font-size: 1.2rem; font-weight: bold; color: var(--text); letter-spacing: 2px;">
+                            {{ server[6] }}
+                        </span>
+                        <button type="button" class="linkbtn" style="padding: 8px 12px; font-size: 0.85rem; border-color: rgba(var(--primary-rgb), 0.3); color: var(--text);" onclick="window.copyInviteCode('{{ server[6] }}', this)">
+                            <i class="fa-solid fa-copy"></i> Kopyala
+                        </button>
+                    </div>
+                    
+                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kısmından girilerek de kullanılabilir.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <script src="/pc/app.js"></script>
+    <script src="/pc/voice.js"></script>
 </body>
 </html>
-

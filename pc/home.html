@@ -2,136 +2,48 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("welcome", "Welcome") }}</title>
     <link rel="stylesheet" href="/pc/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* === Zenginleştirilmiş Bento Box Dashboard === */
 
-        body {
-            position: relative;
-            background-color: var(--bg);
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
+        body { position: relative; background-color: var(--bg); overflow: hidden; min-height: 100vh; margin: 0; padding: 0; }
 
-        .bg-texture {
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: -1;
-            opacity: 0.5;
-        }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.25; will-change: transform; }
+        .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -15%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
+        .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+        @keyframes driftPrimary { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10vw, 10vh) scale(1.1); } }
+        @keyframes driftPurple { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-10vw, -10vh) scale(1.2); } }
 
-        .ambient-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            z-index: -2;
-            opacity: 0.3;
-            will-change: transform;
-        }
+        .server-shell { position: relative; height: 100vh; display: grid; grid-template-columns: 85px 1fr; grid-template-rows: 1fr; }
+        .server-rail { grid-row: 1; grid-column: 1; padding: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px; background: rgba(var(--panel-rgb), 0.4); backdrop-filter: blur(18px); border-right: 1px solid rgba(var(--line-rgb), 0.5); overflow-y: auto; z-index: 100; }
+        .server-rail::-webkit-scrollbar { display: none; }
+        .rail-btn-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+        .rail-btn, .rail-avatar { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: var(--text); background: rgba(var(--panel-rgb), 0.8); border: 1px solid rgba(var(--line-rgb), 0.8); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); text-decoration: none; font-size: 1.2rem; object-fit: cover; cursor: pointer; }
+        .rail-btn-wrapper:hover .rail-btn, .rail-btn-wrapper:hover .rail-avatar, .rail-btn.active { border-radius: 16px; background: var(--primary); color: #fff; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3); }
+        .rail-btn-wrapper::before { content: ''; position: absolute; left: 0; width: 4px; height: 0px; background: var(--text); border-radius: 0 4px 4px 0; transition: height 0.3s ease; }
+        .rail-btn-wrapper:hover::before { height: 24px; }
+        .rail-divider { width: 40px; height: 2px; background: rgba(var(--text-rgb), 0.1); border-radius: 2px; margin: 5px 0; }
 
-        .orb-1 {
-            width: 50vw; height: 50vw;
-            max-width: 600px; max-height: 600px;
-            background: var(--primary);
-            top: -10%; left: -10%;
-            animation: driftPrimary 30s ease-in-out infinite alternate;
-        }
+        .server-main { grid-row: 1; grid-column: 2; padding: 30px 40px 80px 40px; overflow-y: auto; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .server-main::-webkit-scrollbar { width: 8px; }
+        .server-main::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
 
-        .orb-2 {
-            width: 40vw; height: 40vw;
-            max-width: 500px; max-height: 500px;
-            background: #818cf8;
-            bottom: -10%; right: -10%;
-            animation: driftPurple 25s ease-in-out infinite alternate;
-        }
+        /* Bento */
+        .bento-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; }
+        .panel { background: rgba(var(--panel-rgb), 0.6) !important; backdrop-filter: blur(24px) !important; -webkit-backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 24px !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important; opacity: 0; transform: translateY(20px); animation: slideUpPanel 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; padding: 30px !important; display: flex; flex-direction: column; margin: 0 !important; position: relative; overflow: hidden; }
+        body[data-theme="dark"] .panel { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important; border: 1px solid rgba(255, 255, 255, 0.03) !important; background: rgba(var(--panel-rgb), 0.4) !important; }
 
-        @keyframes driftPrimary {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(10vw, 10vh) scale(1.1); }
-        }
+        .welcome-panel { grid-column: span 2; background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), transparent) !important; border: 1px solid rgba(var(--primary-rgb), 0.2) !important; justify-content: center; }
+        .panel-stats { grid-column: span 1; }
+        .panel-dm { grid-column: span 1; }
+        .panel-friends { grid-column: span 1; }
+        .panel-actions { grid-column: span 1; }
+        .panel-suggested { grid-column: span 3; }
 
-        @keyframes driftPurple {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(-10vw, -10vh) scale(1.2); }
-        }
-
-        .topbar {
-            background: rgba(var(--panel-rgb), 0.65) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        /* --- 3 SÜTUNLU ZENGİN BENTO IZGARASI --- */
-        .bento-wrap {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 eşit sütun */
-            gap: 24px;
-            max-width: 1400px; /* Ekranı daha iyi doldurmak için genişlettik */
-            margin: 0 auto;
-            padding: 30px 20px 60px 20px;
-        }
-
-        .panel {
-            background: rgba(var(--panel-rgb), 0.6) !important;
-            backdrop-filter: blur(24px) !important;
-            -webkit-backdrop-filter: blur(24px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 24px !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideUpPanel 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            padding: 30px !important;
-            display: flex;
-            flex-direction: column;
-            margin: 0 !important;
-            position: relative;
-            overflow: hidden;
-        }
-
-        body[data-theme="dark"] .panel {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-            border: 1px solid rgba(255, 255, 255, 0.03) !important;
-            background: rgba(var(--panel-rgb), 0.4) !important;
-        }
-
-        /* Bento Hücre Yerleşimleri */
-        .welcome-panel {
-            grid-column: span 2; /* Hoş geldin 2 sütun kaplar */
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), transparent) !important;
-            border: 1px solid rgba(var(--primary-rgb), 0.2) !important;
-            justify-content: center;
-        }
-
-        .panel-stats {
-            grid-column: span 1; /* Sağ üstte özet kartı */
-        }
-
-        .panel-dm {
-            grid-column: span 1;
-        }
-
-        .panel-friends {
-            grid-column: span 1;
-        }
-
-        .panel-actions {
-            grid-column: span 1; /* Hızlı Eylemler */
-        }
-
-        .panel-suggested {
-            grid-column: span 3; /* Alt satırı tamamen kaplar */
-        }
-
-        /* Animasyon Gecikmeleri */
         .panel:nth-child(1) { animation-delay: 0.1s; }
         .panel:nth-child(2) { animation-delay: 0.15s; }
         .panel:nth-child(3) { animation-delay: 0.2s; }
@@ -139,228 +51,43 @@
         .panel:nth-child(5) { animation-delay: 0.3s; }
         .panel:nth-child(6) { animation-delay: 0.35s; }
 
-        @keyframes slideUpPanel {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideUpPanel { to { opacity: 1; transform: translateY(0); } }
 
-        /* Panel Başlıkları */
-        .panel h2 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.25rem;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
-        }
-
+        .panel h2 { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(var(--text-rgb), 0.05); }
         .panel h2 i { color: var(--primary); }
 
-        /* Hoş Geldin Paneli İçeriği */
-        .welcome-content {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 2;
-        }
+        .welcome-content { display: flex; flex-direction: column; gap: 15px; z-index: 2; }
+        .welcome-content h1 { font-size: 2.5rem; margin: 0; background: linear-gradient(135deg, var(--text), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome-content p { font-size: 1.1rem; margin: 0; color: var(--muted); max-width: 80%; }
+        .welcome-actions { margin-top: 15px; display: flex; gap: 15px; }
 
-        .welcome-content h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            background: linear-gradient(135deg, var(--text), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; height: 100%; }
+        .stat-card { background: rgba(var(--bg-rgb), 0.3); border: 1px solid rgba(var(--line-rgb), 0.3); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; transition: all 0.3s ease; }
+        .stat-card:hover { background: rgba(var(--bg-rgb), 0.6); transform: translateY(-2px); border-color: rgba(var(--primary-rgb), 0.3); }
+        .stat-card i { font-size: 1.8rem; color: var(--primary); opacity: 0.8; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text); line-height: 1; }
+        .stat-label { font-size: 0.85rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .welcome-content p {
-            font-size: 1.1rem;
-            margin: 0;
-            color: var(--muted);
-            max-width: 80%;
-        }
-        
-        .welcome-actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 15px;
-        }
+        .action-list { display: flex; flex-direction: column; gap: 12px; height: 100%; justify-content: center; }
+        .action-item { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(var(--bg-rgb), 0.3); border: 1px solid rgba(var(--line-rgb), 0.3); border-radius: 16px; color: var(--text); text-decoration: none; font-weight: 600; transition: all 0.3s ease; }
+        .action-item:hover { background: rgba(var(--primary-rgb), 0.1); border-color: var(--primary); transform: translateX(5px); color: var(--primary); }
+        .action-item i { font-size: 1.2rem; width: 24px; text-align: center; }
 
-        /* --- İstatistik/Özet Kartları --- */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            height: 100%;
-        }
-
-        .stat-card {
-            background: rgba(var(--bg-rgb), 0.3);
-            border: 1px solid rgba(var(--line-rgb), 0.3);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            background: rgba(var(--bg-rgb), 0.6);
-            transform: translateY(-2px);
-            border-color: rgba(var(--primary-rgb), 0.3);
-        }
-
-        .stat-card i {
-            font-size: 1.8rem;
-            color: var(--primary);
-            opacity: 0.8;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1;
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--muted);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* --- Hızlı Eylemler (Quick Actions) --- */
-        .action-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            height: 100%;
-            justify-content: center;
-        }
-
-        .action-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: rgba(var(--bg-rgb), 0.3);
-            border: 1px solid rgba(var(--line-rgb), 0.3);
-            border-radius: 16px;
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .action-item:hover {
-            background: rgba(var(--primary-rgb), 0.1);
-            border-color: var(--primary);
-            transform: translateX(5px);
-            color: var(--primary);
-        }
-
-        .action-item i {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
-        }
-
-        /* --- Modern Kullanıcı Kartları --- */
-        .modern-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: rgba(var(--bg-rgb), 0.4);
-            border: 1px solid rgba(var(--line-rgb), 0.5);
-            border-radius: 16px;
-            margin-bottom: 12px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .modern-card:hover {
-            transform: translateY(-3px);
-            background: rgba(var(--bg-rgb), 0.8);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            border-color: var(--primary);
-        }
-
-        .modern-card .who {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-weight: 600;
-            font-size: 1.05rem;
-        }
-
-        .modern-card .who img {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid transparent;
-            transition: border-color 0.3s;
-        }
-
+        .modern-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 16px; margin-bottom: 12px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modern-card:hover { transform: translateY(-3px); background: rgba(var(--bg-rgb), 0.8); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); border-color: var(--primary); }
+        .modern-card .who { display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 1.05rem; }
+        .modern-card .who img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; transition: border-color 0.3s; }
         .modern-card:hover .who img { border-color: var(--primary); }
+        .modern-card .acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+        .modern-card .pickbtn, .modern-card .linkbtn { padding: 8px 14px !important; font-size: 0.85rem !important; border-radius: 8px !important; height: auto !important; }
 
-        .modern-card .acts {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .modern-card .pickbtn, .modern-card .linkbtn {
-            padding: 8px 14px !important;
-            font-size: 0.85rem !important;
-            border-radius: 8px !important;
-            height: auto !important;
-        }
-
-        /* --- Önerilenler Izgarası --- */
-        .suggested-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 15px;
-        }
-
+        .suggested-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
         .suggested-grid .modern-card { margin-bottom: 0; }
 
-        /* Boş Durum (Empty State) */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 20px;
-            color: var(--muted);
-            text-align: center;
-            height: 100%;
-            flex-grow: 1;
-            background: rgba(var(--bg-rgb), 0.2);
-            border-radius: 16px;
-            border: 1px dashed rgba(var(--line-rgb), 0.6);
-        }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; color: var(--muted); text-align: center; height: 100%; flex-grow: 1; background: rgba(var(--bg-rgb), 0.2); border-radius: 16px; border: 1px dashed rgba(var(--line-rgb), 0.6); }
+        .empty-state i { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; color: var(--primary); }
+        .empty-state span { font-size: 1rem; font-weight: 500; }
 
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            opacity: 0.5;
-            color: var(--primary);
-        }
-
-        .empty-state span {
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        /* Mobil ve Tablet Uyumluluk */
         @media (max-width: 1200px) {
             .bento-wrap { grid-template-columns: repeat(2, 1fr); }
             .panel-stats { grid-column: span 2; }
@@ -369,22 +96,20 @@
         }
 
         @media (max-width: 900px) {
+            body { overflow: auto; }
+            .server-shell { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 100vh;}
+            .server-rail { grid-column: 1; grid-row: 1; flex-direction: row; justify-content: flex-start; padding: 15px 20px; overflow-x: auto; border-right: none; border-bottom: 1px solid rgba(var(--line-rgb), 0.5); }
+            .rail-divider { width: 2px; height: 30px; margin: 0 5px; }
+            .rail-btn-wrapper::before { top: 0; left: 50%; width: 0; height: 4px; border-radius: 0 0 4px 4px; transform: translateX(-50%); transition: width 0.3s ease; }
+            .rail-btn-wrapper:hover::before { width: 24px; height: 4px; }
+            .server-main { grid-column: 1; grid-row: 2; padding: 25px 20px 60px 20px; }
             .bento-wrap { grid-template-columns: 1fr; }
-            .welcome-panel, .panel-stats, .panel-dm, .panel-friends, .panel-actions, .panel-suggested {
-                grid-column: span 1;
-            }
+            .welcome-panel, .panel-stats, .panel-dm, .panel-friends, .panel-actions, .panel-suggested { grid-column: span 1; }
         }
         
         @media (max-width: 480px) {
-            .modern-card {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            .modern-card .acts {
-                width: 100%;
-                justify-content: flex-end;
-            }
+            .modern-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .modern-card .acts { width: 100%; justify-content: flex-end; }
             .welcome-content h1 { font-size: 2rem; }
             .welcome-actions { flex-direction: column; width: 100%; }
             .welcome-actions .pickbtn, .welcome-actions .linkbtn { width: 100%; text-align: center; }
@@ -396,177 +121,163 @@
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
-    <header class="topbar">
-        <div class="topbar-left">
-            <button class="profile-btn" id="profileBtn">
-                <img src="{{ avatar }}" class="avatar" alt="avatar">
-                <span>{{ username or t.get("profile", "Profile") }}</span>
-            </button>
+    <div class="server-shell">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal" id="profileModal">
+            <div class="modal-content">
+                 <div class="lang-switcher">
+                    <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                    <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+                </div>
+                <a href="/settings" data-nav="soft" class="modal-link">
+                    <i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span>
+                </a>
+                <a href="/logout" data-nav="soft" class="modal-link">
+                    <i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span>
+                </a>
+            </div>
         </div>
-        <nav class="topbar-right">
-            <a href="/dm" data-nav="soft" class="navbtn" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
-            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
-        </nav>
-    </header>
 
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-             <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
-            </div>
-            <a href="/settings" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-cog"></i>
-                <span>{{ t.get("settings", "Settings") }}</span>
-            </a>
-            <a href="/logout" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>{{ t.get("logout", "Logout") }}</span>
-            </a>
-        </div>
-    </div>
+        <aside class="server-rail"></aside>
 
-    <main class="wrap bento-wrap">
-        
-        <section class="panel welcome-panel">
-            <div class="welcome-content">
-                <h1>{{ t.get("welcome", "Welcome to Euphorium!") }} 👋</h1>
-                <p>{{ t.get("subtitle", "This is your dashboard. Keep track of your community, manage your requests, and discover new servers.") }}</p>
-                <div class="welcome-actions">
-                    <a href="/servers" data-nav="soft" class="pickbtn"><i class="fa-solid fa-compass"></i> {{ t.get("discover_servers", "Discover Servers") }}</a>
-                    <a href="/dm" data-nav="soft" class="linkbtn"><i class="fa-solid fa-paper-plane"></i> {{ t.get("open_messages", "Open Messages") }}</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel panel-stats">
-            <h2><i class="fa-solid fa-chart-pie"></i> {{ t.get("overview", "Overview") }}</h2>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <i class="fa-solid fa-user-group"></i>
-                    <div class="stat-value">--</div> <div class="stat-label">{{ t.get("friends", "Friends") }}</div>
-                </div>
-                <div class="stat-card">
-                    <i class="fa-solid fa-server"></i>
-                    <div class="stat-value">--</div> 
-                    <div class="stat-label">{{ t.get("servers", "Servers") }}</div>
-                </div>
-            </div>
-        </section>
-
-        {% if username %}
-        <section class="panel panel-dm">
-            <h2><i class="fa-solid fa-envelope-open-text"></i> {{ t.get("dmrequests", "Message requests") }}</h2>
-            {% if dmpending %}
-                {% for p in dmpending %}
-                <div class="modern-card">
-                    <div class="who">
-                        <img src="{{ p.avatar }}" alt="avatar"> 
-                        {{ p.username }}
+        <main class="server-main">
+            <div class="bento-wrap">
+                <section class="panel welcome-panel">
+                    <div class="welcome-content">
+                        <h1>{{ t.get("welcome", "Welcome to Euphorium!") }} 👋</h1>
+                        <p>{{ t.get("subtitle", "This is your dashboard. Keep track of your community, manage your requests, and discover new servers.") }}</p>
+                        <div class="welcome-actions">
+                            <a href="/servers" data-nav="soft" class="pickbtn"><i class="fa-solid fa-compass"></i> {{ t.get("discover_servers", "Discover Servers") }}</a>
+                            <a href="/dm" data-nav="soft" class="linkbtn"><i class="fa-solid fa-paper-plane"></i> {{ t.get("open_messages", "Open Messages") }}</a>
+                        </div>
                     </div>
-                    <div class="acts">
-                        <form method="post" action="/dm/request/accept/{{ p.requestid }}" data-nav="soft">
-                            <button class="pickbtn"><i class="fa-solid fa-check"></i></button>
-                        </form>
-                        <form method="post" action="/dm/request/reject/{{ p.requestid }}" data-nav="soft">
-                            <button class="linkbtn"><i class="fa-solid fa-xmark"></i></button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fa-regular fa-comment-dots"></i>
-                    <span>{{ t.get("norequests", "No message requests.") }}</span>
-                </div>
-            {% endif %}
-        </section>
+                </section>
 
-        <section class="panel panel-friends">
-            <h2><i class="fa-solid fa-user-group"></i> {{ t.get("requests", "Friend requests") }}</h2>
-            {% if pending %}
-                {% for p in pending %}
-                <div class="modern-card">
-                    <div class="who">
-                        <img src="{{ p.avatar }}" alt="avatar"> 
-                        {{ p.username }}
+                <section class="panel panel-stats">
+                    <h2><i class="fa-solid fa-chart-pie"></i> {{ t.get("overview", "Overview") }}</h2>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <i class="fa-solid fa-user-group"></i>
+                            <div class="stat-value">{{ friendcount }}</div> 
+                            <div class="stat-label">{{ t.get("friends", "Friends") }}</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa-solid fa-server"></i>
+                            <div class="stat-value">--</div> 
+                            <div class="stat-label">{{ t.get("servers", "Servers") }}</div>
+                        </div>
                     </div>
-                    <div class="acts">
-                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft">
-                            <button class="pickbtn"><i class="fa-solid fa-check"></i></button>
-                        </form>
-                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft">
-                            <button class="linkbtn"><i class="fa-solid fa-xmark"></i></button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span>{{ t.get("norequests", "No friend requests.") }}</span>
-                </div>
-            {% endif %}
-        </section>
+                </section>
 
-        <section class="panel panel-actions">
-            <h2><i class="fa-solid fa-bolt"></i> {{ t.get("quick_actions", "Quick Actions") }}</h2>
-            <div class="action-list">
-                <a href="/settings" data-nav="soft" class="action-item">
-                    <i class="fa-solid fa-user-pen"></i>
-                    <span>{{ t.get("edit_profile", "Edit Profile") }}</span>
-                </a>
-                <a href="#" data-nav="soft" class="action-item">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <span>{{ t.get("find_friends", "Find Friends") }}</span>
-                </a>
-                <a href="/servers" data-nav="soft" class="action-item">
-                    <i class="fa-solid fa-circle-plus"></i>
-                    <span>{{ t.get("create_server", "Create Server") }}</span>
-                </a>
-            </div>
-        </section>
+                {% if username %}
+                <section class="panel panel-dm">
+                    <h2><i class="fa-solid fa-envelope-open-text"></i> {{ t.get("dmrequests", "Message requests") }}</h2>
+                    {% if dmpending %}
+                        {% for p in dmpending %}
+                        <div class="modern-card">
+                            <div class="who">
+                                <img src="{{ p.avatar }}" alt="avatar"> 
+                                {{ p.username }}
+                            </div>
+                            <div class="acts">
+                                <form method="post" action="/dm/request/accept/{{ p.requestid }}" data-nav="soft">
+                                    <button class="pickbtn"><i class="fa-solid fa-check"></i></button>
+                                </form>
+                                <form method="post" action="/dm/request/reject/{{ p.requestid }}" data-nav="soft">
+                                    <button class="linkbtn"><i class="fa-solid fa-xmark"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-regular fa-comment-dots"></i>
+                            <span>{{ t.get("norequests", "No message requests.") }}</span>
+                        </div>
+                    {% endif %}
+                </section>
 
-        <section class="panel panel-suggested">
-            <h2><i class="fa-solid fa-compass"></i> {{ t.get("suggested", "Suggested users") }}</h2>
-            <div class="suggested-grid">
-                {% for s in suggestions %}
-                <div class="modern-card">
-                    <div class="who">
-                        <img src="{{ s.avatar }}" alt="avatar"> 
-                        {{ s.username }}
+                <section class="panel panel-friends">
+                    <h2><i class="fa-solid fa-user-group"></i> {{ t.get("requests", "Friend requests") }}</h2>
+                    {% if pending %}
+                        {% for p in pending %}
+                        <div class="modern-card">
+                            <div class="who">
+                                <img src="{{ p.avatar }}" alt="avatar"> 
+                                {{ p.username }}
+                            </div>
+                            <div class="acts">
+                                <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft">
+                                    <button class="pickbtn"><i class="fa-solid fa-check"></i></button>
+                                </form>
+                                <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft">
+                                    <button class="linkbtn"><i class="fa-solid fa-xmark"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-user-shield"></i>
+                            <span>{{ t.get("norequests", "No friend requests.") }}</span>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="panel panel-actions">
+                    <h2><i class="fa-solid fa-bolt"></i> {{ t.get("quick_actions", "Quick Actions") }}</h2>
+                    <div class="action-list">
+                        <a href="/profile" data-nav="soft" class="action-item">
+                            <i class="fa-solid fa-user-pen"></i><span>{{ t.get("edit_profile", "Edit Profile") }}</span>
+                        </a>
+                        <a href="/servers" data-nav="soft" class="action-item">
+                            <i class="fa-solid fa-circle-plus"></i><span>{{ t.get("create_server", "Create Server") }}</span>
+                        </a>
                     </div>
-                    <div class="acts">
-                        {% if s.status == 'friend' %}
-                        <form method="post" action="/social/remove/{{ s.id }}" data-nav="soft">
-                            <button class="linkbtn"><i class="fa-solid fa-user-minus"></i> {{ t.get("removefriend", "Remove friend") }}</button>
-                        </form>
-                        {% elif s.status == 'sent' %}
-                        <button class="linkbtn" disabled><i class="fa-solid fa-paper-plane"></i> {{ t.get("sent", "Sent") }}</button>
-                        {% elif s.status == 'incoming' %}
-                        <button class="linkbtn" disabled><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("incoming", "Incoming request") }}</button>
+                </section>
+
+                <section class="panel panel-suggested">
+                    <h2><i class="fa-solid fa-compass"></i> {{ t.get("suggested", "Suggested users") }}</h2>
+                    <div class="suggested-grid">
+                        {% for s in suggestions %}
+                        <div class="modern-card">
+                            <div class="who">
+                                <img src="{{ s.avatar }}" alt="avatar"> 
+                                {{ s.username }}
+                            </div>
+                            <div class="acts">
+                                {% if s.status == 'friend' %}
+                                <form method="post" action="/social/remove/{{ s.id }}" data-nav="soft">
+                                    <button class="linkbtn"><i class="fa-solid fa-user-minus"></i> {{ t.get("removefriend", "Remove friend") }}</button>
+                                </form>
+                                {% elif s.status == 'sent' %}
+                                <form method="post" action="/social/revoke/{{ s.id }}" data-nav="soft">
+                                    <button class="linkbtn"><i class="fa-solid fa-paper-plane"></i> Geri Çek</button>
+                                </form>
+                                {% elif s.status == 'incoming' %}
+                                <button class="linkbtn" disabled><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("incoming", "Incoming request") }}</button>
+                                {% else %}
+                                <form method="post" action="/social/request/{{ s.id }}" data-nav="soft">
+                                    <button class="pickbtn"><i class="fa-solid fa-user-plus"></i> {{ t.get("addfriend", "Add friend") }}</button>
+                                </form>
+                                {% endif %}
+                                <form method="post" action="/social/block/{{ s.id }}" data-nav="soft">
+                                    <button class="linkbtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-ban"></i></button>
+                                </form>
+                            </div>
+                        </div>
                         {% else %}
-                        <form method="post" action="/social/request/{{ s.id }}" data-nav="soft">
-                            <button class="pickbtn"><i class="fa-solid fa-user-plus"></i> {{ t.get("addfriend", "Add friend") }}</button>
-                        </form>
-                        {% endif %}
-                        <form method="post" action="/social/block/{{ s.id }}" data-nav="soft">
-                            <button class="linkbtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-ban"></i></button>
-                        </form>
+                         <div class="empty-state" style="grid-column: 1 / -1;">
+                            <i class="fa-solid fa-users-slash"></i>
+                            <span>{{ t.get("nosuggestions", "No suggestions at the moment.") }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
-                {% else %}
-                 <div class="empty-state" style="grid-column: 1 / -1;">
-                    <i class="fa-solid fa-users-slash"></i>
-                    <span>{{ t.get("nosuggestions", "No suggestions at the moment.") }}</span>
-                </div>
-                {% endfor %}
+                </section>
+                {% endif %}
             </div>
-        </section>
-        {% endif %}
-    </main>
+        </main>
+    </div>
     <script src="/pc/app.js"></script>
 </body>
 </html>
-

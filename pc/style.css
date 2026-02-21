@@ -175,7 +175,7 @@ a:hover {
 .authwrap {
     max-width: 450px;
     width: 100%;
-    margin: -65px auto 0 auto; /* Adjust for centered auth on a blank page */
+    margin: -65px auto 0 auto; 
     place-self: center;
     padding-top: 65px;
 }
@@ -300,7 +300,7 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--line);
 }
 
-/* --- Modal --- */
+/* --- KUSURSUZ MODAL TASARIMI --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -314,21 +314,47 @@ input:focus, select:focus, textarea:focus {
 
 .modal {
     position: fixed;
-    top: 70px;
-    left: 25px;
-    background: var(--panel);
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: none;
     z-index: 1001;
-    min-width: 220px;
-    padding: 8px;
-    animation: fadeIn 0.2s ease-out;
+    animation: fadeInModal 0.2s ease-out;
+    pointer-events: none; /* Bu sınıf görünmez bir taşıyıcıdır, tıklamaları engellemez */
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
+/* Sol alttan açılan profil menüsü için özel sıfırlama */
+#profileModal.modal {
+    transform: none !important;
+}
+#profileModal .modal-content {
+    animation: fadeInProfile 0.2s ease-out;
+}
+
+/* Tüm görsel yapıları bu içerik kapsayıcısına taşıdık */
+.modal-content {
+    pointer-events: auto; /* Tıklanabilir alan */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--panel);
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    padding: 12px;
+    min-width: 250px;
+    max-height: 90vh; 
+    overflow-y: auto;
+}
+
+/* Animasyonlar */
+@keyframes fadeInModal {
+    from { opacity: 0; transform: translate(-50%, -45%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes fadeInProfile {
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -337,11 +363,6 @@ input:focus, select:focus, textarea:focus {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.modal-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
 .cardrow { 
     display:flex; 
     justify-content:space-between; 
@@ -390,6 +411,52 @@ input:focus, select:focus, textarea:focus {
     padding: 5px 8px;
 }
 
+/* --- Context Menu --- */
+.context-menu {
+    position: fixed;
+    background: rgba(var(--panel-rgb), 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    padding: 8px;
+    min-width: 200px;
+    z-index: 999999;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ctx-item {
+    padding: 10px 15px;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.ctx-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--primary);
+    transition: 0.2s;
+}
+
+.ctx-item:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.ctx-item:hover i {
+    color: #fff;
+}
+
 /* --- Utilities & Misc --- */
 .error {
     color: #e53e3e;
@@ -398,4 +465,3 @@ input:focus, select:focus, textarea:focus {
     border-radius: 8px;
     text-align: center;
 }
-

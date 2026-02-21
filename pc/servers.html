@@ -288,7 +288,7 @@
             {% for s in mine %}
             <div class="rail-btn-wrapper">
                 <a href="/servers/{{ s[0] }}" data-nav="soft" title="{{ s[1] }}">
-                    <img src="{{ s[2] if s[2] else '/pc/avatar.svg' }}" class="rail-avatar" alt="">
+                    <img src="{{ '/media/' + s[2] if s[2] else '/pc/avatar.svg' }}" class="rail-avatar" alt="">
                 </a>
             </div>
             {% endfor %}
@@ -316,7 +316,7 @@
                 <div class="server-grid">
                     {% for s in mine %}
                     <a href="/servers/{{ s[0] }}" data-nav="soft" class="server-card">
-                        <img src="{{ s[2] if s[2] else '/pc/avatar.svg' }}" class="avatar" alt="">
+                        <img src="{{ '/media/' + s[2] if s[2] else '/pc/avatar.svg' }}" class="avatar" alt="">
                         <strong>{{ s[1] }}</strong>
                         <span class="server-tag">Kayıtlı</span>
                     </a>

@@ -114,6 +114,13 @@ def emit(*userids: int) -> None:
                 EVENT_VERSIONS[int(uid)] += 1
 
 
+def emit_server(serverid: int) -> None:
+    members = servermembers(serverid)
+    if members:
+        uids = [m[0] for m in members]
+        emit(*uids)
+
+
 def eventversion(userid: int) -> int:
     with EVENT_LOCK:
         return int(EVENT_VERSIONS.get(int(userid), 0))
@@ -292,7 +299,6 @@ def savemedium(file, kind: str) -> tuple[str, int]:
 
 
 def dmpanel(meid: int):
-    # Show existing DM peers first, then friends without an active conversation.
     ids = dmpeers(meid)
     for fid in friendids(meid):
         if fid not in ids:
@@ -404,27 +410,39 @@ def candom(meid: int, peer: int) -> bool:
     return peer in ids
 
 
+@app.route("/api/nav")
+def apinav():
+    me = currentaccount()
+    if not me:
+        return {"ok": False}
+    mine, _ = serverlist(me[0])
+    servers = [{"id": s[0], "name": s[1], "avatar": smallavatar(s[2])} for s in mine]
+    return {"ok": True, "servers": servers, "avatar": avatarurl(me)}
+
+
 @app.route("/home")
 def home():
     current = userlanguage()
     if not current:
         return redirect(url_for("choose"))
+        
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+        
     content = texts(current)
     ctx = navcontext(content, current)
-    if currentaccount():
-        s, p = socialcards(currentaccount()[0])
-        ctx["suggestions"] = s
-        ctx["pending"] = p
-        dmp = []
-        for rid, sid in pendingdmreceived(currentaccount()[0]):
-            u = accountbyid(sid)
-            if u:
-                dmp.append({"requestid": rid, "id": sid, "username": u[1], "avatar": smallavatar(u[3])})
-        ctx["dmpending"] = dmp
-    else:
-        ctx["suggestions"] = []
-        ctx["pending"] = []
-        ctx["dmpending"] = []
+    
+    s, p = socialcards(account[0])
+    ctx["suggestions"] = s
+    ctx["pending"] = p
+    dmp = []
+    for rid, sid in pendingdmreceived(account[0]):
+        u = accountbyid(sid)
+        if u:
+            dmp.append({"requestid": rid, "id": sid, "username": u[1], "avatar": smallavatar(u[3])})
+    ctx["dmpending"] = dmp
+    
     return render_template(viewfile("home.html"), **ctx)
 
 
@@ -437,6 +455,8 @@ def root():
 def choose():
     if request.method == "POST":
         savechoice(request.form.get("language", "en"))
+        if not currentaccount():
+            return redirect(url_for("login"))
         return redirect(url_for("home"))
     return render_template(viewfile("language.html"))
 
@@ -444,6 +464,8 @@ def choose():
 @app.route("/set/<code>")
 def setlanguage(code: str):
     savechoice(code)
+    if not currentaccount():
+        return redirect(url_for("login"))
     return redirect(url_for("home"))
 
 
@@ -718,8 +740,6 @@ def dmstream(peer: int):
 
     convid = conversation(me[0], peer)
     last = int(request.args.get("last", "0"))
-    # Failsafe: if client starts with 0, start from current tail to avoid
-    # update-refresh loops on existing conversations.
     if last <= 0:
         last = latestentryid(convid)
 
@@ -784,6 +804,17 @@ def socialrequest(target: int):
     me = currentaccount()
     if me and me[0] != target and not isblocked(me[0], target) and not isblocked(target, me[0]) and not arefriends(me[0], target):
         sendrequest(me[0], target)
+        emit(me[0], target)
+    return redirect(url_for("home"))
+
+
+@app.route("/social/revoke/<int:target>", methods=["POST"])
+def socialrevoke(target: int):
+    me = currentaccount()
+    if me:
+        from core.database import connect
+        with connect("social") as db:
+            db.execute("DELETE FROM friend_requests WHERE senderid = ? AND receiverid = ?", (me[0], target))
         emit(me[0], target)
     return redirect(url_for("home"))
 
@@ -953,6 +984,7 @@ def servers():
                     except Exception:
                         avatar = ""
                 sid = servercreate(me[0], name, avatar, visibility, joinmode, code)
+                emit(me[0])
                 return redirect(url_for("serverdetail", serverid=sid))
         if mode == "join":
             code = request.form.get("joincode", "").strip()
@@ -965,7 +997,7 @@ def servers():
 
                 with connect("servers") as db:
                     target = db.execute(
-                        "SELECT id, ownerid, name, avatar, visibility, joinmode, joincode, visibleperms, writeperms, shareperms FROM servers WHERE joincode = ?",
+                        "SELECT id, ownerid, name, avatar, visibility, joinmode, joincode, visibleperms, writeperms, shareperms FROM servers WHERE lower(joincode) = lower(?)",
                         (code,),
                     ).fetchone()
             if not target:
@@ -973,11 +1005,55 @@ def servers():
             else:
                 if target[5] == "approval":
                     serverjoinrequest(target[0], me[0])
+                    emit_server(target[0])
                 else:
                     serverjoin(target[0], me[0])
+                    emit_server(target[0])
                 return redirect(url_for("serverdetail", serverid=target[0]))
     mine, publics = serverlist(me[0])
     return render_template(viewfile("servers.html"), mine=mine, publics=publics, error=error, **navcontext(content, current))
+
+
+# --- DAVET LİNKİ (URL) İLE SUNUCUYA KATILMA ROTASI ---
+@app.route("/join/<code>", methods=["GET", "POST"])
+def join_by_code(code: str):
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    me = currentaccount()
+    if not me:
+        return redirect(url_for("login"))
+    content = texts(current)
+
+    from core.database import connect
+    with connect("servers") as db:
+        target = db.execute(
+            "SELECT id, name, avatar, joinmode FROM servers WHERE lower(joincode) = lower(?)",
+            (code,),
+        ).fetchone()
+
+    if not target:
+        return redirect(url_for("servers"))
+
+    if request.method == "POST":
+        action = request.form.get("action", "").strip().lower()
+        if action != "join":
+            return redirect(url_for("servers"))
+        if not serverismember(target[0], me[0]):
+            if target[3] == "approval":
+                serverjoinrequest(target[0], me[0])
+                emit_server(target[0])
+            else:
+                serverjoin(target[0], me[0])
+                emit_server(target[0])
+        return redirect(url_for("serverdetail", serverid=target[0]))
+
+    return render_template(
+        viewfile("joinconfirm.html"),
+        invitecode=code,
+        server={"id": target[0], "name": target[1], "avatar": smallavatar(target[2]), "joinmode": target[3]},
+        **navcontext(content, current),
+    )
 
 
 @app.route("/servers/<int:serverid>")
@@ -1019,6 +1095,7 @@ def serverdetail(serverid: int):
         members=members,
         canmanageroles=hasserverperm(server, me[0], "manageroles"),
         canmanagechannels=hasserverperm(server, me[0], "managechannels"),
+        myid=me[0],
         **navcontext(content, current),
     )
 
@@ -1028,6 +1105,7 @@ def serverjoinaccept(joinid: int):
     me = currentaccount()
     if me:
         serveraccept(joinid, me[0])
+        emit(me[0])
     return redirect(url_for("servers"))
 
 
@@ -1038,7 +1116,49 @@ def serverjoinreject(joinid: int):
         from core.database import serverreject
 
         serverreject(joinid, me[0])
+        emit(me[0])
     return redirect(url_for("servers"))
+
+
+@app.route("/servers/<int:serverid>/leave", methods=["POST"])
+def serverleave(serverid: int):
+    me = currentaccount()
+    if me:
+        from core.database import connect
+        with connect("servers") as db:
+            owner = db.execute("SELECT ownerid FROM servers WHERE id = ?", (serverid,)).fetchone()
+            if owner and owner[0] != me[0]:
+                db.execute("DELETE FROM server_members WHERE serverid = ? AND userid = ?", (serverid, me[0]))
+        emit(me[0])
+        emit_server(serverid)
+    return redirect(url_for("servers"))
+
+
+@app.route("/servers/<int:serverid>/channels/<int:channelid>/delete", methods=["POST"])
+def deletechannel(serverid: int, channelid: int):
+    me = currentaccount()
+    if me:
+        server = serverbyid(serverid)
+        if hasserverperm(server, me[0], "managechannels"):
+            from core.database import connect
+            with connect("servers") as db:
+                db.execute("DELETE FROM server_channels WHERE id = ? AND serverid = ?", (channelid, serverid))
+            emit_server(serverid)
+    return redirect(url_for("serverdetail", serverid=serverid))
+
+
+@app.route("/servers/<int:serverid>/categories/<int:categoryid>/delete", methods=["POST"])
+def deletecategory(serverid: int, categoryid: int):
+    me = currentaccount()
+    if me:
+        server = serverbyid(serverid)
+        if hasserverperm(server, me[0], "managechannels"):
+            from core.database import connect
+            with connect("servers") as db:
+                db.execute("DELETE FROM server_categories WHERE id = ? AND serverid = ?", (categoryid, serverid))
+                db.execute("UPDATE server_channels SET categoryid = 0 WHERE categoryid = ? AND serverid = ?", (categoryid, serverid))
+            emit_server(serverid)
+    return redirect(url_for("serverdetail", serverid=serverid))
 
 
 @app.route("/servers/<int:serverid>/roles/create", methods=["POST"])
@@ -1067,6 +1187,7 @@ def createrole(serverid: int):
         "manageroles": request.form.get("perm_manageroles") == "1",
     }
     servercreaterole(serverid, name, json.dumps(perms))
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1094,6 +1215,7 @@ def editrole(serverid: int, roleid: int):
         "manageroles": request.form.get("perm_manageroles") == "1",
     }
     serverupdaterole(roleid, serverid, name, json.dumps(perms))
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1107,6 +1229,7 @@ def memberrole(serverid: int, userid: int):
         return redirect(url_for("serverdetail", serverid=serverid))
     roleid = int(request.form.get("roleid", "0"))
     serverassignrole(serverid, userid, roleid)
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1122,6 +1245,7 @@ def createcategory(serverid: int):
     kind = request.form.get("kind", "text")
     if name:
         servercreatecategory(serverid, name, kind)
+        emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1134,6 +1258,7 @@ def editcategory(serverid: int, categoryid: int):
     if not hasserverperm(server, me[0], "managechannels"):
         return redirect(url_for("serverdetail", serverid=serverid))
     serverupdatecategory(serverid, categoryid, request.form.get("name", "").strip(), request.form.get("kind", "text"))
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1158,6 +1283,7 @@ def createchannel(serverid: int):
         writeperms=parseids(request.form.getlist("writeperms")),
         shareperms=parseids(request.form.getlist("shareperms")),
     )
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1180,6 +1306,7 @@ def editchannel(serverid: int, channelid: int):
         writeperms=parseids(request.form.getlist("writeperms")),
         shareperms=parseids(request.form.getlist("shareperms")),
     )
+    emit_server(serverid)
     return redirect(url_for("serverdetail", serverid=serverid))
 
 
@@ -1200,6 +1327,9 @@ def channelview(serverid: int, channelid: int):
         return redirect(url_for("serverdetail", serverid=serverid))
     if not canchannel(server, channel, me[0], "view"):
         return redirect(url_for("serverdetail", serverid=serverid))
+    
+    roles = serverroles(serverid)
+    
     error = ""
     if request.method == "POST":
         if not canchannel(server, channel, me[0], "write"):
@@ -1213,6 +1343,7 @@ def channelview(serverid: int, channelid: int):
                     error = content.get("errorcontentmode", "This channel has content restriction")
                 else:
                     addserverentry(serverid, channelid, me[0], "text", text, "", 0)
+                    emit_server(serverid)
             if not error and upload and upload.filename:
                 if not canchannel(server, channel, me[0], "share"):
                     error = content.get("errornopermshare", "No file sharing permission")
@@ -1222,6 +1353,7 @@ def channelview(serverid: int, channelid: int):
                         if cm in {"image", "video", "audio"} and cm != kind:
                             raise ValueError("contentmode")
                         addserverentry(serverid, channelid, me[0], kind, "", rel, size)
+                        emit_server(serverid)
                     except ValueError as ex:
                         if str(ex) == "contentmode":
                             error = content.get("errorcontentmode", "This channel has content restriction")
@@ -1243,6 +1375,7 @@ def channelview(serverid: int, channelid: int):
         if e[1] not in users:
             a = accountbyid(e[1])
             users[e[1]] = a[1] if a else "user"
+            
     return render_template(
         viewfile("channel.html"),
         server=server,
@@ -1251,9 +1384,13 @@ def channelview(serverid: int, channelid: int):
         users=users,
         categories=cats,
         channels=chans,
+        roles=roles,
         error=error,
+        myid=me[0],
         canwrite=canchannel(server, channel, me[0], "write"),
         canshare=canchannel(server, channel, me[0], "share"),
+        canmanagechannels=hasserverperm(server, me[0], "managechannels"),
+        canmanageroles=hasserverperm(server, me[0], "manageroles"),
         **navcontext(content, current),
     )
 
@@ -1276,6 +1413,10 @@ def voicechannel(serverid: int, channelid: int):
     if not canchannel(server, channel, me[0], "view"):
         return redirect(url_for("serverdetail", serverid=serverid))
 
+    roles = serverroles(serverid)
+    cats = servercategories(serverid)
+    chans = [c for c in serverchannels(serverid) if canchannel(server, c, me[0], "view")]
+
     voiceping(serverid, channelid, me[0], nowiso())
     cutoff = (datetime.now(timezone.utc) - VOICE_WINDOW).isoformat()
     voicecleanup(serverid, channelid, cutoff)
@@ -1284,7 +1425,20 @@ def voicechannel(serverid: int, channelid: int):
         a = accountbyid(uid)
         if a:
             users.append({"id": uid, "username": a[1], "avatar": smallavatar(a[3])})
-    return render_template(viewfile("voice.html"), server=server, channel=channel, users=users, **navcontext(content, current))
+            
+    return render_template(
+        viewfile("voice.html"), 
+        server=server, 
+        channel=channel, 
+        users=users,
+        categories=cats,
+        channels=chans,
+        roles=roles,
+        myid=me[0],
+        canmanagechannels=hasserverperm(server, me[0], "managechannels"),
+        canmanageroles=hasserverperm(server, me[0], "manageroles"),
+        **navcontext(content, current)
+    )
 
 
 @app.route("/voice/ping/<int:serverid>/<int:channelid>", methods=["POST"])
@@ -1353,8 +1507,3 @@ def voicestream(serverid: int, channelid: int):
             time.sleep(1)
 
     return Response(gen(), mimetype="text/event-stream")
-
-
-
-
-

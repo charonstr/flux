@@ -5,6 +5,7 @@
   let dmRefreshing = false;
   let navMask = null;
   let lastEventVersion = 0;
+  let pullRefreshInit = false;
 
   function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -19,9 +20,15 @@
     localStorage.setItem('theme', mode);
 
     const styles = getComputedStyle(document.body);
+    const bgColor = styles.getPropertyValue('--bg').trim();
+    const lineColor = styles.getPropertyValue('--line').trim();
+    const textColor = styles.getPropertyValue('--text').trim();
     const panelColor = styles.getPropertyValue('--panel').trim();
     const primaryColor = styles.getPropertyValue('--primary').trim();
     
+    document.documentElement.style.setProperty('--bg-rgb', hexToRgb(bgColor));
+    document.documentElement.style.setProperty('--line-rgb', hexToRgb(lineColor));
+    document.documentElement.style.setProperty('--text-rgb', hexToRgb(textColor));
     document.documentElement.style.setProperty('--panel-rgb', hexToRgb(panelColor));
     document.documentElement.style.setProperty('--primary-rgb', hexToRgb(primaryColor));
   }
@@ -290,6 +297,64 @@
     initRecorder();
     initEventStream();
     startPresence();
+    initPullToRefresh();
+  }
+
+  function initPullToRefresh() {
+    if (pullRefreshInit) return;
+    pullRefreshInit = true;
+
+    let startY = 0;
+    let pulling = false;
+    let triggered = false;
+    const threshold = 95;
+
+    let indicator = document.getElementById('pullRefresh');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'pullRefresh';
+      indicator.innerHTML = '<i class="fa-solid fa-rotate"></i><span>Yenilemek için çek</span>';
+      document.body.appendChild(indicator);
+    }
+
+    const activeScrollable = () => {
+      return document.querySelector('.chatbox, .chat-messages, .server-main, main');
+    };
+
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || !e.touches.length) return;
+      const sc = activeScrollable();
+      const top = sc ? sc.scrollTop <= 0 : window.scrollY <= 0;
+      if (!top) return;
+      startY = e.touches[0].clientY;
+      pulling = true;
+      triggered = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!pulling || !e.touches || !e.touches.length) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy <= 0) return;
+      if (dy > 8) indicator.classList.add('visible');
+      if (dy >= threshold && !triggered) {
+        triggered = true;
+        indicator.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i><span>Yenileniyor...</span>';
+        showNavMask();
+        softNavigate(window.location.href, true)
+          .catch(() => { window.location.reload(); })
+          .finally(() => {
+            indicator.classList.remove('visible');
+            indicator.innerHTML = '<i class="fa-solid fa-rotate"></i><span>Yenilemek için çek</span>';
+            pulling = false;
+            triggered = false;
+          });
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      if (!triggered) indicator.classList.remove('visible');
+      pulling = false;
+    }, { passive: true });
   }
 
   function initEventStream() {
@@ -348,6 +413,11 @@
 
   window.addEventListener('popstate', () => window.location.reload());
   window.addEventListener('beforeunload', () => showNavMask());
-  document.addEventListener('DOMContentLoaded', initTheme);
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    if (!document.querySelector('.bg-texture')) {
+      document.body.insertAdjacentHTML('afterbegin', '<div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>');
+    }
+  });
   bind();
 })();

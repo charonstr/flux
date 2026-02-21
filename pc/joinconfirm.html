@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Davet Onayı - Euphorium</title>
+    <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { margin: 0; min-height: 100vh; }
+        .server-shell { min-height: 100vh; display: grid; grid-template-columns: 85px 1fr; }
+        .server-main { display: grid; place-items: center; padding: 24px; }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.2; }
+        .orb-1 { width: 42vw; height: 42vw; background: var(--primary); top: -15%; left: -12%; }
+        .orb-2 { width: 36vw; height: 36vw; background: #22c55e; bottom: -12%; right: -10%; }
+        .join-card { width: min(560px, 100%); background: rgba(var(--panel-rgb), 0.72); border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 20px; backdrop-filter: blur(18px); padding: 28px; }
+        .server-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .server-head img { width: 64px; height: 64px; border-radius: 18px; object-fit: cover; border: 2px solid rgba(var(--primary-rgb), 0.35); }
+        .server-head h1 { margin: 0; font-size: 1.3rem; }
+        .hint { color: var(--muted); margin-bottom: 16px; }
+        .invite-code { display: inline-flex; align-items: center; gap: 8px; background: rgba(var(--bg-rgb), 0.45); border: 1px dashed rgba(var(--primary-rgb), 0.5); border-radius: 10px; padding: 8px 12px; margin-bottom: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .actions .pickbtn, .actions .linkbtn { min-width: 130px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="server-shell">
+        <aside class="server-rail"></aside>
+        <main class="server-main">
+            <section class="join-card">
+                <div class="server-head">
+                    <img src="{{ server.avatar }}" alt="server avatar">
+                    <div>
+                        <h1>{{ server.name }}</h1>
+                        <div class="hint">Bu sunucuya katılmak istiyor musun?</div>
+                    </div>
+                </div>
+                <div class="invite-code"><i class="fa-solid fa-link"></i> {{ invitecode }}</div>
+                <form method="post" class="actions" data-nav="soft">
+                    <button type="submit" name="action" value="join" class="pickbtn"><i class="fa-solid fa-check"></i> Katıl</button>
+                    <button type="submit" name="action" value="cancel" class="linkbtn"><i class="fa-solid fa-xmark"></i> İptal</button>
+                </form>
+            </section>
+        </main>
+    </div>
+    <script src="/pc/app.js"></script>
+</body>
+</html>
