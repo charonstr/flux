@@ -4,45 +4,55 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ t.get("casino", "Casino") }} - Euphorium</title>
-    <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .casino-wrap { max-width: 1200px; margin: 0 auto; }
-        .casino-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-        .box { background: rgba(var(--panel-rgb), 0.74); border: 1px solid rgba(var(--line-rgb), 0.55); border-radius: 16px; padding: 18px; min-height: 220px; }
+        .casino-wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .casino-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+        .box { background: linear-gradient(145deg, rgba(var(--panel-rgb), 0.9), rgba(var(--panel-rgb), 0.6)); border: 1px solid rgba(var(--primary-rgb), 0.2); border-radius: 20px; padding: 24px; min-height: 220px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(10px); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .box:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); border-color: rgba(var(--primary-rgb), 0.4); }
         .box-wide { grid-column: 1 / -1; min-height: auto; }
-        .box h2 { margin: 0 0 14px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+        .box h2 { margin: 0 0 20px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
+        .box h2 i { color: var(--primary); font-size: 1.4rem; }
         .muted { color: var(--muted); }
-        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-        .stat { border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 12px; padding: 10px; }
-        .stat .label { color: var(--muted); font-size: 0.78rem; }
-        .stat .value { font-size: 1.05rem; font-weight: 700; margin-top: 4px; }
-        .leader-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
-        .leader-tabs button { border: 1px solid rgba(var(--line-rgb), 0.7); background: rgba(var(--bg-rgb), 0.4); color: var(--text); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
-        .leader-tabs button.active { border-color: rgba(var(--primary-rgb), 0.8); color: var(--primary); }
-        .row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.35); }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+        .stat { background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.4); border-radius: 16px; padding: 16px; text-align: center; transition: background 0.2s ease; }
+        .stat:hover { background: rgba(var(--bg-rgb), 0.8); }
+        .stat .label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat .value { font-size: 1.4rem; font-weight: 800; margin-top: 8px; color: var(--text); }
+        .leader-tabs { display: flex; gap: 10px; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 999px; width: fit-content; }
+        .leader-tabs button { background: transparent; border: none; color: var(--muted); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .leader-tabs button.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4); }
+        .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.2); transition: padding 0.2s ease; }
+        .row:hover { padding-left: 8px; padding-right: 8px; background: rgba(var(--line-rgb), 0.1); border-radius: 8px; border-bottom-color: transparent; }
         .row:last-child { border-bottom: 0; }
-        .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .amt { font-weight: 700; }
-        .profile-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .profile-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(var(--line-rgb), 0.7); }
-        .xp-track { margin-top: 8px; height: 10px; border-radius: 999px; background: rgba(var(--line-rgb), 0.65); overflow: hidden; }
-        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); }
-        .rank-icon { width: 18px; text-align: center; margin-right: 7px; }
-        .win { color: #16a34a; }
-        .lose { color: #dc2626; }
-        .empty { color: var(--muted); padding: 12px 0; }
-        .rewards-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
-        .step { border: 1px solid rgba(var(--line-rgb), 0.7); border-radius: 12px; padding: 8px; text-align: center; background: rgba(var(--bg-rgb), 0.25); transition: all .2s ease; }
-        .step .day { font-size: .75rem; color: var(--muted); }
-        .step .amt { font-weight: 700; margin-top: 4px; }
-        .step.today { border-color: rgba(var(--primary-rgb), 0.9); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2) inset; }
-        .step.claimed { background: rgba(var(--text-rgb), 0.2); opacity: .65; }
-        .reward-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
-        .reward-msg { color: var(--muted); font-size: .9rem; min-height: 22px; }
-        .claim-pop { position: fixed; right: 24px; bottom: 24px; background: rgba(16, 185, 129, .14); border: 1px solid rgba(16,185,129,.45); color: #059669; padding: 10px 14px; border-radius: 999px; opacity: 0; transform: translateY(8px); transition: all .25s ease; pointer-events: none; z-index: 9999; }
+        .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .amt { font-weight: 800; }
+        .profile-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; background: rgba(0,0,0,0.15); padding: 16px; border-radius: 16px; }
+        .profile-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
+        .xp-track { margin-top: 12px; height: 12px; border-radius: 999px; background: rgba(0,0,0,0.3); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .rank-icon { width: 24px; text-align: center; }
+        .win { color: #10b981; }
+        .lose { color: #ef4444; }
+        .empty { color: var(--muted); padding: 20px 0; text-align: center; font-style: italic; }
+        .rewards-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+        .step { border: 2px solid rgba(var(--line-rgb), 0.3); border-radius: 16px; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); transition: all 0.3s ease; }
+        .step .day { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+        .step .amt { font-weight: 800; margin-top: 8px; font-size: 1.1rem; color: #f59e0b; }
+        .step.today { border-color: #10b981; background: rgba(16, 185, 129, 0.1); transform: scale(1.05); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2); }
+        .step.claimed { border-color: rgba(var(--line-rgb), 0.1); background: rgba(0,0,0,0.4); opacity: 0.5; }
+        .reward-actions { margin-top: 20px; display: flex; gap: 16px; align-items: center; justify-content: center; }
+        .reward-msg { color: var(--muted); font-size: 0.95rem; font-weight: 500; }
+        .claim-pop { position: fixed; right: 30px; bottom: 30px; background: #10b981; color: #fff; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); font-weight: 700; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 9999; }
         .claim-pop.show { opacity: 1; transform: translateY(0); }
-        @media (max-width: 920px) { .casino-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } }
+        .game-links { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .game-links a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; border-radius: 16px; background: rgba(0,0,0,0.3); text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.2rem; border: 1px solid rgba(var(--line-rgb), 0.2); transition: all 0.3s ease; }
+        .game-links a i { font-size: 2.5rem; color: var(--primary); transition: transform 0.3s ease; }
+        .game-links a:hover { background: rgba(var(--primary-rgb), 0.15); border-color: var(--primary); transform: translateY(-4px); }
+        .game-links a:hover i { transform: scale(1.1) rotate(5deg); }
+        @media (max-width: 920px) { .casino-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } .rewards-steps { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 480px) { .rewards-steps { grid-template-columns: repeat(2, 1fr); } .game-links { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -63,26 +73,29 @@
                 <h2><i class="fa-solid fa-chart-simple"></i> {{ t.get("casino_stats", "Kumar istatistikleri") }}</h2>
                 <div class="profile-head">
                     <img id="profileAvatar" class="profile-avatar" src="{{ avatar }}" alt="avatar">
-                    <div>
-                        <div id="profileName">{{ username }}</div>
-                        <div class="muted"><span id="profileLevel">1</span> | <span id="profileBalance">0</span></div>
+                    <div style="flex: 1;">
+                        <div id="profileName" style="font-size: 1.2rem; font-weight: 700; margin-bottom: 4px;">{{ username }}</div>
+                        <div class="muted" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span id="profileLevel">1</span>
+                            <span id="profileBalance" style="color: #f59e0b; font-weight: 700;">0</span>
+                        </div>
                     </div>
                 </div>
                 <div class="summary-grid">
-                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanc") }}</div><div id="sumWin" class="value">0</div></div>
-                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayip") }}</div><div id="sumLose" class="value">0</div></div>
-                    <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win lose orani") }}</div><div id="sumRatio" class="value">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanc") }}</div><div id="sumWin" class="value win">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayip") }}</div><div id="sumLose" class="value lose">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win/Lose") }}</div><div id="sumRatio" class="value">0</div></div>
                 </div>
                 <div class="xp-track"><div id="xpFill" class="xp-fill" style="width:0%"></div></div>
-                <div class="muted" id="xpText" style="margin-top:6px;">0 / 0 XP</div>
+                <div class="muted" id="xpText" style="margin-top:10px; text-align: center; font-size: 0.85rem; font-weight: 600;">0 / 0 XP</div>
             </section>
 
             <section class="box">
                 <h2><i class="fa-solid fa-crown"></i> {{ t.get("casino_leaderboard", "En cok kazananlar") }}</h2>
                 <div class="leader-tabs">
-                    <button id="tabDaily" class="active" type="button">Gunluk</button>
-                    <button id="tabWeekly" type="button">Haftalik</button>
-                    <button id="tabMonthly" type="button">Aylik</button>
+                    <button id="tabDaily" class="active" type="button">Günlük</button>
+                    <button id="tabWeekly" type="button">Haftalık</button>
+                    <button id="tabMonthly" type="button">Aylık</button>
                 </div>
                 <div id="leaderRows" class="muted">Kimse yok</div>
             </section>
@@ -96,23 +109,28 @@
                 <h2><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("casino_last_games", "Son 10 oyun") }}</h2>
                 <div id="gameRows" class="muted">Kimse yok</div>
             </section>
-            <section class="box">
-                <h2><i class="fa-solid fa-gamepad"></i> Games</h2>
-                <a href="/casino/blackjack" data-nav="soft" class="linkbtn"><i class="fa-solid fa-clover"></i> Blackjack</a>
-                <a href="/casino/roulette" data-nav="soft" class="linkbtn"><i class="fa-solid fa-bullseye"></i> Roulette</a>
+
+            <section class="box box-wide" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(var(--panel-rgb), 0.8));">
+                <h2><i class="fa-solid fa-gamepad"></i> Oyunlar</h2>
+                <div class="game-links">
+                    <a href="/casino/blackjack" data-nav="soft"><i class="fa-solid fa-cards"></i> Blackjack</a>
+                    <a href="/casino/roulette" data-nav="soft"><i class="fa-solid fa-bullseye"></i> Roulette</a>
+                    <a href="/casino/multiplier" data-nav="soft"><i class="fa-solid fa-chart-line"></i> Carpan</a>
+                </div>
             </section>
+
             <section class="box box-wide">
-                <h2><i class="fa-solid fa-gift"></i> Daily reward</h2>
+                <h2><i class="fa-solid fa-gift"></i> Günlük Ödül</h2>
                 <div id="rewardSteps" class="rewards-steps"></div>
                 <div class="reward-actions">
-                    <button id="claimBtn" class="pickbtn" type="button" disabled>Claim today</button>
-                    <div id="rewardMsg" class="reward-msg">Loading</div>
+                    <button id="claimBtn" class="pickbtn" type="button" disabled style="padding: 12px 32px; font-size: 1.1rem; border-radius: 999px;">Ödülü Al</button>
+                    <div id="rewardMsg" class="reward-msg">Yükleniyor...</div>
                 </div>
             </section>
         </div>
     </main>
     <div id="claimPop" class="claim-pop">+0 gold</div>
-    <script src="/pc/app.js"></script>
+    <script src="/pc/js/app.js"></script>
     <script>
         (function () {
             let leaders = { daily_top5: [], weekly_top5: [], monthly_top5: [] };
@@ -127,7 +145,7 @@
                 const rows = leaders[currentTab] || [];
                 if (!rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
                 wrap.innerHTML = rows.map(function (r) {
-                    return '<div class="row"><div class="name">' + esc(r.username) + '</div><div class="amt">+' + Number(r.amount || 0) + '</div></div>';
+                    return '<div class="row"><div class="name"><i class="fa-solid fa-user-astronaut" style="color:var(--muted);font-size:0.8rem;"></i> ' + esc(r.username) + '</div><div class="amt win">+' + Number(r.amount || 0) + '</div></div>';
                 }).join("");
             }
 
@@ -135,11 +153,11 @@
                 const wrap = document.getElementById("richRows");
                 if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
                 wrap.innerHTML = rows.map(function (r, i) {
-                    let icon = '<i class="fa-solid fa-circle rank-icon"></i>';
-                    if (i === 0) icon = '<i class="fa-solid fa-gem rank-icon" style="color:#60a5fa;"></i>';
-                    if (i === 1) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#f59e0b;"></i>';
-                    if (i === 2) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#b45309;"></i>';
-                    return '<div class="row"><div class="name">' + icon + esc(r.username) + '</div><div class="amt">' + Number(r.balance || 0) + '</div></div>';
+                    let icon = '<i class="fa-solid fa-circle rank-icon" style="color:var(--line-rgb);"></i>';
+                    if (i === 0) icon = '<i class="fa-solid fa-gem rank-icon" style="color:#60a5fa;font-size:1.2rem;text-shadow:0 0 10px rgba(96,165,250,0.5);"></i>';
+                    if (i === 1) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#fcd34d;font-size:1.1rem;"></i>';
+                    if (i === 2) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#b45309;font-size:1rem;"></i>';
+                    return '<div class="row"><div class="name">' + icon + esc(r.username) + '</div><div class="amt" style="color:#f59e0b;"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(r.balance || 0) + '</div></div>';
                 }).join("");
             }
 
@@ -150,7 +168,9 @@
                     const d = Number(g.delta_amount || 0);
                     const cls = d >= 0 ? "win" : "lose";
                     const sign = d >= 0 ? "+" : "";
-                    return '<div class="row"><div class="name">' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
+                    const low = String(g.game_name || "").toLowerCase();
+                    const icon = low.includes("blackjack") ? "fa-cards" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : "fa-bullseye");
+                    return '<div class="row"><div class="name"><i class="fa-solid ' + icon + '"></i> ' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
                 }).join("");
             }
 
@@ -161,8 +181,8 @@
                     if (!data || !data.ok) return;
                     document.getElementById("profileName").textContent = data.profile?.username || "";
                     document.getElementById("profileAvatar").src = data.profile?.avatar || "";
-                    document.getElementById("profileLevel").textContent = "Level " + Number(data.level?.level || 1);
-                    document.getElementById("profileBalance").textContent = "Balance " + Number(data.profile?.balance || 0);
+                    document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level?.level || 1);
+                    document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile?.balance || 0);
                     document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
                     document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
                     document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
@@ -170,7 +190,7 @@
                     const next = Number(data.level?.next_level_xp || 0);
                     const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
                     document.getElementById("xpFill").style.width = pct + "%";
-                    document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAX LEVEL";
+                    document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAKSİMUM SEVİYE";
 
                     leaders = { daily_top5: data.daily_top5 || [], weekly_top5: data.weekly_top5 || [], monthly_top5: data.monthly_top5 || [] };
                     renderLeader();
@@ -193,24 +213,27 @@
                 }
                 wrap.innerHTML = state.days.map(function (d) {
                     const cls = [d.state === "today" ? "today" : "", d.claimed ? "claimed" : ""].join(" ").trim();
-                    return '<div class="step ' + cls + '"><div class="day">Day ' + d.day + '</div><div class="amt">' + Number(d.amount || 0) + '</div></div>';
+                    let icon = '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-top:4px;"></i>';
+                    if(!d.claimed && d.state !== "today") icon = '<i class="fa-solid fa-lock" style="color:var(--muted); margin-top:4px; font-size:0.8rem;"></i>';
+                    if(d.state === "today" && !d.claimed) icon = '<i class="fa-solid fa-gift" style="color:#10b981; margin-top:4px;"></i>';
+                    return '<div class="step ' + cls + '"><div class="day">Gün ' + d.day + '</div><div class="amt"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(d.amount || 0) + '</div><div>' + icon + '</div></div>';
                 }).join("");
                 if (state.days[6]) {
                     const day7 = wrap.children[6];
-                    day7.innerHTML += '<div class="day">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
+                    day7.innerHTML += '<div class="day" style="color:#f59e0b; margin-top:4px;">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
                 }
                 btn.disabled = !state.can_claim_today;
-                msg.textContent = state.can_claim_today ? "Today reward is ready" : "Today already claimed";
+                msg.textContent = state.can_claim_today ? "Bugünün ödülü hazır" : "Bugünün ödülü zaten alındı";
             }
 
             async function loadReward() {
                 const msg = document.getElementById("rewardMsg");
-                msg.textContent = "Loading";
+                msg.textContent = "Yükleniyor...";
                 try {
                     const res = await fetch("/rewards/daily", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
                     if (!data || !data.ok) {
-                        msg.textContent = "Yuklenemedi";
+                        msg.textContent = "Yüklenemedi";
                         return;
                     }
                     renderReward(data);
@@ -224,7 +247,7 @@
                 const btn = document.getElementById("claimBtn");
                 const msg = document.getElementById("rewardMsg");
                 btn.disabled = true;
-                msg.textContent = "Claiming";
+                msg.textContent = "Alınıyor...";
                 try {
                     const res = await fetch("/rewards/daily/claim", {
                         method: "POST",
@@ -232,20 +255,20 @@
                     });
                     const data = await res.json();
                     if (!res.ok || !data.ok) {
-                        msg.textContent = "Claim basarisiz";
+                        msg.textContent = "İşlem başarısız";
                         await loadReward();
                         return;
                     }
                     renderReward(data);
                     const pop = document.getElementById("claimPop");
-                    pop.textContent = "+" + Number(data.claimed_amount || 0) + " gold";
+                    pop.innerHTML = '<i class="fa-solid fa-coins"></i> +' + Number(data.claimed_amount || 0) + " altın kazandın!";
                     pop.classList.add("show");
-                    setTimeout(function () { pop.classList.remove("show"); }, 1300);
+                    setTimeout(function () { pop.classList.remove("show"); }, 2500);
                     await loadCasinoProfile();
-                    msg.textContent = "Claim basarili";
+                    msg.textContent = "Başarıyla alındı";
                 } catch (err) {
                     console.log("daily reward claim error", err);
-                    msg.textContent = "Claim hatasi";
+                    msg.textContent = "Hata oluştu";
                     await loadReward();
                 }
             }
@@ -263,8 +286,8 @@
             document.getElementById("claimBtn").onclick = claimReward;
             loadCasinoProfile();
             loadReward();
+            setInterval(loadCasinoProfile, 15000);
         })();
     </script>
 </body>
 </html>
-

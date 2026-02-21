@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ t.get("casino", "Casino") }} - Euphorium</title>
-    <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .box { border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 12px; padding: 12px; margin-top: 10px; }
@@ -81,6 +81,7 @@
                     <h3>Games</h3>
                     <a href="/casino/blackjack" data-nav="soft" class="linkbtn"><i class="fa-solid fa-clover"></i> Blackjack</a>
                     <a href="/casino/roulette" data-nav="soft" class="linkbtn"><i class="fa-solid fa-bullseye"></i> Roulette</a>
+                    <a href="/casino/multiplier" data-nav="soft" class="linkbtn"><i class="fa-solid fa-chart-line"></i> Carpan</a>
                 </div>
                 <div class="box">
                     <h3>Daily reward</h3>
@@ -94,7 +95,7 @@
         </div>
     </main>
     <div id="claimPop" class="claim-pop">+0 gold</div>
-    <script src="/mobile/app.js"></script>
+    <script src="/mobile/js/app.js"></script>
     <script>
         (function () {
             let leaders = { daily_top5: [], weekly_top5: [], monthly_top5: [] };
@@ -215,6 +216,7 @@
             document.getElementById("claimBtn").onclick = claimReward;
             load();
             loadReward();
+            setInterval(load, 15000);
         })();
     </script>
 </body>

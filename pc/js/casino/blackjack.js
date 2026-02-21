@@ -26,14 +26,56 @@
     let pending = false;
 
     function suitChar(s) { if (s === 'H') return '♥'; if (s === 'D') return '♦'; if (s === 'C') return '♣'; return '♠'; }
-    function cardHtml(c) {
-      if (c.hidden) return '<div class="card back"><i class="fa-solid fa-diamond"></i></div>';
+    
+    function cardHtml(c, forcedRot) {
+      const rot = forcedRot !== undefined ? forcedRot : (Math.random() * 6 - 3).toFixed(1);
+      const rotDeg = rot + 'deg';
+      if (c.hidden) return '<div class="card back" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><i class="fa-brands fa-monero"></i></div>';
       const red = c.suit === 'H' || c.suit === 'D';
-      return '<div class="card ' + (red ? 'red' : 'black') + '"><div class="rank">' + c.rank + '</div><div class="suit">' + suitChar(c.suit) + '</div></div>';
+      const char = suitChar(c.suit);
+      return '<div class="card ' + (red ? 'red' : 'black') + '" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><div class="rank">' + c.rank + '</div><div class="suit">' + char + '</div><div class="suit-small">' + char + '</div></div>';
     }
-    function animateCards(container) {
-      const cards = container.querySelectorAll('.card');
-      cards.forEach(function (card, idx) { setTimeout(function () { card.classList.add('in'); }, idx * 85); });
+
+    // Ortak bir animasyon kuyruğu: Eklenen tüm yeni kartları sırayla tek tek çeker
+    function animateAllCards() {
+      const cards = document.querySelectorAll('.card:not(.in)');
+      cards.forEach(function (card, idx) {
+        setTimeout(function () {
+          card.classList.add('in');
+        }, idx * 150 + 50);
+      });
+    }
+
+    function updateHand(container, hand) {
+      if (!hand || hand.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      if (hand.length < container.children.length) {
+        container.innerHTML = '';
+      }
+
+      hand.forEach(function(card, i) {
+        const existing = container.children[i];
+        if (existing) {
+          const isBack = existing.classList.contains('back');
+          if (isBack && !card.hidden) {
+            // Krupiyenin kapalı kartı açıldığında flip (dönme) animasyonu uygula
+            const oldRot = existing.getAttribute('data-rot');
+            const temp = document.createElement('div');
+            temp.innerHTML = cardHtml(card, oldRot);
+            const newCard = temp.firstChild;
+            newCard.classList.add('in');
+            newCard.classList.add('flip');
+            container.replaceChild(newCard, existing);
+          }
+        } else {
+          // Yeni eklenen kart normal html olarak eklenir, kayma animasyonu animateAllCards ile verilir
+          const temp = document.createElement('div');
+          temp.innerHTML = cardHtml(card);
+          container.appendChild(temp.firstChild);
+        }
+      });
     }
 
     function setControlState() {
@@ -61,10 +103,12 @@
       else if (res === 'lose') resultEl.classList.add('result-lose');
       else if (res === 'push') resultEl.classList.add('result-push');
 
-      dealerWrap.innerHTML = (state.dealer_hand || []).map(cardHtml).join('');
-      playerWrap.innerHTML = (state.player_hand || []).map(cardHtml).join('');
-      animateCards(dealerWrap);
-      animateCards(playerWrap);
+      updateHand(dealerWrap, state.dealer_hand);
+      updateHand(playerWrap, state.player_hand);
+      
+      requestAnimationFrame(function() {
+          animateAllCards();
+      });
       setControlState();
     }
 
@@ -102,7 +146,7 @@
         if (!data.ok) {
           console.log('blackjack error', data);
           if (data.error === 'invalid_bet' || data.error === 'invalid_bet_min') msgEl.textContent = 'Minimum bahis 100';
-          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti asildi';
+          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti aşıldı';
           return null;
         }
         return data.state;
@@ -118,10 +162,12 @@
     }
 
     newBtn.onclick = async function () {
-      msgEl.textContent = 'dealing';
+      msgEl.textContent = 'Kartlar dağıtılıyor...';
       const raw = parseInt(betInput.value || '0', 10);
       const bet = Math.max(Number(limits.min_bet || 100), Math.min(Number(limits.max_bet || 100), Number(raw || 0)));
       betInput.value = String(bet);
+      dealerWrap.innerHTML = '';
+      playerWrap.innerHTML = '';
       const state = await req('/api/casino/blackjack/new', 'POST', { bet: bet });
       if (state) renderState(state);
     };

@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -14,6 +15,7 @@ from werkzeug.utils import secure_filename
 
 from core.config import load
 from core.casino.blackjack import MANAGER as BLACKJACK
+from core.casino.multiplier import MANAGER as MULTIPLIER
 from core.casino.roulette import MANAGER as ROULETTE
 from core.database import (
     acceptdmrequest,
@@ -29,6 +31,7 @@ from core.database import (
     blockuser,
     conversation,
     createaccount,
+    connect,
     dmhistory,
     dmpermission,
     dmpeers,
@@ -589,13 +592,142 @@ def roulettestate():
     return {"ok": True, "state": ROULETTE.get_state(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
 
 
+def _multiplier_settle_atomic(user_id: int, round_id: str, bet_amount: int, payout_amount: int) -> tuple[bool, str]:
+    uid = int(user_id)
+    bet = int(bet_amount or 0)
+    payout = int(payout_amount or 0)
+    rid = str(round_id or "").strip()
+    if uid <= 0 or not rid or bet <= 0 or payout < 0:
+        return False, "invalid_settlement"
+
+    bet_ref = f"multiplier:{rid}:bet"
+    payout_ref = f"multiplier:{rid}:payout"
+    try:
+        with connect("accounts") as db:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT OR IGNORE INTO wallets (user_id, balance) VALUES (?, 0)", (uid,))
+            # Sync wallet from immutable ledger to avoid stale cached balances.
+            row = db.execute("SELECT COALESCE(SUM(amount), 0) FROM ledger WHERE user_id = ?", (uid,)).fetchone()
+            balance = int(row[0]) if row else 0
+            db.execute(
+                "UPDATE wallets SET balance = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+                (balance, uid),
+            )
+            if balance < bet:
+                db.execute("ROLLBACK")
+                return False, "insufficient_balance"
+            db.execute(
+                "INSERT INTO ledger (user_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)",
+                (uid, -bet, "multiplier_bet", "multiplier bet", bet_ref),
+            )
+            db.execute(
+                "INSERT INTO ledger (user_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)",
+                (uid, payout, "multiplier_payout", "multiplier payout", payout_ref),
+            )
+            db.execute(
+                "UPDATE wallets SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+                (payout - bet, uid),
+            )
+            db.execute("COMMIT")
+        return True, ""
+    except sqlite3.IntegrityError:
+        # Idempotent replay safety: if both ledger rows exist, treat as success.
+        with connect("accounts") as db:
+            b = db.execute(
+                "SELECT 1 FROM ledger WHERE user_id = ? AND type = ? AND reference_id = ?",
+                (uid, "multiplier_bet", bet_ref),
+            ).fetchone()
+            p = db.execute(
+                "SELECT 1 FROM ledger WHERE user_id = ? AND type = ? AND reference_id = ?",
+                (uid, "multiplier_payout", payout_ref),
+            ).fetchone()
+        if b and p:
+            return True, ""
+        return False, "settlement_integrity_error"
+    except Exception:
+        return False, "settlement_failed"
+
+
 @app.route("/api/casino/roulette/start", methods=["POST"])
 def roulettestart():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
     initialize_user_economy(me[0])
+    prev = ROULETTE.get_state(me[0])
+    prev_total_bet = int(prev.get("total_bet", 0) or 0)
+    prev_round_id = str(prev.get("round_id", "") or "")
+    prev_state = str(prev.get("state", "") or "")
+    if prev_total_bet > 0 and prev_round_id and prev_state in {"betting_open", "betting_locked"}:
+        applyledger(me[0], prev_total_bet, "roulette_refund", "roulette round cancelled refund", f"roulette:{prev_round_id}:cancel_refund")
     return {"ok": True, "state": ROULETTE.start_round(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+
+
+@app.route("/casino/multiplier")
+def casinomultiplier():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template("core/casino/multiplier.html", **navcontext(content, current))
+
+
+def multiplierconstants(userid: int) -> dict:
+    base = MULTIPLIER.constants()
+    base["balance"] = int(get_balance(userid))
+    return base
+
+
+@app.route("/casino/multiplier/state")
+def multiplierstate():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    return {
+        "ok": True,
+        "state": MULTIPLIER.state(me[0]),
+        "constants": multiplierconstants(me[0]),
+        "balance": int(get_balance(me[0])),
+    }
+
+
+@app.route("/casino/multiplier/play", methods=["POST"])
+def multiplierplay():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    try:
+        bet_amount = int(payload.get("bet_amount", 0) or 0)
+    except Exception:
+        bet_amount = 0
+
+    ok, data = MULTIPLIER.play(me[0], bet_amount, idem, _multiplier_settle_atomic)
+    if ok and not bool(data.get("idempotent_replay")):
+        state = data.get("state", {})
+        bet = int(state.get("bet_amount", 0) or 0)
+        payout = int(state.get("payout_amount", 0) or 0)
+        recordcasinogame(me[0], "multiplier", payout - bet)
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": multiplierconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/casino/multiplier/history")
+def multiplierhistory():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    return {"ok": True, "rows": MULTIPLIER.history(me[0], 10), "balance": int(get_balance(me[0]))}
 
 
 @app.route("/api/casino/roulette/place", methods=["POST"])
@@ -615,7 +747,22 @@ def rouletteplace():
         amount = int(payload.get("amount", 0) or 0)
     except Exception:
         amount = 0
+    if amount > 0 and int(get_balance(me[0])) < amount:
+        return {"ok": False, "error": "insufficient_balance", "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+    before = ROULETTE.get_state(me[0])
+    before_total = int(before.get("total_bet", 0) or 0)
     ok, data = ROULETTE.place_bet(me[0], bet_type, selection, amount, idem)
+    if ok:
+        state = data.get("state", {})
+        round_id = str(state.get("round_id", "") or "")
+        after_total = int(state.get("total_bet", 0) or 0)
+        delta = max(0, after_total - before_total)
+        if delta > 0 and round_id:
+            debit_ref = f"roulette:{round_id}:place:{idem}"
+            if not applyledger(me[0], -delta, "roulette_bet", "roulette bet placed", debit_ref):
+                ROULETTE.undo(me[0])
+                rollback_state = ROULETTE.get_state(me[0])
+                return {"ok": False, "error": "bet_debit_failed", "state": rollback_state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
     code = 200 if ok else 400
     return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
 
@@ -625,7 +772,15 @@ def rouletteundo():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    before = ROULETTE.get_state(me[0])
+    before_total = int(before.get("total_bet", 0) or 0)
+    round_id = str(before.get("round_id", "") or "")
     ok, data = ROULETTE.undo(me[0])
+    if ok:
+        after_total = int((data.get("state") or {}).get("total_bet", 0) or 0)
+        refund = max(0, before_total - after_total)
+        if refund > 0 and round_id:
+            applyledger(me[0], refund, "roulette_refund", "roulette undo refund", f"roulette:{round_id}:undo:{uuid4().hex[:8]}")
     code = 200 if ok else 400
     return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
 
@@ -635,7 +790,12 @@ def rouletteclear():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    before = ROULETTE.get_state(me[0])
+    refund = int(before.get("total_bet", 0) or 0)
+    round_id = str(before.get("round_id", "") or "")
     ok, data = ROULETTE.clear(me[0])
+    if ok and refund > 0 and round_id:
+        applyledger(me[0], refund, "roulette_refund", "roulette clear refund", f"roulette:{round_id}:clear:{uuid4().hex[:8]}")
     code = 200 if ok else 400
     return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
 
@@ -654,17 +814,8 @@ def roulettelock():
         return {"ok": False, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
     state = data.get("state", {})
     total_bet = int(state.get("total_bet", 0) or 0)
-    round_id = str(state.get("round_id", "") or "")
     if total_bet <= 0:
         return {"ok": False, "error": "no_bets", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
-
-    if not bool(state.get("stake_locked")):
-        if get_balance(me[0]) < total_bet:
-            return {"ok": False, "error": "insufficient_balance", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
-        debit_ref = f"roulette:{round_id}:betlock"
-        if not applyledger(me[0], -total_bet, "roulette_bet", "roulette round stake", debit_ref):
-            return {"ok": False, "error": "bet_lock_failed", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
-        state = ROULETTE.mark_stake_locked(me[0])
     return {"ok": True, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
 
 
@@ -1345,7 +1496,7 @@ def projectassets(filename: str):
     return send_from_directory(ROOT / "assets", filename)
 
 
-@app.route("/<zone>/<filename>")
+@app.route("/<zone>/<path:filename>")
 def assets(zone: str, filename: str):
     if zone not in {"pc", "mobile"}:
         abort(404)
