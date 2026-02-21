@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carpan - Euphorium</title>
+  <link rel="stylesheet" href="/pc/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --mx-bg: #0b1220;
+      --mx-panel: #111a2e;
+      --mx-line: #223055;
+      --mx-text: #e5e7eb;
+      --mx-muted: #9ca3af;
+      --mx-gold: #f59e0b;
+      --mx-green: #22c55e;
+      --mx-red: #ef4444;
+      --mx-cyan: #38bdf8;
+    }
+    body { background: radial-gradient(circle at 20% 0%, #18233e 0, #0b1220 55%); color: var(--mx-text); }
+    .mx-wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
+    .mx-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .mx-title { font-size: 1.5rem; font-weight: 900; letter-spacing: 0.6px; margin: 0; }
+    .mx-badge { display: inline-flex; gap: 8px; align-items: center; background: rgba(245, 158, 11, 0.13); border: 1px solid rgba(245, 158, 11, 0.35); color: var(--mx-gold); border-radius: 999px; padding: 10px 14px; font-weight: 800; }
+    .mx-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+    .mx-card { background: linear-gradient(180deg, rgba(17, 26, 46, 0.92), rgba(12, 18, 34, 0.92)); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 16px; padding: 16px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; }
+    
+    /* Reel and Boxes Layout */
+    .mx-reel { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 50px 0; }
+    .mx-box { 
+      min-height: 110px; 
+      border-radius: 12px; 
+      border: 1px solid rgba(56, 189, 248, 0.3); 
+      display: grid; 
+      place-items: center; 
+      font-weight: 900; 
+      font-size: 1.5rem; 
+      background: rgba(10, 17, 34, 0.85); 
+      perspective: 800px; 
+      transform-style: preserve-3d; 
+    }
+    
+    /* Kapalı Durum (Nefes Alma) */
+    .mx-box.locked::before { 
+      content: '?'; 
+      color: #64748b; 
+      font-size: 2.2rem;
+      animation: pulseLocked 2.5s infinite ease-in-out;
+    }
+
+    /* Çarpan Seviyelerine Göre Özel Sınıflar (7 Farklı Renk/Animasyon) */
+    .mx-box.tier-0  { animation: flip0 0.5s cubic-bezier(0.175, 0.885, 0.32, 1) both; }         /* 0x: Gri, Hızlı, Sönük */
+    .mx-box.tier-1  { animation: flip1 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }     /* 1x: Mavi, Standart */
+    .mx-box.tier-2  { animation: flip2 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }     /* 2x: Turkuaz/Su Yeşili */
+    .mx-box.tier-3  { animation: flip3 1.0s cubic-bezier(0.175, 0.885, 0.32, 1.3) both; }       /* 3x-4x: Pembe/Mor */
+    .mx-box.tier-5  { animation: flip5 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.4) both; }       /* 5x-9x: Altın Sarısı, Bekletmeli */
+    .mx-box.tier-10 { animation: flip10 2.2s ease-in-out both; }                                /* 10x-19x: Neon Yeşil, Titremeli Epic */
+    .mx-box.tier-20 { animation: flip20 2.8s ease-in-out both; }                                /* 20x+: Mor/Beyaz Işıklı, Efsanevi */
+
+    .mx-controls { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; margin-top: 16px; }
+    .mx-controls input { min-width: 0; height: 44px; border-radius: 10px; border: 1px solid var(--mx-line); background: #0a1226; color: var(--mx-text); padding: 0 12px; font-weight: 700; }
+    .mx-btn { height: 44px; border: 1px solid rgba(56, 189, 248, 0.35); background: #0f1a33; color: var(--mx-text); border-radius: 10px; padding: 0 16px; font-weight: 800; cursor: pointer; }
+    .mx-btn:hover:not(:disabled) { filter: brightness(1.12); }
+    .mx-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .mx-btn.play { background: linear-gradient(180deg, #0ea5e9, #0369a1); border-color: rgba(125, 211, 252, 0.7); }
+    .mx-state { margin-top: 12px; color: var(--mx-muted); font-size: 0.92rem; min-height: 20px; }
+    .mx-result { display: grid; gap: 8px; }
+    .mx-line { display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(148, 163, 184, 0.3); padding-bottom: 6px; }
+    .mx-line b { font-size: 1.05rem; }
+    .mx-line .gain { color: var(--mx-green); }
+    .mx-line .loss { color: var(--mx-red); }
+    .mx-picks { color: #bfdbfe; font-weight: 700; word-break: break-word; }
+    .mx-result.flash { animation: pulseResult 850ms ease 2; }
+    .mx-result.mega { border: 1px solid rgba(34, 197, 94, 0.65); border-radius: 12px; padding: 10px; background: rgba(34, 197, 94, 0.09); animation: megaResult 1s ease 2; }
+    .mx-history { margin-top: 14px; max-height: 280px; overflow: auto; }
+    .mx-row { display: grid; grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr; gap: 8px; padding: 8px 4px; border-bottom: 1px solid rgba(148, 163, 184, 0.16); font-size: 0.92rem; }
+    .mx-hdr { color: var(--mx-muted); text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.5px; }
+    
+    /* ---- Animasyon Keyframe'leri ---- */
+    
+    @keyframes pulseLocked {
+      0%, 100% { transform: scale(1); text-shadow: 0 0 5px rgba(100, 116, 139, 0.2); }
+      50% { transform: scale(1.1); color: #94a3b8; text-shadow: 0 0 15px rgba(100, 116, 139, 0.6); box-shadow: 0 0 10px rgba(56, 189, 248, 0.1) inset; }
+    }
+
+    /* Tier 0 (0x): Sönük, Gri/Koyu Kırmızı, Başarısızlık Hissi */
+    @keyframes flip0 {
+      0% { transform: rotateY(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      49% { color: transparent; }
+      50% { transform: rotateY(90deg) scale(0.95); background: #475569; }
+      100% { transform: rotateY(0deg) scale(0.95); color: #64748b; border-color: #334155; background: #0f172a; text-shadow: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); opacity: 0.8; }
+    }
+
+    /* Tier 1 (1x): Mavi, Temiz Dönüş */
+    @keyframes flip1 {
+      0% { transform: rotateY(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      49% { color: transparent; }
+      50% { transform: rotateY(90deg) scale(1.05); background: #bae6fd; }
+      100% { transform: rotateY(0deg) scale(1); color: #7dd3fc; border-color: #0284c7; box-shadow: 0 0 10px rgba(2, 132, 199, 0.2); text-shadow: 0 0 5px rgba(2, 132, 199, 0.4); }
+    }
+
+    /* Tier 2 (2x): Turkuaz/Su Yeşili, Yukarıdan Aşağıya Takla */
+    @keyframes flip2 {
+      0% { transform: rotateX(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      49% { color: transparent; }
+      50% { transform: rotateX(90deg) scale(1.1); background: #a7f3d0; }
+      100% { transform: rotateX(0deg) scale(1.02); color: #34d399; border-color: #059669; box-shadow: 0 0 15px rgba(5, 150, 105, 0.3), inset 0 0 10px rgba(5, 150, 105, 0.1); text-shadow: 0 0 8px rgba(5, 150, 105, 0.6); }
+    }
+
+    /* Tier 3 (3x-4x): Pembe/Mor, Hafif Büyüyen Şık Dönüş */
+    @keyframes flip3 {
+      0% { transform: rotateY(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      49% { color: transparent; }
+      50% { transform: rotateY(90deg) scale(1.15); background: #fbcfe8; }
+      100% { transform: rotateY(0deg) scale(1.05); color: #f472b6; border-color: #db2777; box-shadow: 0 0 20px rgba(219, 39, 119, 0.4), inset 0 0 10px rgba(219, 39, 119, 0.2); text-shadow: 0 0 10px rgba(219, 39, 119, 0.8); }
+    }
+
+    /* Tier 5 (5x-9x): Altın Sarısı, Bekleten Şov */
+    @keyframes flip5 {
+      0% { transform: rotateY(180deg) scale(0.8); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      30% { transform: rotateY(180deg) scale(0.9); color: transparent; }
+      49% { color: transparent; }
+      50% { transform: rotateY(90deg) scale(1.25); background: #fef08a; box-shadow: 0 0 30px #fef08a; }
+      70% { transform: rotateY(-15deg) scale(1.15); }
+      100% { transform: rotateY(0deg) scale(1.05); color: #facc15; border-color: #eab308; background: rgba(20, 15, 5, 0.85); box-shadow: 0 0 25px rgba(234, 179, 8, 0.4), inset 0 0 15px rgba(234, 179, 8, 0.2); text-shadow: 0 0 15px rgba(234, 179, 8, 0.8); }
+    }
+
+    /* Tier 10 (10x-19x): Neon Yeşil, Titreme ve Patlama */
+    @keyframes flip10 {
+      0% { transform: rotateY(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      10% { transform: rotateY(180deg) scale(1) translateX(-5px) rotate(-4deg); color: transparent; border-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+      15% { transform: rotateY(180deg) scale(1) translateX(5px) rotate(4deg); color: transparent; border-color: #ef4444; }
+      20% { transform: rotateY(180deg) scale(1.05) translateX(-5px) rotate(-4deg); color: transparent; }
+      25% { transform: rotateY(180deg) scale(1.05) translateX(5px) rotate(4deg); color: transparent; border-color: #f59e0b; box-shadow: 0 0 20px #f59e0b; }
+      30% { transform: rotateY(180deg) scale(1.1) translateX(-6px) rotate(-5deg); color: transparent; }
+      35% { transform: rotateY(180deg) scale(1.1) translateX(6px) rotate(5deg); color: transparent; border-color: #f59e0b; }
+      40% { transform: rotateY(180deg) scale(1.15) translateX(0) rotate(0); color: transparent; }
+      49% { color: transparent; }
+      50% { transform: rotateY(90deg) scale(1.4); background: #fff; box-shadow: 0 0 50px #fff; }
+      60% { transform: rotateY(0deg) scale(1.5); color: #fff; text-shadow: 0 0 30px #4ade80; border-color: #4ade80; background: #052e16; }
+      80% { transform: rotateY(0deg) scale(1.2); }
+      100% { transform: rotateY(0deg) scale(1.1); color: #86efac; border-color: #22c55e; background: rgba(5, 20, 10, 0.9); box-shadow: 0 0 35px rgba(34, 197, 94, 0.5), inset 0 0 20px rgba(34, 197, 94, 0.3); text-shadow: 0 0 20px rgba(34, 197, 94, 1); }
+    }
+
+    /* Tier 20 (20x+): Mor/Menekşe, Yükselme, İnanılmaz Büyük Patlama */
+    @keyframes flip20 {
+      0% { transform: rotateX(180deg) scale(0.9); color: transparent; border-color: rgba(56, 189, 248, 0.3); }
+      10% { transform: rotateX(180deg) scale(1.1) translateY(-5px); color: transparent; box-shadow: 0 -20px 20px #ef4444; }
+      20% { transform: rotateX(180deg) scale(1.1) translateY(5px); color: transparent; box-shadow: 0 20px 20px #8b5cf6; }
+      30% { transform: rotateX(180deg) scale(1.2) translateY(-5px); color: transparent; box-shadow: 0 -20px 30px #ec4899; }
+      40% { transform: rotateX(180deg) scale(1.2) translateY(0); color: transparent; }
+      49% { color: transparent; }
+      50% { transform: rotateX(90deg) scale(1.5); background: #fff; box-shadow: 0 0 80px #fff; }
+      60% { transform: rotateX(0deg) scale(1.6); color: #fff; text-shadow: 0 0 40px #c084fc; border-color: #c084fc; background: #2e1065; }
+      80% { transform: rotateX(0deg) scale(1.3); }
+      100% { transform: rotateX(0deg) scale(1.15); color: #e9d5ff; border-color: #a855f7; background: rgba(20, 5, 40, 0.9); box-shadow: 0 0 50px rgba(168, 85, 247, 0.6), inset 0 0 30px rgba(168, 85, 247, 0.4); text-shadow: 0 0 25px rgba(168, 85, 247, 1); }
+    }
+
+    @keyframes pulseResult { 0% { box-shadow: 0 0 0 rgba(56,189,248,0); } 50% { box-shadow: 0 0 18px rgba(56,189,248,0.36); } 100% { box-shadow: 0 0 0 rgba(56,189,248,0); } }
+    @keyframes megaResult { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    
+    @media (max-width: 860px) {
+      .mx-grid { grid-template-columns: 1fr; }
+      .mx-controls { grid-template-columns: 1fr 1fr; }
+      .mx-btn.play { grid-column: 1 / -1; }
+      .mx-reel { margin: 20px 0; gap: 8px; }
+      .mx-box { min-height: 80px; font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="mx-wrap">
+    <div class="mx-top">
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menu</a>
+      <h1 class="mx-title">Carpan Oyunu</h1>
+      <div class="mx-badge"><i class="fa-solid fa-coins"></i> <span id="mxBalance">0</span></div>
+    </div>
+    <section class="mx-grid">
+      <section class="mx-card">
+        <div style="font-weight:800; font-size:1.05rem;">5 Carpan Acilir ve Toplanir</div>
+        <div class="mx-reel" id="mxReel">
+          <div class="mx-box locked" data-idx="0"></div>
+          <div class="mx-box locked" data-idx="1"></div>
+          <div class="mx-box locked" data-idx="2"></div>
+          <div class="mx-box locked" data-idx="3"></div>
+          <div class="mx-box locked" data-idx="4"></div>
+        </div>
+        <div class="mx-controls">
+          <input id="mxBet" type="number" inputmode="numeric" min="1" step="1" placeholder="Bahis" />
+          <button class="mx-btn" id="mxMin" type="button">Min</button>
+          <button class="mx-btn" id="mxMax" type="button">Max</button>
+          <button class="mx-btn play" id="mxPlay" type="button">Oyna</button>
+        </div>
+        <div class="mx-state" id="mxState">Hazir</div>
+      </section>
+      <section class="mx-card">
+        <div style="font-weight:800; font-size:1.05rem; margin-bottom:8px;">Sonuc</div>
+        <div id="mxResult" class="mx-result">
+          <div class="mx-line"><span>Picks</span><b id="mxPicks" class="mx-picks">-</b></div>
+          <div class="mx-line"><span>Toplam Carpan</span><b id="mxTotal">-</b></div>
+          <div class="mx-line"><span>Bahis</span><b id="mxBetOut">-</b></div>
+          <div class="mx-line"><span>Payout</span><b id="mxPayout">-</b></div>
+        </div>
+        <div style="font-weight:800; font-size:1rem; margin-top:14px;">Son 10 Oyun</div>
+        <div class="mx-history" id="mxHistory"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/pc/js/app.js"></script>
+  <script>
+    (function () {
+      const betInput = document.getElementById("mxBet");
+      const minBtn = document.getElementById("mxMin");
+      const maxBtn = document.getElementById("mxMax");
+      const playBtn = document.getElementById("mxPlay");
+      const stateText = document.getElementById("mxState");
+      const balanceText = document.getElementById("mxBalance");
+      const picksText = document.getElementById("mxPicks");
+      const totalText = document.getElementById("mxTotal");
+      const betOutText = document.getElementById("mxBetOut");
+      const payoutText = document.getElementById("mxPayout");
+      const resultCard = document.getElementById("mxResult");
+      const historyWrap = document.getElementById("mxHistory");
+      const boxes = Array.from(document.querySelectorAll(".mx-box"));
+
+      let constants = { min_bet: 100, max_bet: 0, reveal_interval_ms: 350 };
+      let balance = 0;
+      let revealBusy = false;
+
+      function idem(prefix) {
+        return prefix + "_" + Date.now() + "_" + Math.random().toString(16).slice(2, 10);
+      }
+
+      function intVal(v) {
+        const n = Number(v || 0);
+        return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+      }
+
+      function setBusy(v) {
+        revealBusy = !!v;
+        const blocked = intVal(constants.max_bet || 0) < intVal(constants.min_bet || 100);
+        playBtn.disabled = revealBusy || blocked;
+        minBtn.disabled = revealBusy || blocked;
+        maxBtn.disabled = revealBusy || blocked;
+        betInput.disabled = revealBusy;
+      }
+
+      function resetBoxes() {
+        boxes.forEach(function (b) {
+          b.className = "mx-box locked";
+          b.textContent = "";
+        });
+      }
+
+      function updateBalance(v) {
+        balance = intVal(v);
+        balanceText.textContent = String(balance);
+      }
+
+      function applyLimits(next) {
+        if (!next) return;
+        constants = Object.assign({}, constants, next);
+        const minBet = intVal(constants.min_bet || 100);
+        const maxBet = intVal(constants.max_bet || 0);
+        betInput.min = String(minBet);
+        if (maxBet > 0) betInput.max = String(maxBet);
+        const cur = intVal(betInput.value);
+        if (!cur || cur < minBet) betInput.value = String(minBet);
+        if (maxBet > 0 && cur > maxBet) betInput.value = String(maxBet);
+        setBusy(revealBusy);
+      }
+
+      function setStatus(msg, isErr) {
+        stateText.textContent = msg || "";
+        stateText.style.color = isErr ? "#fca5a5" : "";
+      }
+
+      function formatTime(ts) {
+        const d = new Date(Number(ts || 0) * 1000);
+        if (!Number.isFinite(d.getTime())) return "-";
+        return d.toLocaleString();
+      }
+
+      function renderHistory(rows) {
+        if (!Array.isArray(rows) || !rows.length) {
+          historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr">No games yet</div></div>';
+          return;
+        }
+        const header = '<div class="mx-row mx-hdr"><div>Time</div><div>Bet</div><div>Total</div><div>Payout</div></div>';
+        const body = rows.map(function (r) {
+          return '<div class="mx-row"><div>' + formatTime(r.created_at) + '</div><div>' + intVal(r.bet_amount) + '</div><div>' + String(r.total_multiplier || "-") + 'x</div><div>' + intVal(r.payout_amount) + '</div></div>';
+        }).join("");
+        historyWrap.innerHTML = header + body;
+      }
+
+      async function loadState() {
+        const res = await fetch("/casino/multiplier/state", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error(data?.error || "state_failed");
+        applyLimits(data.constants || constants);
+        updateBalance(data.balance);
+        if (!betInput.value) betInput.value = String(intVal(constants.min_bet || 100));
+      }
+
+      async function loadHistory() {
+        const res = await fetch("/casino/multiplier/history", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+        const data = await res.json();
+        if (!data || !data.ok) return;
+        updateBalance(data.balance);
+        renderHistory(data.rows || []);
+      }
+
+      function showResult(round) {
+        const picks = Array.isArray(round.picks) ? round.picks : [];
+        picksText.textContent = picks.length ? picks.map(function (p) { return p + "x"; }).join(", ") : "-";
+        totalText.textContent = String(round.total_multiplier || "-") + "x";
+        betOutText.textContent = String(intVal(round.bet_amount));
+        payoutText.textContent = String(intVal(round.payout_amount));
+        payoutText.className = intVal(round.payout_amount) >= intVal(round.bet_amount) ? "gain" : "loss";
+
+        resultCard.classList.remove("flash", "mega");
+        void resultCard.offsetWidth;
+        resultCard.classList.add("flash");
+        if (Number(round.total_multiplier || 0) >= 10) resultCard.classList.add("mega");
+      }
+
+      async function revealPicks(picks) {
+        resetBoxes();
+        const baseInterval = intVal(constants.reveal_interval_ms || 350);
+        
+        for (let i = 0; i < 5; i++) {
+          const value = picks[i] || "-";
+          const num = Number(value);
+          const box = boxes[i];
+          if (!box) continue;
+          
+          box.textContent = String(value) + "x";
+          
+          // Çarpan büyüklüğüne göre sınıf ve bekleme süresi ayarı
+          let tierClass = "tier-1";
+          let waitMultiplier = 1;
+          
+          if (num >= 20) {
+            tierClass = "tier-20";
+            waitMultiplier = 4.5; // Efsanevi animasyon için uzun gerilim
+          } else if (num >= 10) {
+            tierClass = "tier-10";
+            waitMultiplier = 3.5;
+          } else if (num >= 5) {
+            tierClass = "tier-5";
+            waitMultiplier = 2.2;
+          } else if (num >= 3) {
+            tierClass = "tier-3";
+            waitMultiplier = 1.5;
+          } else if (num >= 2) {
+            tierClass = "tier-2";
+            waitMultiplier = 1.2;
+          } else if (num >= 1) {
+            tierClass = "tier-1";
+            waitMultiplier = 1;
+          } else { // 0x durumu
+            tierClass = "tier-0";
+            waitMultiplier = 0.7; // 0 olunca çok hızlı ve sönük geçsin
+          }
+
+          box.className = "mx-box " + tierClass;
+          
+          await new Promise(function (r) { setTimeout(r, baseInterval * waitMultiplier); });
+        }
+      }
+
+      async function playRound() {
+        if (revealBusy) return;
+        const betAmount = intVal(betInput.value);
+        if (betAmount < intVal(constants.min_bet)) {
+          setStatus("Min bahis: " + intVal(constants.min_bet), true);
+          return;
+        }
+        if (betAmount > intVal(constants.max_bet)) {
+          setStatus("Max bahis: " + intVal(constants.max_bet), true);
+          return;
+        }
+        setBusy(true);
+        setStatus("Carpanlar hazirlaniyor...");
+        try {
+          const res = await fetch("/casino/multiplier/play", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Requested-With": "fetch" },
+            body: JSON.stringify({ bet_amount: betAmount, idempotency_key: idem("multiplier_play") }),
+          });
+          const data = await res.json();
+          applyLimits(data.constants || constants);
+          updateBalance(data.balance);
+          if (!res.ok || !data.ok) {
+            if (data.error === "invalid_bet_min") setStatus("Minimum bahis: " + intVal(constants.min_bet), true);
+            else if (data.error === "invalid_bet_max") setStatus("Maksimum bahis limiti: " + intVal(constants.max_bet), true);
+            else setStatus("Hata: " + String(data.error || "play_failed"), true);
+            return;
+          }
+          const round = data.state || {};
+          await revealPicks(round.picks || []);
+          showResult(round);
+          setStatus("Tur tamamlandi.");
+          await loadHistory();
+        } catch (err) {
+          console.log("multiplier play error", err);
+          setStatus("Istek hatasi.", true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      minBtn.onclick = function () {
+        betInput.value = String(intVal(constants.min_bet || 100));
+      };
+      maxBtn.onclick = function () {
+        const maxBet = Math.min(intVal(constants.max_bet || 10000), intVal(balance));
+        betInput.value = String(maxBet > 0 ? maxBet : intVal(constants.min_bet || 100));
+      };
+      playBtn.onclick = playRound;
+
+      (async function init() {
+        try {
+          await loadState();
+          await loadHistory();
+          resetBoxes();
+          setStatus("Hazir");
+          setInterval(function () {
+            if (revealBusy) return;
+            loadState().catch(() => {});
+            loadHistory().catch(() => {});
+          }, 12000);
+        } catch (err) {
+          console.log("multiplier init error", err);
+          setStatus("Sayfa baslatilamadi.", true);
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>

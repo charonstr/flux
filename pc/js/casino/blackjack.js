@@ -23,6 +23,8 @@
 
     let limits = { min_bet: 100, max_bet: 500 };
     let reqSeq = 0;
+    
+    // SPA Bug Fix: Kapalı veya asılı kalan buton durumu sıfırlanıyor
     let pending = false;
 
     function suitChar(s) { if (s === 'H') return '♥'; if (s === 'D') return '♦'; if (s === 'C') return '♣'; return '♠'; }
@@ -36,7 +38,6 @@
       return '<div class="card ' + (red ? 'red' : 'black') + '" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><div class="rank">' + c.rank + '</div><div class="suit">' + char + '</div><div class="suit-small">' + char + '</div></div>';
     }
 
-    // Ortak bir animasyon kuyruğu: Eklenen tüm yeni kartları sırayla tek tek çeker
     function animateAllCards() {
       const cards = document.querySelectorAll('.card:not(.in)');
       cards.forEach(function (card, idx) {
@@ -60,7 +61,6 @@
         if (existing) {
           const isBack = existing.classList.contains('back');
           if (isBack && !card.hidden) {
-            // Krupiyenin kapalı kartı açıldığında flip (dönme) animasyonu uygula
             const oldRot = existing.getAttribute('data-rot');
             const temp = document.createElement('div');
             temp.innerHTML = cardHtml(card, oldRot);
@@ -70,7 +70,6 @@
             container.replaceChild(newCard, existing);
           }
         } else {
-          // Yeni eklenen kart normal html olarak eklenir, kayma animasyonu animateAllCards ile verilir
           const temp = document.createElement('div');
           temp.innerHTML = cardHtml(card);
           container.appendChild(temp.firstChild);
@@ -146,7 +145,7 @@
         if (!data.ok) {
           console.log('blackjack error', data);
           if (data.error === 'invalid_bet' || data.error === 'invalid_bet_min') msgEl.textContent = 'Minimum bahis 100';
-          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti aşıldı';
+          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti asildi';
           return null;
         }
         return data.state;

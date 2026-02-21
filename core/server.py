@@ -673,12 +673,17 @@ def casinomultiplier():
         return redirect(url_for("login"))
     content = texts(current)
     initialize_user_economy(account[0])
-    return render_template("core/casino/multiplier.html", **navcontext(content, current))
+    return render_template("pc/casino/multiplier.html", **navcontext(content, current))
 
 
 def multiplierconstants(userid: int) -> dict:
     base = MULTIPLIER.constants()
-    base["balance"] = int(get_balance(userid))
+    limits = blackjacklimits(userid)
+    base["min_bet"] = int(limits.get("min_bet", base.get("min_bet", 100)))
+    base["max_bet"] = int(limits.get("max_bet", base.get("max_bet", 0)))
+    base["level_cap"] = int(limits.get("level_cap", 0))
+    base["level"] = int(limits.get("level", 1))
+    base["balance"] = int(limits.get("balance", get_balance(userid)))
     return base
 
 
@@ -710,6 +715,13 @@ def multiplierplay():
         bet_amount = int(payload.get("bet_amount", 0) or 0)
     except Exception:
         bet_amount = 0
+    limits = multiplierconstants(me[0])
+    min_bet = int(limits.get("min_bet", 100))
+    max_bet = int(limits.get("max_bet", 0))
+    if bet_amount < min_bet:
+        return {"ok": False, "error": "invalid_bet_min", "constants": limits, "balance": int(get_balance(me[0]))}, 400
+    if bet_amount > max_bet:
+        return {"ok": False, "error": "invalid_bet_max", "constants": limits, "balance": int(get_balance(me[0]))}, 400
 
     ok, data = MULTIPLIER.play(me[0], bet_amount, idem, _multiplier_settle_atomic)
     if ok and not bool(data.get("idempotent_replay")):

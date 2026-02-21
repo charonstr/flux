@@ -513,7 +513,7 @@
           m = document.createElement('div');
           m.id = 'ctxMenu';
           m.className = 'context-menu';
-          document.body.appendChild(m); // Her zaman en dışa eklenerek z-index ve DOM kopmalarından korunur.
+          document.body.appendChild(m);
       } else if (m.parentElement !== document.body) {
           document.body.appendChild(m);
       }
@@ -715,7 +715,6 @@
     });
     document.querySelectorAll('.modal-overlay').forEach(o => o.style.display = 'none');
     
-    // Geçiş esnasında olası eski menüleri sayfadan tamamen temizle
     document.querySelectorAll('#ctxMenu').forEach(m => m.remove());
     
     const drop = document.getElementById('serverDropdown');
@@ -791,17 +790,12 @@
         }
     } else if (nextShell && currentShell) {
         document.body.classList.add('shell-active');
-        
         const currentRail = currentShell.querySelector('.server-rail');
         const nextRail = nextShell.querySelector('.server-rail');
-        
-        // Yenilenmiş shell DOM'a aktarılıyor.
         currentShell.replaceWith(nextShell);
-        
         if (currentRail && nextRail) {
             nextRail.replaceWith(currentRail);
         }
-        
     } else {
         const oldMain = document.querySelector('main');
         const incMain = doc.querySelector('main');
@@ -814,20 +808,29 @@
     
     window.updateRailActiveState(tgt);
 
-    // Kalan hayalet DOM pencereleri tamamen temizleniyor.
     const orphans = document.querySelectorAll('body > .modal, body > .modal-overlay');
     orphans.forEach(el => {
         if (!document.querySelector('.server-shell').contains(el)) el.remove();
     });
 
-    // Sesli sohbet için JavaScript gerekiyorsa çalıştır!
-    const scripts = doc.querySelectorAll('script');
-    scripts.forEach(s => {
-        if (!s.src) return;
-        if ((s.src.includes('voice.js') || s.src.includes('blackjack.js') || s.src.includes('roulette.js')) && !document.querySelector(`script[src="${s.src}"]`)) {
+    // HARİKA SCRIPT ÇALIŞTIRICI: Inline script'leri ve dış script'leri ayıklayıp çalıştırır (0 bakiye bugunu çözer)
+    const newScripts = doc.querySelectorAll('script');
+    newScripts.forEach(s => {
+        if (s.src) {
+            if (s.src.includes('app.js')) return; 
+            const srcUrl = new URL(s.src, window.location.origin).href;
+            const existing = Array.from(document.querySelectorAll('script')).find(ex => ex.src && new URL(ex.src, window.location.origin).href === srcUrl);
+            
+            if (!existing) {
+                const newScript = document.createElement('script');
+                newScript.src = s.src;
+                document.body.appendChild(newScript);
+            }
+        } else {
             const newScript = document.createElement('script');
-            newScript.src = s.src;
+            newScript.textContent = s.textContent;
             document.body.appendChild(newScript);
+            newScript.remove(); 
         }
     });
 
@@ -885,6 +888,7 @@
             },
             cache: 'no-store'
         });
+        if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
         swapFromHtml(html, res.url || url, !!replaceOnly, false);
     } catch(e) {
@@ -910,6 +914,7 @@
           },
           cache: 'no-store'
         });
+        if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
         swapFromHtml(html, res.url || window.location.href, false, true);
     } catch(e) {
@@ -977,6 +982,7 @@
     initEventStream();
     startPresence();
     initTabs();
+    
     if (typeof window.initVoicePage === 'function') window.initVoicePage();
     if (typeof window.initBlackjackPage === 'function') window.initBlackjackPage();
     if (typeof window.initRoulettePage === 'function') window.initRoulettePage();

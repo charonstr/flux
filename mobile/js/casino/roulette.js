@@ -1,4 +1,6 @@
 (function () {
+  let gameInterval = null;
+
   async function initRoulettePage(rootSelector) {
     const root = document.querySelector(rootSelector);
     if (!root) return;
@@ -15,29 +17,33 @@
     const totalBetText = document.getElementById('totalBetText');
     const wheel = document.getElementById('wheel');
     const wheelTrack = document.getElementById('wheelTrack');
+    const ball = document.getElementById('ball');
 
-    const btnNew = document.getElementById('newRoundBtn');
     const btnMin = document.getElementById('minBtn');
     const btnMax = document.getElementById('maxBtn');
     const btnUndo = document.getElementById('undoBtn');
     const btnClear = document.getElementById('clearBtn');
-    const btnLock = document.getElementById('lockBtn');
-    const btnSpin = document.getElementById('spinBtn');
 
-    let constants = null;\n    let liveBalance = 0;
+    let constants = null;
+    let liveBalance = 0;
     let state = null;
     let selectedChip = 10;
     let selectedSpot = null;
-    let polling = null;
-    let reqLock = false;
+    
+    let isInitialized = false;
+    let phaseTimer = 0;
+    let isSpinningLocal = false;
+    const ballRadiusPx = 100;
+
+    // SUNUCU BEKLEMEDEN MASAYI KURMAK İÇİN SABİT YEDEKLER
+    const FALLBACK_WHEEL = ["0", "32", "15", "19", "4", "21", "2", "25", "17", "34", "6", "27", "13", "36", "11", "30", "8", "23", "10", "5", "24", "16", "33", "1", "20", "14", "31", "9", "22", "18", "29", "7", "28", "12", "35", "3", "26"];
+    const FALLBACK_CHIPS = [10, 50, 100, 500, 1000, 5000];
 
     function idem(prefix) {
       return prefix + '_' + Date.now() + '_' + Math.random().toString(16).slice(2, 10);
     }
 
     async function api(url, method, body) {
-      if (reqLock) return null;
-      reqLock = true;
       try {
         const opts = { method: method || 'GET', headers: { 'X-Requested-With': 'fetch' } };
         if (body) {
@@ -46,37 +52,23 @@
         }
         const res = await fetch(url, opts);
         const data = await res.json();
-        if (data.constants) constants = data.constants;\n        if (typeof data.balance !== 'undefined') liveBalance = Number(data.balance || 0);
-        if (!data.ok) {
-          console.log('roulette error', data);
-          return null;
-        }
+        if (data.constants) constants = data.constants;
+        if (typeof data.balance !== 'undefined') liveBalance = Number(data.balance || 0);
+        if (!data.ok) return null;
         return data;
       } catch (e) {
-        console.log('roulette request error', e);
         return null;
-      } finally {
-        reqLock = false;
       }
     }
 
     function colorClass(num) {
-      if (!constants || !constants.colors) return 'black';
-      const c = constants.colors[String(num)] || 'black';
-      return c === 'red' ? 'red' : (c === 'green' ? 'green' : 'black');
+      if (String(num) === '0' || String(num) === '00') return 'green';
+      const redNums = ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"];
+      return redNums.includes(String(num)) ? 'red' : 'black';
     }
 
-    function numberRows() {
-      const rows = [];
-      for (let i = 0; i < 12; i++) {
-        const a = i * 3 + 1;
-        rows.push([a, a + 1, a + 2]);
-      }
-      return rows.reverse();
-    }
-
-    function currentSpotTotal(type, selection) {
-      const key = type + ':' + selection.join(',');
+    function getSpotSum(type, sel) {
+      const key = type + ':' + sel.join(',');
       let sum = 0;
       (state?.bets || []).forEach(function (b) {
         const k = b.bet_type + ':' + (b.selection || []).join(',');
@@ -86,30 +78,34 @@
     }
 
     function buildTable() {
-      const rows = numberRows();
-      let html = '<div class="num-cell green" data-type="straight" data-selection="0">0<span class="chip-stack">' + (currentSpotTotal('straight', ['0']) || '') + '</span></div>';
-      html += '<div class="table-grid">';
-      rows.forEach(function (r) {
-        r.forEach(function (n) {
-          const val = currentSpotTotal('straight', [String(n)]);
-          html += '<div class="num-cell ' + colorClass(n) + '" data-type="straight" data-selection="' + n + '">' + n + '<span class="chip-stack">' + (val || '') + '</span></div>';
-        });
+      const grid = [
+          [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],
+          [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],
+          [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]
+      ];
+      
+      let html = '<div class="table-layout">';
+      html += '<div class="numbers-section">';
+      html += '<div class="zero-wrap"><div class="num-cell green" data-type="straight" data-selection="0">0</div></div>';
+      html += '<div style="flex:1;"><div class="table-grid">';
+      grid.forEach(function(row) {
+          row.forEach(function(n) {
+              html += '<div class="num-cell ' + colorClass(n) + '" data-type="straight" data-selection="' + n + '">' + n + '</div>';
+          });
       });
-      html += '</div>';
-      html += '<div class="outside">';
-      [
-        ['low', '1-18'], ['even', 'Even'], ['red', 'Red'], ['black', 'Black'], ['odd', 'Odd'], ['high', '19-36'],
-        ['dozen1', '1st12'], ['dozen2', '2nd12'], ['dozen3', '3rd12'], ['col1', 'Col1'], ['col2', 'Col2'], ['col3', 'Col3']
-      ].forEach(function (x) {
-        const val = currentSpotTotal(x[0], [x[0]]);
-        html += '<div class="bet-cell" data-type="' + x[0] + '" data-selection="' + x[0] + '">' + x[1] + '<span class="chip-stack">' + (val || '') + '</span></div>';
+      html += '</div></div></div>';
+
+      html += '<div class="outside-grid">';
+      const simpleOutsideBets = [['even', 'ÇİFT'], ['odd', 'TEK'], ['red', 'KIRMIZI'], ['black', 'SİYAH']];
+      simpleOutsideBets.forEach(function(x) {
+          html += '<div class="bet-cell" data-type="' + x[0] + '" data-selection="' + x[0] + '">' + x[1] + '</div>';
       });
-      html += '</div>';
+      html += '</div></div>';
       tableWrap.innerHTML = html;
 
       tableWrap.querySelectorAll('[data-type]').forEach(function (el) {
         el.onclick = async function () {
-          if (!state || state.state !== 'betting_open') return;
+          if (!state || state.state !== 'betting_open' || phaseTimer <= 0) return;
           const betType = el.getAttribute('data-type');
           const selection = [el.getAttribute('data-selection')];
           selectedSpot = { betType: betType, selection: selection };
@@ -120,8 +116,30 @@
           render();
         };
       });
+    }
 
-      if (state && state.result_pocket) {
+    function updateTableBets() {
+      tableWrap.querySelectorAll('[data-type]').forEach(function (el) {
+        const type = el.getAttribute('data-type');
+        const selection = [el.getAttribute('data-selection')];
+        const sum = getSpotSum(type, selection);
+
+        let stack = el.querySelector('.chip-stack');
+        if (sum > 0) {
+          if (!stack) {
+            stack = document.createElement('span');
+            stack.className = 'chip-stack';
+            el.appendChild(stack);
+          }
+          if (stack.textContent !== String(sum)) stack.textContent = String(sum);
+        } else {
+          if (stack) stack.remove();
+        }
+      });
+
+      tableWrap.querySelectorAll('.winner').forEach(function(el) { el.classList.remove('winner'); });
+      const canShowWinner = state && state.result_pocket && (state.state === 'finished' || Boolean(state.settled) || state.state === 'result_revealed');
+      if (canShowWinner) {
         const pocket = String(state.result_pocket);
         const winEl = tableWrap.querySelector('[data-type="straight"][data-selection="' + pocket + '"]');
         if (winEl) winEl.classList.add('winner');
@@ -129,143 +147,249 @@
     }
 
     function buildChips() {
-      if (!constants) return;
+      const arr = constants?.chips || FALLBACK_CHIPS;
       chipBar.innerHTML = '';
-      (constants.chips || []).forEach(function (v) {
+      arr.forEach(function (v) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'chip-btn' + (Number(v) === Number(selectedChip) ? ' active' : '');
         b.textContent = String(v);
+        b.setAttribute('data-val', String(v));
         b.onclick = function () {
           selectedChip = Number(v);
-          buildChips();
+          updateChips();
         };
         chipBar.appendChild(b);
       });
     }
 
+    function updateChips() {
+      chipBar.querySelectorAll('.chip-btn').forEach(function(btn) {
+        if (Number(btn.getAttribute('data-val')) === Number(selectedChip)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
     function buildWheel() {
-      if (!constants) return;
-      const wheelOrder = constants.wheel || [];
-      const total = wheelOrder.length || 1;
+      const arr = constants?.wheel || FALLBACK_WHEEL;
+      const total = arr.length || 1;
       wheelTrack.innerHTML = '';
-      wheelOrder.forEach(function (n, idx) {
+      arr.forEach(function (n, idx) {
         const angle = (360 / total) * idx;
         const seg = document.createElement('div');
         seg.className = 'pocket';
         seg.setAttribute('data-num', String(n));
         seg.style.transform = 'rotate(' + angle + 'deg)';
-        const clr = colorClass(n);
-        seg.style.background = clr === 'red' ? '#ef4444' : (clr === 'green' ? '#22c55e' : '#111827');
+        seg.style.background = colorClass(n) === 'red' ? '#dc2626' : (colorClass(n) === 'green' ? '#059669' : '#111827');
         wheelTrack.appendChild(seg);
       });
     }
 
-    function render() {
-      if (!state || !constants) return;
-      balanceText.textContent = String(Number(liveBalance || constants.balance || 0));
-      stateText.textContent = String(state.state || '-');
-      timerText.textContent = String(Number(state.remaining_seconds || 0));
-      resultText.textContent = state.result_pocket ? (String(state.result_pocket) + ' ' + (state.result_color || '')) : '-';
-      totalBetText.textContent = String(Number(state.total_bet || 0));
-      buildChips();
-      buildTable();
-      buildWheel();
-
-      const bettingOpen = state.state === 'betting_open';
-      btnMin.disabled = !bettingOpen;
-      btnMax.disabled = !bettingOpen;
-      btnUndo.disabled = !bettingOpen;
-      btnClear.disabled = !bettingOpen;
-      btnLock.disabled = !(state.state === 'betting_open' || state.state === 'betting_locked');
-      btnSpin.disabled = !(state.state === 'betting_locked' || state.state === 'result_revealed');
+    function placeBallOnPocket(pocket) {
+      const arr = constants?.wheel || FALLBACK_WHEEL;
+      if (!ball || !arr) return;
+      const idx = arr.indexOf(String(pocket));
+      if (idx < 0) return;
+      const angle = (360 / arr.length) * idx;
+      ball.style.animation = 'none';
+      ball.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateX(${ballRadiusPx}px) rotate(${-angle}deg)`;
     }
 
-    async function refreshState() {
-      const res = await api('/api/casino/roulette/state', 'GET');
-      if (!res) return;
-      state = res.state;
-      render();
+    function resetBallPosition() {
+      if (!ball) return;
+      ball.style.animation = 'none';
+      ball.style.transform = 'translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg)';
+    }
+
+    function render() {
+      if (!state) return;
+      
+      balanceText.textContent = String(Number(liveBalance || constants?.balance || 0));
+      
+      const stMap = {
+          'betting_open': 'BAHİSLER AÇIK',
+          'betting_locked': 'BAHİSLER KAPALI',
+          'spinning': 'ÇEVRİLİYOR',
+          'result_revealed': 'SONUÇLANDI',
+          'settling': 'SONUÇLANDI',
+          'finished': 'SONUÇLANDI'
+      };
+      
+      if (!stateText.textContent.includes("BAŞLIYOR") && !stateText.textContent.includes("BEKLENİYOR")) {
+          stateText.textContent = stMap[state.state] || state.state;
+      }
+      
+      let resColorTr = '';
+      if(state.result_color === 'red') resColorTr = 'KIRMIZI';
+      if(state.result_color === 'black') resColorTr = 'SİYAH';
+      if(state.result_color === 'green') resColorTr = 'YEŞİL';
+      
+      resultText.textContent = state.result_pocket ? (String(state.result_pocket) + ' ' + resColorTr) : '-';
+      totalBetText.textContent = String(Number(state.total_bet || 0));
+      
+      if (!isInitialized) {
+        buildChips();
+        buildTable();
+        buildWheel();
+        isInitialized = true;
+      }
+      
+      updateTableBets();
+      updateChips();
+
+      if (state.result_pocket && (state.state === 'finished' || Boolean(state.settled) || state.state === 'result_revealed')) {
+        placeBallOnPocket(state.result_pocket);
+      }
+
+      const bettingOpen = state.state === 'betting_open' && phaseTimer > 0;
+      if(btnMin) btnMin.disabled = !bettingOpen;
+      if(btnMax) btnMax.disabled = !bettingOpen;
+      if(btnUndo) btnUndo.disabled = !bettingOpen;
+      if(btnClear) btnClear.disabled = !bettingOpen;
     }
 
     async function runSpinFlow() {
-      if (!state) return;
-      if (state.state === 'betting_open') {
-        const locked = await api('/api/casino/roulette/lock', 'POST', { idempotency_key: idem('lock') });
-        if (!locked) return;
-        state = locked.state;
-        render();
-      }
+      if (!state || isSpinningLocal) return;
+      isSpinningLocal = true;
+      
+      stateText.textContent = "BAHİSLER KAPALI";
+      render();
+      
+      const locked = await api('/api/casino/roulette/lock', 'POST', { idempotency_key: idem('lock') });
+      if (locked) state = locked.state;
+      render();
+
+      stateText.textContent = "ÇEVRİLİYOR";
       const spun = await api('/api/casino/roulette/spin', 'POST', { idempotency_key: idem('spin') });
-      if (!spun) return;
+      if (!spun) { isSpinningLocal = false; return; }
       state = spun.state;
+      
+      const arr = constants?.wheel || FALLBACK_WHEEL;
+      if (state.result_pocket && arr) {
+          const targetIdx = arr.indexOf(String(state.result_pocket));
+          if (targetIdx >= 0) {
+              const targetAngle = (360 / arr.length) * targetIdx;
+              const endRot = -2160 + targetAngle;
+              ball.style.setProperty('--end-rot', endRot + 'deg');
+          }
+      }
+
       wheel.classList.remove('spinfx');
+      if (ball) {
+        ball.style.animation = '';
+        ball.style.transform = '';
+      }
       void wheel.offsetWidth;
       wheel.classList.add('spinfx');
+      render();
+      
       setTimeout(async function () {
         const settled = await api('/api/casino/roulette/settle', 'POST', { idempotency_key: idem('settle') });
-        if (!settled) return;
-        state = settled.state;
+        if (settled) state = settled.state;
+        isSpinningLocal = false;
+        phaseTimer = 6;
+        stateText.textContent = "SONUÇLANDI";
+        if (state && state.result_pocket) placeBallOnPocket(state.result_pocket);
         render();
-      }, 4700);
-      render();
+      }, 5100);
     }
 
-    btnNew.onclick = async function () {
-      const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
-      if (!res) return;
-      state = res.state;
-      render();
-    };
+    async function gameLoop() {
+      if (isSpinningLocal) return;
 
-    btnMin.onclick = function () {
-      selectedChip = Number(constants?.min_bet || 10);
-      buildChips();
-    };
-    btnMax.onclick = function () {
+      if (!state) {
+          stateText.textContent = "YENİ TUR BAŞLIYOR...";
+          const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
+          if (res) {
+            state = res.state;
+            phaseTimer = Math.max(0, Number(state.remaining_seconds || 20));
+            wheel.classList.remove('spinfx');
+            resetBallPosition();
+            render();
+          }
+          return;
+      }
+
+      if (state.state === 'settled' || state.state === 'finished' || state.state === 'result_revealed') {
+        if (phaseTimer > 0) {
+          phaseTimer--;
+          timerText.textContent = String(phaseTimer);
+          stateText.textContent = "YENİ TUR BEKLENİYOR...";
+          render();
+        } else {
+          stateText.textContent = "YENİ TUR BAŞLIYOR...";
+          const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
+          if (res) {
+            state = res.state;
+            phaseTimer = Math.max(0, Number(state.remaining_seconds || constants?.betting_timer_seconds || 20));
+            wheel.classList.remove('spinfx');
+            resetBallPosition();
+            render();
+          }
+        }
+      } else if (state.state === 'betting_open') {
+        if (phaseTimer > 0) {
+          phaseTimer--;
+          timerText.textContent = String(phaseTimer);
+          stateText.textContent = "BAHİSLER AÇIK";
+          render(); // Arayüzü ve butonların açıklığını anında senkronize eder
+        } else {
+          timerText.textContent = "0";
+          render(); // Butonları anında kilitle
+          if (Number(state.total_bet || 0) > 0) {
+            runSpinFlow();
+          } else {
+            stateText.textContent = "YENİ TUR BAŞLIYOR...";
+            const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
+            if (res) {
+              state = res.state;
+              phaseTimer = Math.max(0, Number(state.remaining_seconds || constants?.betting_timer_seconds || 20));
+              wheel.classList.remove('spinfx');
+              resetBallPosition();
+              render();
+            }
+          }
+        }
+      } else if (state.state === 'betting_locked' || state.state === 'spinning' || state.state === 'settling') {
+          // Oyuncu sayfaya ortasında girdiyse dönüşü anında başlat
+          runSpinFlow();
+      }
+    }
+
+    if(btnMin) btnMin.onclick = function () { selectedChip = Number(constants?.min_bet || 10); updateChips(); };
+    if(btnMax) btnMax.onclick = function () {
       if (selectedSpot) {
-        const now = currentSpotTotal(selectedSpot.betType, selectedSpot.selection);
-        const cap = Number(constants?.max_bet || 0);
-        const left = Math.max(Number(constants?.min_bet || 0), cap - now);
-        selectedChip = left;
+        const now = getSpotSum(selectedSpot.betType, selectedSpot.selection);
+        const cap = Number(constants?.max_bet || 10000);
+        selectedChip = Math.max(Number(constants?.min_bet || 10), cap - now);
       } else {
         selectedChip = Number(constants?.max_bet || 10000);
       }
-      buildChips();
+      updateChips();
     };
+    if(btnUndo) btnUndo.onclick = async function () { const res = await api('/api/casino/roulette/undo', 'POST', { idempotency_key: idem('undo') }); if(res) { state = res.state; render(); } };
+    if(btnClear) btnClear.onclick = async function () { const res = await api('/api/casino/roulette/clear', 'POST', { idempotency_key: idem('clear') }); if(res) { state = res.state; render(); } };
 
-    btnUndo.onclick = async function () {
-      const res = await api('/api/casino/roulette/undo', 'POST', { idempotency_key: idem('undo') });
-      if (!res) return;
-      state = res.state;
-      render();
-    };
+    api('/api/casino/roulette/state', 'GET').then(res => {
+        if (res) {
+            state = res.state;
+            if (state.state === 'betting_open') {
+                phaseTimer = Math.max(0, Number(state.remaining_seconds || constants?.betting_timer_seconds || 20));
+            } else {
+                phaseTimer = 0;
+            }
+            render(); 
+        }
+    });
 
-    btnClear.onclick = async function () {
-      const res = await api('/api/casino/roulette/clear', 'POST', { idempotency_key: idem('clear') });
-      if (!res) return;
-      state = res.state;
-      render();
-    };
-
-    btnLock.onclick = async function () {
-      const res = await api('/api/casino/roulette/lock', 'POST', { idempotency_key: idem('lock') });
-      if (!res) return;
-      state = res.state;
-      render();
-    };
-
-    btnSpin.onclick = runSpinFlow;
-
-    await refreshState();
-    if (polling) clearInterval(polling);
-    polling = setInterval(function () {
-      if (!state || state.state !== 'betting_open') return;
-      refreshState();
-    }, 500);
+    if (gameInterval) clearInterval(gameInterval);
+    gameInterval = setInterval(gameLoop, 1000);
   }
 
-  window.initRoulettePage = function () { return initRoulettePage('.wrap'); };
+  window.initRoulettePage = function () { return initRoulettePage('.roulette-root'); };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { if (window.initRoulettePage) window.initRoulettePage(); });
