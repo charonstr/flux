@@ -1,42 +1,37 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("login", "Login") }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.login }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <main class="wrap authwrap">
-        <section class="panel">
-            <h1>{{ t.get("login", "Login") }} 🚀</h1>
-            {% if error %}<p class="error">{{ error }}</p>{% endif %}
-            <form method="post" class="form" data-nav="soft">
-                <div class="input-group">
-                    <i class="fa-solid fa-user"></i>
-                    <input name="username" type="text" required placeholder="{{ t.get('username', 'Username') }}">
-                </div>
-                <div class="passrow">
+    <main>
+        <div class="authwrap">
+            <div class="panel">
+                <h1><i class="fa-solid fa-right-to-bracket"></i> {{ t.login }}</h1>
+                {% if error %}<div class="error">{{ error }}</div>{% endif %}
+                <form class="form" method="POST" action="/login">
                     <div class="input-group">
-                        <i class="fa-solid fa-lock"></i>
-                        <input id="password" name="password" type="password" required placeholder="{{ t.get('password', 'Password') }}">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" name="username" placeholder="{{ t.username }}" required autofocus>
                     </div>
-                    <button type="button" class="tiny" onclick="togglepass(this)"><i class="fa-solid fa-eye-slash"></i></button>
-                </div>
-                <label class="checkline"><input type="checkbox" name="remember" value="1"> {{ t.get("remember", "Remember me") }}</label>
-                <button type="submit" class="pickbtn">{{ t.get("login", "Login") }}</button>
-            </form>
-            <a href="/register" data-nav="soft" class="linkbtn full">{{ t.get("register", "Don't have an account?") }}</a>
-        </section>
-        <div style='display:flex;justify-content:center;gap:10px;margin-top:10px'>
-            <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
-            <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+                    <div class="passrow">
+                        <div class="input-group">
+                            <i class="fa-solid fa-key"></i>
+                            <input type="password" name="password" id="password" placeholder="{{ t.password }}" required>
+                        </div>
+                        <button type="button" class="tiny" onclick="window.togglepass(this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <label class="checkline"><input type="checkbox" name="remember" value="1"> {{ t.remember }}</label>
+                    <button class="pickbtn">{{ t.login }}</button>
+                    <a href="/register" class="linkbtn">{{ t.register }}</a>
+                </form>
+            </div>
         </div>
     </main>
     <script src="/mobile/app.js"></script>
 </body>
 </html>
-
-
-

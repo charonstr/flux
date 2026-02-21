@@ -6,6 +6,7 @@
   let navMask = null;
   let lastEventVersion = 0;
   let pullRefreshInit = false;
+  let globalRefreshing = false;
 
   function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -20,15 +21,9 @@
     localStorage.setItem('theme', mode);
 
     const styles = getComputedStyle(document.body);
-    const bgColor = styles.getPropertyValue('--bg').trim();
-    const lineColor = styles.getPropertyValue('--line').trim();
-    const textColor = styles.getPropertyValue('--text').trim();
     const panelColor = styles.getPropertyValue('--panel').trim();
     const primaryColor = styles.getPropertyValue('--primary').trim();
     
-    document.documentElement.style.setProperty('--bg-rgb', hexToRgb(bgColor));
-    document.documentElement.style.setProperty('--line-rgb', hexToRgb(lineColor));
-    document.documentElement.style.setProperty('--text-rgb', hexToRgb(textColor));
     document.documentElement.style.setProperty('--panel-rgb', hexToRgb(panelColor));
     document.documentElement.style.setProperty('--primary-rgb', hexToRgb(primaryColor));
   }
@@ -52,10 +47,10 @@
     navMask.id = 'navmask';
     navMask.style.position = 'fixed';
     navMask.style.inset = '0';
-    navMask.style.background = getComputedStyle(document.body).getPropertyValue('--bg') || '#1a202c';
+    navMask.style.background = 'transparent';
     navMask.style.opacity = '0';
     navMask.style.pointerEvents = 'none';
-    navMask.style.transition = 'opacity 120ms ease';
+    navMask.style.transition = 'opacity 0.2s ease';
     navMask.style.zIndex = '99999';
     document.body.appendChild(navMask);
     return navMask;
@@ -63,13 +58,14 @@
 
   function showNavMask() {
     const m = ensureNavMask();
-    m.style.background = getComputedStyle(document.body).getPropertyValue('--bg') || '#1a202c';
     m.style.opacity = '1';
+    m.style.pointerEvents = 'auto';
   }
   
   function hideNavMask() {
     if (!navMask) return;
     navMask.style.opacity = '0';
+    navMask.style.pointerEvents = 'none';
   }
 
   function startPresence() {
@@ -117,10 +113,7 @@
       } catch {
         return;
       }
-      if (dmRefreshing) return;
-      dmRefreshing = true;
-      await softNavigate(window.location.href, true);
-      dmRefreshing = false;
+      window.triggerBackgroundRefresh();
     };
     dmSource.onerror = () => {
       if (dmSource) dmSource.close();
@@ -162,47 +155,24 @@
     form._voiceBlob = blob;
   }
   
-  function initModal(profileBtn, profileModal, modalOverlay) {
-      if (!profileBtn || !profileModal || !modalOverlay) return;
-
-      profileBtn.onclick = (event) => {
-          event.stopPropagation();
-          const isVisible = profileModal.style.display === 'block';
-          if (isVisible) {
-              closeModal(profileModal, modalOverlay);
-          } else {
-              const rect = profileBtn.getBoundingClientRect();
-              profileModal.style.left = rect.left + 'px';
-              profileModal.style.top = rect.bottom + 5 + 'px';
-              profileModal.style.display = 'block';
-              modalOverlay.style.display = 'block';
-          }
-      };
-  }
-
-  function closeModal(profileModal, modalOverlay) {
-      profileModal.style.display = 'none';
-      modalOverlay.style.display = 'none';
-  }
-
-  function swapFromHtml(html, url, replaceOnly) {
+  function swapFromHtml(html, url, replaceOnly, isSubmit) {
+    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.modal-overlay').forEach(o => o.style.display = 'none');
+    
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const nextMain = doc.querySelector('main');
     const currentMain = document.querySelector('main');
+    
     if (!nextMain || !currentMain) {
       window.location.href = url;
       return;
     }
+    
     document.title = doc.title;
     
-    const nextTopBar = doc.querySelector('.topbar');
-    const currentTopBar = document.querySelector('.topbar');
-    if(nextTopBar && currentTopBar) currentTopBar.replaceWith(nextTopBar);
-
-    const nextModal = doc.querySelector('.modal');
-    const currentModal = document.querySelector('.modal');
-    if(nextModal && currentModal) currentModal.replaceWith(nextModal);
+    const oldTop = document.querySelector('.topbar');
+    if (oldTop) oldTop.remove();
 
     const styleNodes = Array.from(doc.head.querySelectorAll('style'))
       .filter((s) => !/themeboot/i.test(s.textContent || '') && !/html\s*\{\s*background/i.test(s.textContent || ''));
@@ -217,31 +187,122 @@
     
     currentMain.replaceWith(nextMain);
 
+    const scripts = doc.querySelectorAll('script');
+    scripts.forEach(s => {
+        if (!s.src) return;
+        if ((s.src.includes('voice.js') || s.src.includes('blackjack.js') || s.src.includes('roulette.js')) && !document.querySelector(`script[src="${s.src}"]`)) {
+            const newScript = document.createElement('script');
+            newScript.src = s.src;
+            document.body.appendChild(newScript);
+        }
+    });
+
     const nextUrl = new URL(url, window.location.origin);
     const tgt = nextUrl.pathname + nextUrl.search;
     const now = window.location.pathname + window.location.search;
+    
     if (!replaceOnly && now !== tgt) history.pushState({}, '', tgt);
+    
+    ensureMobileShell();
+    updateActiveNav();
     bind();
     hideNavMask();
+    
+    const newChatContainer = document.querySelector('.chat-messages, .chatbox');
+    if (newChatContainer) {
+        newChatContainer.scrollTop = newChatContainer.scrollHeight;
+    } else if (!replaceOnly && !isSubmit) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   async function softNavigate(url, replaceOnly) {
-    const res = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } });
-    const html = await res.text();
-    swapFromHtml(html, res.url || url, !!replaceOnly);
+    try {
+        const res = await fetch(url, { 
+            headers: { 
+                'X-Requested-With': 'fetch',
+                'Cache-Control': 'no-cache, no-store, must-revalidate'
+            },
+            cache: 'no-store'
+        });
+        const html = await res.text();
+        swapFromHtml(html, res.url || url, !!replaceOnly, false);
+    } catch(e) {
+        window.location.href = url;
+    }
   }
 
   async function softSubmit(form) {
-    const res = await fetch(form.action || window.location.href, {
-      method: (form.method || 'GET').toUpperCase(),
-      body: new FormData(form),
-      headers: { 'X-Requested-With': 'fetch' }
-    });
-    const html = await res.text();
-    swapFromHtml(html, res.url || window.location.href, false);
+    try {
+        const res = await fetch(form.action || window.location.href, {
+          method: (form.method || 'GET').toUpperCase(),
+          body: new FormData(form),
+          headers: { 
+              'X-Requested-With': 'fetch',
+              'Cache-Control': 'no-cache, no-store, must-revalidate'
+          },
+          cache: 'no-store'
+        });
+        const html = await res.text();
+        swapFromHtml(html, res.url || window.location.href, false, true);
+    } catch(e) {
+        form.submit();
+    }
+  }
+
+  function ensureMobileShell() {
+    const p = window.location.pathname || '';
+    if (p.startsWith('/login') || p.startsWith('/register') || p.startsWith('/choose')) return;
+
+    if (document.querySelector('.mobile-nav')) return;
+
+    const nav = document.createElement('nav');
+    nav.className = 'mobile-nav';
+    nav.innerHTML = `
+        <a href="/home" class="nav-item" data-nav="soft">
+            <i class="fa-solid fa-house"></i>
+            <span>Ana Sayfa</span>
+        </a>
+        <a href="/dm" class="nav-item" data-nav="soft">
+            <i class="fa-solid fa-comment"></i>
+            <span>Mesajlar</span>
+        </a>
+        <a href="/casino" class="nav-item" data-nav="soft">
+            <i class="fa-solid fa-dice"></i>
+            <span>Casino</span>
+        </a>
+        <a href="/servers" class="nav-item" data-nav="soft">
+            <i class="fa-solid fa-compass"></i>
+            <span>Sunucular</span>
+        </a>
+        <a href="/profile" class="nav-item" data-nav="soft">
+            <img src="/mobile/avatar.svg" class="mobile-avatar" id="shellAvatar">
+            <span>Profil</span>
+        </a>
+    `;
+    document.body.appendChild(nav);
+    
+    fetch('/api/nav', { headers: { 'X-Requested-With': 'fetch' } })
+        .then(r => r.json())
+        .then(d => {
+            if(d.avatar) document.getElementById('shellAvatar').src = d.avatar;
+        }).catch(()=>{});
+        
+    updateActiveNav();
+  }
+
+  function updateActiveNav() {
+      const path = window.location.pathname;
+      document.querySelectorAll('.nav-item').forEach(el => {
+          el.classList.remove('active');
+          const href = el.getAttribute('href');
+          if (href === '/home' && (path === '/' || path.startsWith('/home'))) el.classList.add('active');
+          else if (href !== '/home' && path.startsWith(href)) el.classList.add('active');
+      });
   }
 
   function bind() {
+    ensureMobileShell();
     document.querySelectorAll('a[data-nav="soft"]').forEach((a) => {
       a.onclick = async (e) => {
         e.preventDefault();
@@ -249,6 +310,7 @@
         await softNavigate(a.href, false);
       };
     });
+    
     document.querySelectorAll('form[data-nav="soft"]').forEach((form) => {
       if (form.id === 'dmform') {
         form.onsubmit = async (e) => {
@@ -272,9 +334,11 @@
         };
       }
     });
+
     document.querySelectorAll('[data-go-back="1"]').forEach((btn) => {
       btn.onclick = () => window.goback();
     });
+
     document.querySelectorAll('[data-theme-set]').forEach((btn) => {
       btn.onclick = (e) => {
         e.preventDefault();
@@ -282,22 +346,14 @@
       };
     });
 
-    const profileBtn = document.getElementById('profileBtn');
-    const profileModal = document.getElementById('profileModal');
-    const modalOverlay = document.getElementById('modalOverlay');
-    
-    initModal(profileBtn, profileModal, modalOverlay);
-    
-    const globalClose = () => closeModal(profileModal, modalOverlay);
-    if(modalOverlay) modalOverlay.onclick = globalClose;
-    window.onscroll = globalClose;
-
     initProfileCrop();
     initDmStream();
     initRecorder();
     initEventStream();
     startPresence();
     initPullToRefresh();
+    if (typeof window.initBlackjackPage === 'function') window.initBlackjackPage();
+    if (typeof window.initRoulettePage === 'function') window.initRoulettePage();
   }
 
   function initPullToRefresh() {
@@ -317,15 +373,15 @@
       document.body.appendChild(indicator);
     }
 
-    const activeScrollable = () => {
-      return document.querySelector('.chatbox, .chat-messages, .server-main, main');
-    };
-
     document.addEventListener('touchstart', (e) => {
       if (!e.touches || !e.touches.length) return;
-      const sc = activeScrollable();
-      const top = sc ? sc.scrollTop <= 0 : window.scrollY <= 0;
-      if (!top) return;
+      
+      const scrollableNode = e.target.closest('.chatbox, .chat-messages, .server-main, .panel');
+      const containerAtTop = scrollableNode ? scrollableNode.scrollTop <= 0 : true;
+      const pageAtTop = window.scrollY <= 0 || document.documentElement.scrollTop <= 0;
+
+      if (!pageAtTop || !containerAtTop) return;
+      
       startY = e.touches[0].clientY;
       pulling = true;
       triggered = false;
@@ -357,6 +413,15 @@
     }, { passive: true });
   }
 
+  window.triggerBackgroundRefresh = async function() {
+      if (globalRefreshing) return;
+      const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'block');
+      if (anyModalOpen) return;
+      globalRefreshing = true;
+      await softNavigate(window.location.href, true);
+      globalRefreshing = false;
+  };
+
   function initEventStream() {
     if (eventSource) {
       eventSource.close();
@@ -371,11 +436,7 @@
       } catch {
         return;
       }
-      if (document.hidden) return;
-      const tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (window.location.pathname.startsWith('/dm')) return;
-      await softNavigate(window.location.href, true);
+      window.triggerBackgroundRefresh();
     };
     eventSource.onerror = () => {
       if (eventSource) eventSource.close();
@@ -412,12 +473,16 @@
   };
 
   window.addEventListener('popstate', () => window.location.reload());
+  
   window.addEventListener('beforeunload', () => showNavMask());
+  
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     if (!document.querySelector('.bg-texture')) {
       document.body.insertAdjacentHTML('afterbegin', '<div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>');
     }
+    document.querySelectorAll('.chat-messages, .chatbox').forEach(b => b.scrollTop = b.scrollHeight);
   });
+  
   bind();
 })();

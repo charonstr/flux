@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import Lock
 from uuid import uuid4
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Flask, Response, abort, redirect, render_template, request, send_from_directory, session, url_for
 from PIL import Image
@@ -12,6 +13,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from core.config import load
+from core.casino.blackjack import MANAGER as BLACKJACK
+from core.casino.roulette import MANAGER as ROULETTE
 from core.database import (
     acceptdmrequest,
     acceptrequest,
@@ -69,18 +72,28 @@ from core.database import (
     serverupdaterole,
     serverassignrole,
     addserverentry,
+    applyledger,
+    casinosummary,
+    casinoleaderboard,
+    casinorichest,
+    casinolastgames,
+    recordcasinogame,
+    claimdailyreward,
     setdmpermission,
     voicecleanup,
     voiceparticipants,
     voiceping,
     getvoicesignals,
     setup,
+    dailyrewardstate,
     unblockuser,
     unreadcount,
     updateavatar,
     updatepassword,
     updateusername,
 )
+from core.economy import get_balance, initialize_user_economy
+from core.leveling import add_xp, get_level
 from core.texts import language, texts
 
 
@@ -97,6 +110,17 @@ SERVER_IMAGE_MAX = 200 * 1024 * 1024
 SERVER_VIDEO_MAX = 300 * 1024 * 1024
 SERVER_AUDIO_MAX = 200 * 1024 * 1024
 SERVER_FILE_MAX = 500 * 1024 * 1024
+
+
+def _turkey_tz():
+    try:
+        return ZoneInfo("Europe/Istanbul")
+    except ZoneInfoNotFoundError:
+        # Fallback for environments without tzdata package
+        return timezone(timedelta(hours=3))
+
+
+TURKEY_TZ = _turkey_tz()
 
 app = Flask(__name__)
 app.template_folder = str(ROOT)
@@ -186,7 +210,7 @@ def statuslabel(user) -> str:
         return "offline"
     if datetime.now(timezone.utc) - dt <= ACTIVE_WINDOW:
         return "active"
-    return dt.strftime("%Y-%m-%d %H:%M")
+    return dt.astimezone(TURKEY_TZ).strftime("%Y-%m-%d %H:%M")
 
 
 def canchange(account) -> bool:
@@ -449,6 +473,406 @@ def home():
 @app.route("/")
 def root():
     return redirect(url_for("home"))
+
+
+@app.route("/casino")
+def casinohome():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template(
+        viewfile("casino/home.html"),
+        **navcontext(content, current),
+    )
+
+
+@app.route("/api/casino/profile")
+def apicasinoprofile():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    lvl = get_level(me[0])
+    wins, loses, ratio = casinosummary(me[0])
+    daily = casinoleaderboard("daily", 5)
+    weekly = casinoleaderboard("weekly", 5)
+    monthly = casinoleaderboard("monthly", 5)
+    richest = casinorichest(5)
+    games = casinolastgames(me[0], 10)
+    return {
+        "ok": True,
+        "total_win_amount": wins,
+        "total_lose_amount": loses,
+        "win_lose_ratio": ratio,
+        "daily_top5": daily,
+        "weekly_top5": weekly,
+        "monthly_top5": monthly,
+        "richest_top5": richest,
+        "last10_games": games,
+        "profile_summary": {
+            "total_win_amount": wins,
+            "total_lose_amount": loses,
+            "win_lose_ratio": ratio,
+        },
+        "leaderboards": {
+            "daily_top5": daily,
+            "weekly_top5": weekly,
+            "monthly_top5": monthly,
+        },
+        "level": {
+            "level": lvl["level"],
+            "xp": lvl["xp"],
+            "next_level_xp": lvl["next_level_xp"],
+        },
+        "profile": {
+            "username": me[1],
+            "avatar": avatarurl(me),
+            "balance": get_balance(me[0]),
+        },
+    }
+
+
+@app.route("/casino/blackjack")
+def casinoblackjack():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    return render_template(viewfile("casino/blackjack.html"), **navcontext(content, current))
+
+
+@app.route("/casino/roulette")
+def casinoroulette():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template(viewfile("casino/roulette.html"), **navcontext(content, current))
+
+
+def rouletteconstants(userid: int) -> dict:
+    balance = int(get_balance(userid))
+    base = ROULETTE.constants()
+    base["balance"] = balance
+    return base
+
+
+def _jsonpayload() -> dict:
+    return request.get_json(silent=True) or {}
+
+
+def _idem_from(payload: dict, fallback_prefix: str = "") -> str:
+    val = str(payload.get("idempotency_key", "") or request.form.get("idempotency_key", "")).strip()
+    if val:
+        return val
+    return f"{fallback_prefix}:{int(time.time() * 1000)}:{uuid4().hex[:8]}" if fallback_prefix else ""
+
+
+@app.route("/api/casino/roulette/state")
+def roulettestate():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    return {"ok": True, "state": ROULETTE.get_state(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+
+
+@app.route("/api/casino/roulette/start", methods=["POST"])
+def roulettestart():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    return {"ok": True, "state": ROULETTE.start_round(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+
+
+@app.route("/api/casino/roulette/place", methods=["POST"])
+def rouletteplace():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    bet_type = str(payload.get("bet_type", "")).strip()
+    selection = payload.get("selection", [])
+    if not isinstance(selection, list):
+        selection = []
+    try:
+        amount = int(payload.get("amount", 0) or 0)
+    except Exception:
+        amount = 0
+    ok, data = ROULETTE.place_bet(me[0], bet_type, selection, amount, idem)
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/api/casino/roulette/undo", methods=["POST"])
+def rouletteundo():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    ok, data = ROULETTE.undo(me[0])
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/api/casino/roulette/clear", methods=["POST"])
+def rouletteclear():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    ok, data = ROULETTE.clear(me[0])
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/api/casino/roulette/lock", methods=["POST"])
+def roulettelock():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    ok, data = ROULETTE.lock_bets(me[0], idem)
+    if not ok:
+        return {"ok": False, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+    state = data.get("state", {})
+    total_bet = int(state.get("total_bet", 0) or 0)
+    round_id = str(state.get("round_id", "") or "")
+    if total_bet <= 0:
+        return {"ok": False, "error": "no_bets", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+
+    if not bool(state.get("stake_locked")):
+        if get_balance(me[0]) < total_bet:
+            return {"ok": False, "error": "insufficient_balance", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+        debit_ref = f"roulette:{round_id}:betlock"
+        if not applyledger(me[0], -total_bet, "roulette_bet", "roulette round stake", debit_ref):
+            return {"ok": False, "error": "bet_lock_failed", "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+        state = ROULETTE.mark_stake_locked(me[0])
+    return {"ok": True, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+
+
+@app.route("/api/casino/roulette/spin", methods=["POST"])
+def roulettespin():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    ok, data = ROULETTE.spin(me[0], idem)
+    code = 200 if ok else 400
+    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+
+
+@app.route("/api/casino/roulette/settle", methods=["POST"])
+def roulettesettle():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    ok, data = ROULETTE.settle(me[0])
+    if not ok:
+        return {"ok": False, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+    state = data.get("state", {})
+    round_id = str(state.get("round_id", "") or "")
+    total_payout = int(data.get("total_payout", 0) or 0)
+    total_stake = int(data.get("total_stake", 0) or 0)
+    net_delta = int(data.get("net_delta", 0) or 0)
+    if total_payout > 0:
+        applyledger(me[0], total_payout, "roulette_payout", "roulette payout", f"roulette:{round_id}:payout")
+    recordcasinogame(me[0], "roulette", net_delta if total_stake > 0 else 0)
+    state["settled"] = True
+    return {"ok": True, **data, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+
+
+def blackjacklimits(userid: int) -> dict:
+    level = int(get_level(userid).get("level", 1))
+    balance = int(get_balance(userid))
+    min_bet = 100
+    level_cap = 500 + max(0, level - 1) * 100
+    max_bet = min(level_cap, balance) if balance >= min_bet else 0
+    return {
+        "min_bet": min_bet,
+        "max_bet": int(max_bet),
+        "level_cap": int(level_cap),
+        "balance": balance,
+        "level": level,
+    }
+
+
+def blackjacksettle(userid: int, state: dict) -> dict:
+    if not state:
+        return {}
+    if str(state.get("phase", "")) != "finished":
+        return state
+    if bool(state.get("settled")):
+        return state
+    round_id = str(state.get("round_id", "") or "")
+    bet = int(state.get("bet", 0) or 0)
+    result = str(state.get("result", "") or "")
+    if not round_id or bet <= 0:
+        return state
+
+    payout = 0
+    net_delta = 0
+    if result == "push":
+        payout = bet
+        net_delta = 0
+    elif result == "win":
+        payout = bet * 2
+        net_delta = bet
+    elif result == "blackjack":
+        payout = (bet * 5) // 2
+        net_delta = payout - bet
+    else:
+        payout = 0
+        net_delta = -bet
+
+    if payout > 0:
+        applyledger(userid, payout, "blackjack_payout", f"blackjack {result}", f"blackjack:{round_id}:payout")
+    recordcasinogame(userid, "blackjack", net_delta)
+    return BLACKJACK.mark_settled(userid)
+
+
+@app.route("/api/casino/blackjack/state")
+def blackjackstate():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    state = blackjacksettle(me[0], BLACKJACK.get_state(me[0]))
+    return {"ok": True, "state": state, "limits": blackjacklimits(me[0])}
+
+
+@app.route("/api/casino/blackjack/new", methods=["POST"])
+def blackjacknew():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    payload = request.get_json(silent=True) or {}
+    bet_raw = payload.get("bet", request.form.get("bet", "0"))
+    try:
+        bet = int(bet_raw or 0)
+    except Exception:
+        bet = 0
+    limits = blackjacklimits(me[0])
+    if bet < limits["min_bet"]:
+        return {"ok": False, "error": "invalid_bet_min", "limits": limits}, 400
+    if bet > limits["max_bet"]:
+        return {"ok": False, "error": "invalid_bet_max", "limits": limits}, 400
+    if not applyledger(me[0], -bet, "blackjack_bet", "blackjack bet", f"blackjack:pre:{int(time.time() * 1000)}:{bet}"):
+        return {"ok": False, "error": "bet_failed", "limits": blackjacklimits(me[0])}, 400
+    ok, state = BLACKJACK.start_round(me[0], bet)
+    if not ok:
+        applyledger(me[0], bet, "blackjack_refund", "blackjack refund", f"blackjack:refund:{int(time.time() * 1000)}:{bet}")
+        return {"ok": False, **state, "limits": limits}, 400
+    state = blackjacksettle(me[0], state)
+    return {"ok": True, "state": state, "limits": blackjacklimits(me[0])}
+
+
+@app.route("/api/casino/blackjack/hit", methods=["POST"])
+def blackjackhit():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    ok, payload = BLACKJACK.hit(me[0])
+    if not ok:
+        return {"ok": False, **payload, "limits": blackjacklimits(me[0])}, 400
+    payload = blackjacksettle(me[0], payload)
+    return {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+
+
+@app.route("/api/casino/blackjack/stand", methods=["POST"])
+def blackjackstand():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    ok, payload = BLACKJACK.stand(me[0])
+    if not ok:
+        return {"ok": False, **payload, "limits": blackjacklimits(me[0])}, 400
+    payload = blackjacksettle(me[0], payload)
+    return {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+
+
+@app.route("/level")
+def levelinfo():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    data = get_level(me[0])
+    return {"ok": True, "level": data["level"], "xp": data["xp"], "next_level_xp": data["next_level_xp"]}
+
+
+@app.route("/level/xp", methods=["POST"])
+def leveladdxp():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    internal_key = request.headers.get("X-Internal-Key", "")
+    if not internal_key or internal_key != app.secret_key:
+        return {"ok": False, "error": "forbidden"}, 403
+    payload = request.get_json(silent=True) or {}
+    amount = int(payload.get("amount", 0) or 0)
+    reason = str(payload.get("reason", "") or "").strip()
+    reference_id = str(payload.get("reference_id", "") or "").strip()
+    idempotency_key = str(payload.get("idempotency_key", "") or "").strip()
+    if amount <= 0 or not reason:
+        return {"ok": False, "error": "invalid_payload"}, 400
+    ref = reference_id or idempotency_key or None
+    result = add_xp(me[0], amount, reason, ref)
+    return {
+        "ok": True,
+        "applied": result["applied"],
+        "level": result["level"],
+        "xp": result["xp"],
+        "next_level_xp": result["next_level_xp"],
+    }
+
+
+@app.route("/rewards/daily")
+def rewardsdaily():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    return {"ok": True, **dailyrewardstate(me[0])}
+
+
+@app.route("/rewards/daily/claim", methods=["POST"])
+def rewardsdailyclaim():
+    me = currentaccount()
+    if not me:
+        return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
+    result = claimdailyreward(me[0])
+    if not result.get("ok"):
+        return result, 400
+    return {
+        "ok": True,
+        "claimed_amount": result["claimed_amount"],
+        "balance": get_balance(me[0]),
+        **result["state"],
+    }
 
 
 @app.route("/choose", methods=["GET", "POST"])
@@ -914,6 +1338,11 @@ def logout():
 @app.route("/media/<path:filename>")
 def media(filename: str):
     return send_from_directory(MEDIA, filename)
+
+
+@app.route("/assets/<path:filename>")
+def projectassets(filename: str):
+    return send_from_directory(ROOT / "assets", filename)
 
 
 @app.route("/<zone>/<filename>")

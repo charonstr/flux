@@ -1,2 +1,27 @@
-<!doctype html><html lang="{{ current }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ t.get("settings", "Settings") }}</title><link rel="stylesheet" href="/mobile/style.css"></head><body><main class="wrap"><header class="sidebar"><a href="/profile" data-nav="soft" class="profilebadge"><img src="{{ avatar }}" class="avatar" alt="avatar"><span>{{ username }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back", "Back") }}</button><a href="/profile" data-nav="soft" class="linkbtn">{{ t.get("profile", "Profile") }}</a><a href="/" data-nav="soft" class="linkbtn">{{ t.get("home", "Home") }}</a></nav></header><section class="panel authwrap"><h1>{{ t.get("settings", "Settings") }}</h1><p><button type="button" class="linkbtn" data-theme-set="dark">Dark</button> <button type="button" class="linkbtn" data-theme-set="light">Light</button></p><p><a href="/friendships" data-nav="soft" class="linkbtn">{{ t.get("friendships", "Friendships") }}</a></p><p><a href="/privacy" data-nav="soft" class="linkbtn">{{ t.get("privacy", "Privacy and security") }}</a></p><p><a href="/sitesettings" data-nav="soft" class="linkbtn">{{ t.get("sitesettings", "Site settings") }}</a></p></section></main><script src="/mobile/app.js"></script></body></html>
-
+<!DOCTYPE html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.settings }} - Euphorium</title>
+    <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <h2>{{ t.settings }}</h2>
+                <div style="display:grid; gap:10px;">
+                    <a href="/friends" class="modal-link" data-nav="soft"><i class="fa-solid fa-user-group"></i> {{ t.friends }}</a>
+                    <a href="/friendships" class="modal-link" data-nav="soft"><i class="fa-solid fa-ban"></i> {{ t.friendships }}</a>
+                    <a href="/changepassword" class="modal-link" data-nav="soft"><i class="fa-solid fa-key"></i> {{ t.changepassword }}</a>
+                    <a href="/sitesettings" class="modal-link" data-nav="soft"><i class="fa-solid fa-globe"></i> {{ t.sitesettings }}</a>
+                    <a href="/privacy" class="modal-link" data-nav="soft"><i class="fa-solid fa-shield-halved"></i> {{ t.privacy }}</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/mobile/app.js"></script>
+</body>
+</html>

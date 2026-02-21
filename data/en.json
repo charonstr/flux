@@ -103,5 +103,10 @@
   "joinrequests": "Join requests",
   "sitesettings": "Site settings",
   "sitesettingsdesc": "Language and general site preferences.",
-  "language": "Language"
+  "language": "Language",
+  "casino": "Casino",
+  "casino_balance": "Gold balance",
+  "casino_level": "Level",
+  "casino_subtitle": "Casino lobby coming soon",
+  "casino_wait": "Games will be added soon"
 }

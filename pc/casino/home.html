@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ t.get("casino", "Casino") }} - Euphorium</title>
+    <link rel="stylesheet" href="/pc/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .casino-wrap { max-width: 1200px; margin: 0 auto; }
+        .casino-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .box { background: rgba(var(--panel-rgb), 0.74); border: 1px solid rgba(var(--line-rgb), 0.55); border-radius: 16px; padding: 18px; min-height: 220px; }
+        .box-wide { grid-column: 1 / -1; min-height: auto; }
+        .box h2 { margin: 0 0 14px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+        .muted { color: var(--muted); }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .stat { border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 12px; padding: 10px; }
+        .stat .label { color: var(--muted); font-size: 0.78rem; }
+        .stat .value { font-size: 1.05rem; font-weight: 700; margin-top: 4px; }
+        .leader-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+        .leader-tabs button { border: 1px solid rgba(var(--line-rgb), 0.7); background: rgba(var(--bg-rgb), 0.4); color: var(--text); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+        .leader-tabs button.active { border-color: rgba(var(--primary-rgb), 0.8); color: var(--primary); }
+        .row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.35); }
+        .row:last-child { border-bottom: 0; }
+        .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .amt { font-weight: 700; }
+        .profile-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .profile-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(var(--line-rgb), 0.7); }
+        .xp-track { margin-top: 8px; height: 10px; border-radius: 999px; background: rgba(var(--line-rgb), 0.65); overflow: hidden; }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); }
+        .rank-icon { width: 18px; text-align: center; margin-right: 7px; }
+        .win { color: #16a34a; }
+        .lose { color: #dc2626; }
+        .empty { color: var(--muted); padding: 12px 0; }
+        .rewards-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+        .step { border: 1px solid rgba(var(--line-rgb), 0.7); border-radius: 12px; padding: 8px; text-align: center; background: rgba(var(--bg-rgb), 0.25); transition: all .2s ease; }
+        .step .day { font-size: .75rem; color: var(--muted); }
+        .step .amt { font-weight: 700; margin-top: 4px; }
+        .step.today { border-color: rgba(var(--primary-rgb), 0.9); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2) inset; }
+        .step.claimed { background: rgba(var(--text-rgb), 0.2); opacity: .65; }
+        .reward-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+        .reward-msg { color: var(--muted); font-size: .9rem; min-height: 22px; }
+        .claim-pop { position: fixed; right: 24px; bottom: 24px; background: rgba(16, 185, 129, .14); border: 1px solid rgba(16,185,129,.45); color: #059669; padding: 10px 14px; border-radius: 999px; opacity: 0; transform: translateY(8px); transition: all .25s ease; pointer-events: none; z-index: 9999; }
+        .claim-pop.show { opacity: 1; transform: translateY(0); }
+        @media (max-width: 920px) { .casino-grid { grid-template-columns: 1fr; } .summary-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="lang-switcher">
+                <button data-theme-set="light" class="navbtn"><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class="navbtn"><i class="fa-solid fa-moon"></i></button>
+            </div>
+            <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span></a>
+            <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
+        </div>
+    </div>
+    <main class="casino-wrap">
+        <div class="casino-grid">
+            <section class="box">
+                <h2><i class="fa-solid fa-chart-simple"></i> {{ t.get("casino_stats", "Kumar istatistikleri") }}</h2>
+                <div class="profile-head">
+                    <img id="profileAvatar" class="profile-avatar" src="{{ avatar }}" alt="avatar">
+                    <div>
+                        <div id="profileName">{{ username }}</div>
+                        <div class="muted"><span id="profileLevel">1</span> | <span id="profileBalance">0</span></div>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanc") }}</div><div id="sumWin" class="value">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayip") }}</div><div id="sumLose" class="value">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win lose orani") }}</div><div id="sumRatio" class="value">0</div></div>
+                </div>
+                <div class="xp-track"><div id="xpFill" class="xp-fill" style="width:0%"></div></div>
+                <div class="muted" id="xpText" style="margin-top:6px;">0 / 0 XP</div>
+            </section>
+
+            <section class="box">
+                <h2><i class="fa-solid fa-crown"></i> {{ t.get("casino_leaderboard", "En cok kazananlar") }}</h2>
+                <div class="leader-tabs">
+                    <button id="tabDaily" class="active" type="button">Gunluk</button>
+                    <button id="tabWeekly" type="button">Haftalik</button>
+                    <button id="tabMonthly" type="button">Aylik</button>
+                </div>
+                <div id="leaderRows" class="muted">Kimse yok</div>
+            </section>
+
+            <section class="box">
+                <h2><i class="fa-solid fa-gem"></i> {{ t.get("casino_richest", "Guncel en zenginler") }}</h2>
+                <div id="richRows" class="muted">Kimse yok</div>
+            </section>
+
+            <section class="box">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("casino_last_games", "Son 10 oyun") }}</h2>
+                <div id="gameRows" class="muted">Kimse yok</div>
+            </section>
+            <section class="box">
+                <h2><i class="fa-solid fa-gamepad"></i> Games</h2>
+                <a href="/casino/blackjack" data-nav="soft" class="linkbtn"><i class="fa-solid fa-clover"></i> Blackjack</a>
+                <a href="/casino/roulette" data-nav="soft" class="linkbtn"><i class="fa-solid fa-bullseye"></i> Roulette</a>
+            </section>
+            <section class="box box-wide">
+                <h2><i class="fa-solid fa-gift"></i> Daily reward</h2>
+                <div id="rewardSteps" class="rewards-steps"></div>
+                <div class="reward-actions">
+                    <button id="claimBtn" class="pickbtn" type="button" disabled>Claim today</button>
+                    <div id="rewardMsg" class="reward-msg">Loading</div>
+                </div>
+            </section>
+        </div>
+    </main>
+    <div id="claimPop" class="claim-pop">+0 gold</div>
+    <script src="/pc/app.js"></script>
+    <script>
+        (function () {
+            let leaders = { daily_top5: [], weekly_top5: [], monthly_top5: [] };
+            let currentTab = "daily_top5";
+
+            function esc(v) {
+                return String(v || "").replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; });
+            }
+
+            function renderLeader() {
+                const wrap = document.getElementById("leaderRows");
+                const rows = leaders[currentTab] || [];
+                if (!rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map(function (r) {
+                    return '<div class="row"><div class="name">' + esc(r.username) + '</div><div class="amt">+' + Number(r.amount || 0) + '</div></div>';
+                }).join("");
+            }
+
+            function renderRichest(rows) {
+                const wrap = document.getElementById("richRows");
+                if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map(function (r, i) {
+                    let icon = '<i class="fa-solid fa-circle rank-icon"></i>';
+                    if (i === 0) icon = '<i class="fa-solid fa-gem rank-icon" style="color:#60a5fa;"></i>';
+                    if (i === 1) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#f59e0b;"></i>';
+                    if (i === 2) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#b45309;"></i>';
+                    return '<div class="row"><div class="name">' + icon + esc(r.username) + '</div><div class="amt">' + Number(r.balance || 0) + '</div></div>';
+                }).join("");
+            }
+
+            function renderGames(rows) {
+                const wrap = document.getElementById("gameRows");
+                if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map(function (g) {
+                    const d = Number(g.delta_amount || 0);
+                    const cls = d >= 0 ? "win" : "lose";
+                    const sign = d >= 0 ? "+" : "";
+                    return '<div class="row"><div class="name">' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
+                }).join("");
+            }
+
+            async function loadCasinoProfile() {
+                try {
+                    const res = await fetch("/api/casino/profile", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+                    const data = await res.json();
+                    if (!data || !data.ok) return;
+                    document.getElementById("profileName").textContent = data.profile?.username || "";
+                    document.getElementById("profileAvatar").src = data.profile?.avatar || "";
+                    document.getElementById("profileLevel").textContent = "Level " + Number(data.level?.level || 1);
+                    document.getElementById("profileBalance").textContent = "Balance " + Number(data.profile?.balance || 0);
+                    document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
+                    document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
+                    document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
+                    const xp = Number(data.level?.xp || 0);
+                    const next = Number(data.level?.next_level_xp || 0);
+                    const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
+                    document.getElementById("xpFill").style.width = pct + "%";
+                    document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAX LEVEL";
+
+                    leaders = { daily_top5: data.daily_top5 || [], weekly_top5: data.weekly_top5 || [], monthly_top5: data.monthly_top5 || [] };
+                    renderLeader();
+                    renderRichest(data.richest_top5 || []);
+                    renderGames(data.last10_games || []);
+                } catch (err) {
+                    console.log("casino profile load error", err);
+                }
+            }
+
+            function renderReward(state) {
+                const wrap = document.getElementById("rewardSteps");
+                const msg = document.getElementById("rewardMsg");
+                const btn = document.getElementById("claimBtn");
+                if (!state || !state.days) {
+                    wrap.innerHTML = '<div class="empty">Veri yok</div>';
+                    btn.disabled = true;
+                    msg.textContent = "Veri yok";
+                    return;
+                }
+                wrap.innerHTML = state.days.map(function (d) {
+                    const cls = [d.state === "today" ? "today" : "", d.claimed ? "claimed" : ""].join(" ").trim();
+                    return '<div class="step ' + cls + '"><div class="day">Day ' + d.day + '</div><div class="amt">' + Number(d.amount || 0) + '</div></div>';
+                }).join("");
+                if (state.days[6]) {
+                    const day7 = wrap.children[6];
+                    day7.innerHTML += '<div class="day">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
+                }
+                btn.disabled = !state.can_claim_today;
+                msg.textContent = state.can_claim_today ? "Today reward is ready" : "Today already claimed";
+            }
+
+            async function loadReward() {
+                const msg = document.getElementById("rewardMsg");
+                msg.textContent = "Loading";
+                try {
+                    const res = await fetch("/rewards/daily", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+                    const data = await res.json();
+                    if (!data || !data.ok) {
+                        msg.textContent = "Yuklenemedi";
+                        return;
+                    }
+                    renderReward(data);
+                } catch (err) {
+                    console.log("daily reward load error", err);
+                    msg.textContent = "Hata";
+                }
+            }
+
+            async function claimReward() {
+                const btn = document.getElementById("claimBtn");
+                const msg = document.getElementById("rewardMsg");
+                btn.disabled = true;
+                msg.textContent = "Claiming";
+                try {
+                    const res = await fetch("/rewards/daily/claim", {
+                        method: "POST",
+                        headers: { "X-Requested-With": "fetch" },
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.ok) {
+                        msg.textContent = "Claim basarisiz";
+                        await loadReward();
+                        return;
+                    }
+                    renderReward(data);
+                    const pop = document.getElementById("claimPop");
+                    pop.textContent = "+" + Number(data.claimed_amount || 0) + " gold";
+                    pop.classList.add("show");
+                    setTimeout(function () { pop.classList.remove("show"); }, 1300);
+                    await loadCasinoProfile();
+                    msg.textContent = "Claim basarili";
+                } catch (err) {
+                    console.log("daily reward claim error", err);
+                    msg.textContent = "Claim hatasi";
+                    await loadReward();
+                }
+            }
+
+            function setTab(key, btn) {
+                currentTab = key;
+                document.querySelectorAll(".leader-tabs button").forEach(function (b) { b.classList.remove("active"); });
+                btn.classList.add("active");
+                renderLeader();
+            }
+
+            document.getElementById("tabDaily").onclick = function () { setTab("daily_top5", this); };
+            document.getElementById("tabWeekly").onclick = function () { setTab("weekly_top5", this); };
+            document.getElementById("tabMonthly").onclick = function () { setTab("monthly_top5", this); };
+            document.getElementById("claimBtn").onclick = claimReward;
+            loadCasinoProfile();
+            loadReward();
+        })();
+    </script>
+</body>
+</html>
+

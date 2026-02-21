@@ -1,172 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("servers","Servers") }} - Euphorium</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.servers }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .tabs {
-            display: flex;
-            background-color: var(--panel);
-            border-radius: 12px;
-            padding: 5px;
-            margin-bottom: 15px;
-        }
-        .tab-link {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-            font-weight: 500;
-            color: var(--muted);
-            transition: all 0.3s;
-        }
-        .tab-link.active {
-            background: var(--primary);
-            color: #fff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-        .server-list-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--panel);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            text-decoration: none;
-            color: var(--text);
-            margin-bottom: 10px;
-        }
-        .server-list-item .avatar {
-            width: 50px;
-            height: 50px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <button class="profile-btn" id="profileBtn">
-                <img src="{{ avatar }}" class="avatar" alt="avatar">
-            </button>
-        </div>
-        <nav class="topbar-right">
-            <a href="/dm" data-nav="soft" class="navbtn" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
-            <a href="/servers" data-nav="soft" class="navbtn active" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
-        </nav>
-    </header>
-
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <a href="/profile" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-user"></i>
-                <span>{{ username or t.get("profile", "Profile") }}</span>
-            </a>
-            <a href="/settings" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-cog"></i>
-                <span>{{ t.get("settings", "Settings") }}</span>
-            </a>
-            <a href="/logout" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>{{ t.get("logout", "Logout") }}</span>
-            </a>
-            <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <main class="wrap">
-        <div class="tabs">
-            <div class="tab-link active" onclick="openTab(event, 'my-servers')">{{ t.get("myservers","My Servers") }}</div>
-            <div class="tab-link" onclick="openTab(event, 'explore')">{{ t.get("explore","Explore") }}</div>
-            <div class="tab-link" onclick="openTab(event, 'create')">{{ t.get("createserver","Create") }}</div>
-        </div>
-
-        <div id="my-servers" class="tab-content active">
-            {% for s in mine %}
-            <a href="/servers/{{ s[0] }}" data-nav="soft" class="server-list-item">
-                <img src="{{ s[2] }}" class="avatar" alt="">
-                <strong>{{ s[1] }}</strong>
-            </a>
-            {% else %}
-            <div class="panel" style="text-align:center;">
-                <p>{{ t.get("noservers","You are not in any servers yet.") }}</p>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div id="explore" class="tab-content">
-            <section class="panel">
-                <h2>{{ t.get("joinserver","Join a Server") }}</h2>
-                <form method="post" class="form" data-nav="soft">
-                    <input type="hidden" name="mode" value="join">
-                    <p>{{ t.get('join-info', 'Select a public server or enter an invite code.') }}</p>
-                    <select name="serverid">
-                        <option value="">-- {{ t.get("publicservers","Public Servers") }} --</option>
-                        {% for s in publics %}
-                        <option value="{{ s[0] }}">{{ s[1] }}</option>
-                        {% endfor %}
-                    </select>
-                    <input name="joincode" type="text" placeholder="{{ t.get('invitecode','Or enter invite code') }}">
-                    <button class="pickbtn" type="submit">{{ t.get("join","Join Server") }}</button>
-                </form>
-            </section>
-        </div>
-
-        <div id="create" class="tab-content">
-            <section class="panel">
-                <h2>{{ t.get("createserver","Create a New Server") }}</h2>
-                {% if error %}<p class="error">{{ error }}</p>{% endif %}
-                <form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <h2>{{ t.createserver }}</h2>
+                {% if error %}<div class="error">{{ error }}</div>{% endif %}
+                <form class="form" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="mode" value="create">
-                    <input name="name" type="text" placeholder="{{ t.get('servername','Server name') }}" required>
-                    <label>{{ t.get('serveravatar', 'Server Avatar') }}</label>
-                    <input name="avatar" type="file" accept="image/*">
-                    <label>{{ t.get('visibility', 'Visibility') }}</label>
-                    <select name="visibility">
-                        <option value="public">{{ t.get("public","Public") }}</option>
-                        <option value="private">{{ t.get("private","Private") }}</option>
-                    </select>
-                     <label>{{ t.get('joinmode', 'Join Mode') }}</label>
-                    <select name="joinmode">
-                        <option value="open">{{ t.get("openjoin","Open to Everyone") }}</option>
-                        <option value="approval">{{ t.get("approvaljoin","Approval Required") }}</option>
-                        <option value="code">{{ t.get("codejoin","Invite Code Only") }}</option>
-                    </select>
-                    <input name="joincode" type="text" placeholder="{{ t.get('invitecode','Invite code (if required)') }}">
-                    <button class="pickbtn" type="submit">{{ t.get("create","Create Server") }}</button>
+                    <div class="input-group">
+                        <i class="fa-solid fa-server"></i>
+                        <input type="text" name="name" placeholder="{{ t.servername }}" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-image"></i>
+                        <input type="file" name="avatar">
+                    </div>
+                    <button class="pickbtn">{{ t.create }}</button>
                 </form>
-            </section>
+            </div>
+
+            <div class="panel">
+                <h2>{{ t.joinserver }}</h2>
+                <form class="form" method="POST">
+                    <input type="hidden" name="mode" value="join">
+                    <div class="input-group">
+                        <i class="fa-solid fa-link"></i>
+                        <input type="text" name="joincode" placeholder="{{ t.invitecode }}" required>
+                    </div>
+                    <button class="linkbtn">{{ t.join }}</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h3>{{ t.myservers }}</h3>
+                {% for s in mine %}
+                <a href="/servers/{{ s.0 }}" class="cardrow modal-link" data-nav="soft">
+                    <img src="/media/{{ s.2 }}" class="avatar" onerror="this.src='/mobile/avatar.svg'">
+                    <span>{{ s.1 }}</span>
+                    <i class="fa-solid fa-chevron-right" style="margin-left:auto;"></i>
+                </a>
+                {% else %}
+                <p>{{ t.noservers }}</p>
+                {% endfor %}
+            </div>
         </div>
     </main>
     <script src="/mobile/app.js"></script>
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tab-link");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
-    </script>
 </body>
 </html>

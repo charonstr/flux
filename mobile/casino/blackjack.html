@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blackjack - Euphorium</title>
+    <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .table { border-radius: 16px; padding: 10px; background: linear-gradient(180deg, #0b6b3a, #075a31); border: 4px solid #5b2f12; }
+        .zone { border: 1px dashed rgba(255,255,255,.24); border-radius: 12px; padding: 8px; margin-bottom: 8px; }
+        .zone-head { display: flex; justify-content: space-between; color: #e8f8ef; margin-bottom: 6px; font-weight: 700; font-size: .84rem; }
+        .cards { display: flex; flex-wrap: wrap; gap: 6px; min-height: 100px; }
+        .card { width: 56px; height: 82px; border-radius: 8px; background: #fff; border: 1px solid #ddd; box-shadow: 0 6px 12px rgba(0,0,0,.28); padding: 6px; display:flex; flex-direction:column; justify-content:space-between; transform: translateY(-14px) rotate(-5deg); opacity:0; transition: all .2s ease; }
+        .card.in { transform: translateY(0) rotate(0); opacity:1; }
+        .card.back { background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border: 1px solid #4b5563; color: #93c5fd; justify-content:center; align-items:center; font-size:.95rem; }
+        .card.red { color: #c81e1e; }
+        .card.black { color: #111827; }
+        .rank { font-size: .86rem; font-weight: 800; line-height: 1; }
+        .suit { font-size: 1rem; line-height: 1; }
+        .panel { background: rgba(17,24,39,.42); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 8px; color: #f8fafc; margin-bottom: 8px; }
+        .status { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: .78rem; margin-bottom: 8px; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .actions button { flex: 1; min-width: 80px; }
+        .bet-input { width: 100px; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.2); color:#fff; }
+        .top { display:flex; gap:6px; margin-bottom:8px; }
+        .balance-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(245,158,11,.45); background: rgba(245,158,11,.16); color: #f59e0b; font-weight: 700; font-size: .82rem; }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="wrap">
+            <div class="panel top">
+                <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i></a>
+                
+                <div id="balanceBadge" class="balance-badge"><i class="fa-solid fa-coins"></i><span id="balanceText">0</span></div>
+            </div>
+            <div class="table">
+                <div class="zone">
+                    <div class="zone-head"><span>Dealer</span><span id="dealerTotal">?</span></div>
+                    <div id="dealerCards" class="cards"></div>
+                </div>
+                <div class="panel">
+                    <div class="status">
+                        <span>State <b id="phase">idle</b></span>
+                        <span>Result <b id="result">-</b></span>
+                        <span>Player <b id="playerTotal">0</b></span>
+                        <span id="msg">ready</span>
+                    </div>
+                    <div class="actions">
+                        <input id="betInput" class="bet-input" type="number" min="100" step="1" value="100" /><button id="betMinBtn" class="linkbtn" type="button">MIN</button><button id="betMaxBtn" class="linkbtn" type="button">MAX</button>
+                        <button id="newBtn" class="pickbtn" type="button">New</button>
+                        <button id="hitBtn" class="pickbtn" type="button" disabled>Cek</button>
+                        <button id="standBtn" class="linkbtn" type="button" disabled>Dur</button>
+                    </div>
+                </div>
+                <div class="zone">
+                    <div class="zone-head"><span>Player</span><span id="playerTotalBottom">0</span></div>
+                    <div id="playerCards" class="cards"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/mobile/app.js"></script>
+    <script src="/mobile/blackjack.js"></script>
+</body>
+</html>

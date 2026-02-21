@@ -1,115 +1,72 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("welcome", "Welcome") }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.home }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <button class="profile-btn" id="profileBtn">
-                <img src="{{ avatar }}" class="avatar" alt="avatar">
-            </button>
-        </div>
-        <nav class="topbar-right">
-            <a href="/dm" data-nav="soft" class="navbtn" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
-            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
-        </nav>
-    </header>
-
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <a href="/profile" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-user"></i>
-                <span>{{ username or t.get("profile", "Profile") }}</span>
-            </a>
-            <a href="/settings" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-cog"></i>
-                <span>{{ t.get("settings", "Settings") }}</span>
-            </a>
-            <a href="/logout" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>{{ t.get("logout", "Logout") }}</span>
-            </a>
-            <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <h2>{{ t.welcome }}, {{ username }}</h2>
+                <p>{{ t.subtitle }}</p>
             </div>
-        </div>
-    </div>
 
-    <main class="wrap">
-        <section class="panel" style="animation: fadeIn 0.5s ease-out;">
-            <h1>{{ t.get("welcome", "Welcome!") }} 👋</h1>
-            <p>{{ t.get("subtitle", "This is your dashboard. You can see your friend requests and suggestions below.") }}</p>
-        </section>
-
-        {% if username %}
-        <section class="panel" style="animation: fadeIn 0.7s ease-out;">
-            <h2>{{ t.get("dmrequests", "Message requests") }}</h2>
             {% if dmpending %}
-                {% for p in dmpending %}
+            <div class="panel">
+                <h3>{{ t.dmrequests }}</h3>
+                {% for req in dmpending %}
                 <div class="cardrow">
-                    <div class="who"><img src="{{ p.avatar }}" class="avatar sm" alt="a"> {{ p.username }}</div>
+                    <div class="who">
+                        <img src="{{ req.avatar }}" class="avatar">
+                        <span>{{ req.username }}</span>
+                    </div>
                     <div class="acts">
-                        <form method="post" action="/dm/request/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn">{{ t.get("accept", "Accept") }}</button></form>
-                        <form method="post" action="/dm/request/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn">{{ t.get("reject", "Reject") }}</button></form>
+                        <form action="/dm/request/accept/{{ req.requestid }}" method="POST"><button class="pickbtn"><i class="fa-solid fa-check"></i></button></form>
+                        <form action="/dm/request/reject/{{ req.requestid }}" method="POST"><button class="linkbtn"><i class="fa-solid fa-xmark"></i></button></form>
                     </div>
                 </div>
                 {% endfor %}
-            {% else %}
-                <p>{{ t.get("norequests", "No message requests.") }}</p>
-            {% endif %}
-        </section>
-
-        <section class="panel" style="animation: fadeIn 0.9s ease-out;">
-            <h2>{{ t.get("requests", "Friend requests") }}</h2>
-            {% if pending %}
-                {% for p in pending %}
-                <div class="cardrow">
-                    <div class="who"><img src="{{ p.avatar }}" class="avatar sm" alt="a"> {{ p.username }}</div>
-                    <div class="acts">
-                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn">{{ t.get("accept", "Accept") }}</button></form>
-                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn">{{ t.get("reject", "Reject") }}</button></form>
-                        <form method="post" action="/social/block/{{ p.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("block", "Block") }}</button></form>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <p>{{ t.get("norequests", "No friend requests.") }}</p>
-            {% endif %}
-        </section>
-
-        <section class="panel" style="animation: fadeIn 1.1s ease-out;">
-            <h2>{{ t.get("suggested", "Suggested users") }}</h2>
-            {% for s in suggestions %}
-            <div class="cardrow">
-                <div class="who"><img src="{{ s.avatar }}" class="avatar sm" alt="a"> {{ s.username }}</div>
-                <div class="acts">
-                    {% if s.status == 'friend' %}
-                    <form method="post" action="/social/remove/{{ s.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("removefriend", "Remove friend") }}</button></form>
-                    {% elif s.status == 'sent' %}
-                    <button class="linkbtn" disabled>{{ t.get("sent", "Sent") }}</button>
-                    {% elif s.status == 'incoming' %}
-                    <button class="linkbtn" disabled>{{ t.get("incoming", "Incoming request") }}</button>
-                    {% else %}
-                    <form method="post" action="/social/request/{{ s.id }}" data-nav="soft"><button class="pickbtn">{{ t.get("addfriend", "Add friend") }}</button></form>
-                    {% endif %}
-                    <form method="post" action="/social/block/{{ s.id }}" data-nav="soft"><button class="linkbtn">{{ t.get("block", "Block") }}</button></form>
-                </div>
             </div>
-            {% endfor %}
-        </section>
-        {% endif %}
+            {% endif %}
+
+            {% if pending %}
+            <div class="panel">
+                <h3>{{ t.requests }}</h3>
+                {% for req in pending %}
+                <div class="cardrow">
+                    <div class="who">
+                        <img src="{{ req.avatar }}" class="avatar">
+                        <span>{{ req.username }}</span>
+                    </div>
+                    <div class="acts">
+                        <form action="/social/accept/{{ req.requestid }}" method="POST"><button class="pickbtn"><i class="fa-solid fa-check"></i></button></form>
+                        <form action="/social/reject/{{ req.requestid }}" method="POST"><button class="linkbtn"><i class="fa-solid fa-xmark"></i></button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="panel">
+                <h3>{{ t.suggested }}</h3>
+                {% for user in suggestions %}
+                <div class="cardrow">
+                    <div class="who"><img src="{{ user.avatar }}" class="avatar"><span>{{ user.username }}</span></div>
+                    <div class="acts">
+                        {% if user.status == 'friend' %}<button class="linkbtn" disabled><i class="fa-solid fa-user-check"></i></button>
+                        {% elif user.status == 'sent' %}<form action="/social/revoke/{{ user.id }}" method="POST"><button class="linkbtn"><i class="fa-solid fa-clock"></i></button></form>
+                        {% elif user.status == 'incoming' %}<button class="pickbtn" disabled><i class="fa-solid fa-envelope"></i></button>
+                        {% else %}<form action="/social/request/{{ user.id }}" method="POST"><button class="pickbtn"><i class="fa-solid fa-user-plus"></i></button></form>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </main>
     <script src="/mobile/app.js"></script>
 </body>
 </html>
-
-
-
-

@@ -1,16 +1,32 @@
 import secrets
 import sqlite3
 import string
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from random import Random
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 ROOT = Path(__file__).resolve().parent.parent
 DBROOT = ROOT / "database"
 
 
+def _turkey_tz():
+    try:
+        return ZoneInfo("Europe/Istanbul")
+    except ZoneInfoNotFoundError:
+        # Fallback for environments without tzdata package
+        return timezone(timedelta(hours=3))
+
+
+TURKEY_TZ = _turkey_tz()
+
+
 def path(name: str) -> Path:
     DBROOT.mkdir(parents=True, exist_ok=True)
-    return DBROOT / f"{name}.db"
+    target = DBROOT / f"{name}.db"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    return target
 
 
 def connect(name: str) -> sqlite3.Connection:
@@ -58,6 +74,118 @@ def setup() -> None:
             db.execute("ALTER TABLE accounts ADD COLUMN usernamechangedat TEXT DEFAULT ''")
         if not hascolumn(db, "accounts", "lastseen"):
             db.execute("ALTER TABLE accounts ADD COLUMN lastseen TEXT DEFAULT ''")
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS wallets (
+                user_id INTEGER PRIMARY KEY,
+                balance INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                amount INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                description TEXT NOT NULL,
+                reference_id TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_ledger_idempotent
+            ON ledger(user_id, type, reference_id)
+            WHERE reference_id IS NOT NULL AND reference_id <> ''
+            """
+        )
+        db.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_ledger_no_update
+            BEFORE UPDATE ON ledger
+            BEGIN
+                SELECT RAISE(ABORT, 'ledger is immutable');
+            END;
+            """
+        )
+        db.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_ledger_no_delete
+            BEFORE DELETE ON ledger
+            BEGIN
+                SELECT RAISE(ABORT, 'ledger is immutable');
+            END;
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_level (
+                user_id INTEGER PRIMARY KEY,
+                level INTEGER NOT NULL DEFAULT 1,
+                xp INTEGER NOT NULL DEFAULT 0,
+                total_xp INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS xp_ledger (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                amount INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                reference_id TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_xp_idempotent
+            ON xp_ledger(user_id, reference_id)
+            WHERE reference_id IS NOT NULL AND reference_id <> ''
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS casino_games (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                game_name TEXT NOT NULL DEFAULT '',
+                delta_amount INTEGER NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
+    with connect("casino/rewards") as db:
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_daily_rewards (
+                user_id INTEGER NOT NULL,
+                week_start_date TEXT NOT NULL,
+                rewards_day1 INTEGER NOT NULL,
+                rewards_day2 INTEGER NOT NULL,
+                rewards_day3 INTEGER NOT NULL,
+                rewards_day4 INTEGER NOT NULL,
+                rewards_day5 INTEGER NOT NULL,
+                rewards_day6 INTEGER NOT NULL,
+                rewards_day7 INTEGER NOT NULL,
+                bonus_day7 INTEGER NOT NULL,
+                claimed_days INTEGER NOT NULL DEFAULT 0,
+                last_claim_date TEXT NOT NULL DEFAULT '',
+                streak_count INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(user_id, week_start_date)
+            )
+            """
+        )
 
     with connect("social") as db:
         db.execute(
@@ -348,10 +476,353 @@ def savevisitor(token: str, language: str, useragent: str, ip: str) -> None:
 def createaccount(username: str, passwordhash: str) -> bool:
     try:
         with connect("accounts") as db:
+            db.execute("BEGIN IMMEDIATE")
             db.execute("INSERT INTO accounts (username, passwordhash) VALUES (?, ?)", (username, passwordhash))
+            user_id = int(db.execute("SELECT last_insert_rowid()").fetchone()[0])
+            _applyledger(db, user_id, 1000, "initial_grant", "signup bonus", f"signup:{user_id}:initial_grant")
+            db.execute("COMMIT")
         return True
     except sqlite3.IntegrityError:
         return False
+    except Exception:
+        return False
+
+
+def _ensurewallet(db: sqlite3.Connection, user_id: int) -> None:
+    db.execute("INSERT OR IGNORE INTO wallets (user_id, balance) VALUES (?, 0)", (int(user_id),))
+
+
+def _applyledger(
+    db: sqlite3.Connection,
+    user_id: int,
+    amount: int,
+    tx_type: str,
+    description: str,
+    reference_id: str | None = None,
+) -> bool:
+    if int(amount) == 0:
+        raise ValueError("amount cannot be zero")
+    _ensurewallet(db, user_id)
+    try:
+        db.execute(
+            "INSERT INTO ledger (user_id, amount, type, description, reference_id) VALUES (?, ?, ?, ?, ?)",
+            (int(user_id), int(amount), str(tx_type), str(description), reference_id),
+        )
+    except sqlite3.IntegrityError:
+        return False
+    db.execute(
+        "UPDATE wallets SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+        (int(amount), int(user_id)),
+    )
+    return True
+
+
+def applyledger(user_id: int, amount: int, tx_type: str, description: str, reference_id: str | None = None) -> bool:
+    with connect("accounts") as db:
+        db.execute("BEGIN IMMEDIATE")
+        applied = _applyledger(db, user_id, amount, tx_type, description, reference_id)
+        if applied:
+            db.execute("COMMIT")
+            return True
+        db.execute("ROLLBACK")
+        return False
+
+
+def walletbalance(user_id: int) -> int:
+    with connect("accounts") as db:
+        _ensurewallet(db, user_id)
+        row = db.execute("SELECT balance FROM wallets WHERE user_id = ?", (int(user_id),)).fetchone()
+    return int(row[0]) if row else 0
+
+
+def syncwallet(user_id: int) -> int:
+    with connect("accounts") as db:
+        db.execute("BEGIN IMMEDIATE")
+        _ensurewallet(db, user_id)
+        row = db.execute("SELECT COALESCE(SUM(amount), 0) FROM ledger WHERE user_id = ?", (int(user_id),)).fetchone()
+        balance = int(row[0]) if row else 0
+        db.execute(
+            "UPDATE wallets SET balance = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            (balance, int(user_id)),
+        )
+        db.execute("COMMIT")
+    return balance
+
+
+def ensurelevel(user_id: int) -> None:
+    with connect("accounts") as db:
+        db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
+
+
+def levelstate(user_id: int):
+    with connect("accounts") as db:
+        db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
+        return db.execute(
+            "SELECT level, xp, total_xp, updated_at FROM user_level WHERE user_id = ?",
+            (int(user_id),),
+        ).fetchone()
+
+
+def applyxp(
+    user_id: int,
+    amount: int,
+    reason: str,
+    reference_id: str | None = None,
+    max_level: int = 100,
+    base_xp: int = 100,
+    step_xp: int = 50,
+) -> tuple[bool, int, int, int]:
+    value = int(amount)
+    if value <= 0:
+        raise ValueError("amount must be positive")
+    with connect("accounts") as db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
+        try:
+            db.execute(
+                "INSERT INTO xp_ledger (user_id, amount, reason, reference_id) VALUES (?, ?, ?, ?)",
+                (int(user_id), value, str(reason), reference_id),
+            )
+        except sqlite3.IntegrityError:
+            row = db.execute("SELECT level, xp, total_xp FROM user_level WHERE user_id = ?", (int(user_id),)).fetchone()
+            db.execute("ROLLBACK")
+            return False, int(row[0]), int(row[1]), int(row[2])
+
+        row = db.execute("SELECT level, xp, total_xp FROM user_level WHERE user_id = ?", (int(user_id),)).fetchone()
+        level = int(row[0]) if row else 1
+        xp = int(row[1]) if row else 0
+        total_xp = int(row[2]) if row else 0
+        xp += value
+        total_xp += value
+
+        while level < int(max_level):
+            required = int(base_xp) + (int(level) - 1) * int(step_xp)
+            if xp < required:
+                break
+            xp -= required
+            level += 1
+
+        db.execute(
+            "UPDATE user_level SET level = ?, xp = ?, total_xp = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            (level, xp, total_xp, int(user_id)),
+        )
+        db.execute("COMMIT")
+        return True, level, xp, total_xp
+
+
+def casinosummary(user_id: int):
+    with connect("accounts") as db:
+        row = db.execute(
+            """
+            SELECT
+                COALESCE(SUM(CASE WHEN delta_amount > 0 THEN delta_amount ELSE 0 END), 0) AS total_win_amount,
+                COALESCE(SUM(CASE WHEN delta_amount < 0 THEN -delta_amount ELSE 0 END), 0) AS total_lose_amount
+            FROM casino_games
+            WHERE user_id = ?
+            """,
+            (int(user_id),),
+        ).fetchone()
+    wins = int(row[0]) if row else 0
+    loses = int(row[1]) if row else 0
+    ratio = round((wins / loses), 2) if loses > 0 else (float(wins) if wins > 0 else 0.0)
+    return wins, loses, ratio
+
+
+def casinoleaderboard(period: str, limit: int = 5):
+    where = ""
+    if period == "daily":
+        where = "AND created_at >= datetime('now', '-1 day')"
+    elif period == "weekly":
+        where = "AND created_at >= datetime('now', '-7 day')"
+    elif period == "monthly":
+        where = "AND created_at >= datetime('now', '-30 day')"
+    with connect("accounts") as db:
+        rows = db.execute(
+            f"""
+            SELECT a.username, COALESCE(SUM(CASE WHEN g.delta_amount > 0 THEN g.delta_amount ELSE 0 END), 0) AS total_win
+            FROM casino_games g
+            JOIN accounts a ON a.id = g.user_id
+            WHERE 1=1 {where}
+            GROUP BY g.user_id, a.username
+            HAVING total_win > 0
+            ORDER BY total_win DESC, a.username ASC
+            LIMIT ?
+            """,
+            (int(limit),),
+        ).fetchall()
+    return [{"username": r[0], "amount": int(r[1])} for r in rows]
+
+
+def casinorichest(limit: int = 5):
+    with connect("accounts") as db:
+        rows = db.execute(
+            """
+            SELECT a.username, w.balance
+            FROM wallets w
+            JOIN accounts a ON a.id = w.user_id
+            WHERE EXISTS (SELECT 1 FROM casino_games g WHERE g.user_id = w.user_id)
+            ORDER BY w.balance DESC, a.username ASC
+            LIMIT ?
+            """,
+            (int(limit),),
+        ).fetchall()
+    return [{"username": r[0], "balance": int(r[1])} for r in rows]
+
+
+def casinolastgames(user_id: int, limit: int = 10):
+    with connect("accounts") as db:
+        rows = db.execute(
+            """
+            SELECT game_name, delta_amount, created_at
+            FROM casino_games
+            WHERE user_id = ?
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (int(user_id), int(limit)),
+        ).fetchall()
+    return [{"game_name": r[0], "delta_amount": int(r[1]), "created_at": r[2]} for r in rows]
+
+
+def recordcasinogame(user_id: int, game_name: str, delta_amount: int) -> None:
+    with connect("accounts") as db:
+        db.execute(
+            "INSERT INTO casino_games (user_id, game_name, delta_amount) VALUES (?, ?, ?)",
+            (int(user_id), str(game_name), int(delta_amount)),
+        )
+
+
+def _turkey_now() -> datetime:
+    return datetime.now(TURKEY_TZ)
+
+
+def _week_start(day: datetime) -> datetime:
+    return (day - timedelta(days=day.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _week_rewards(user_id: int, week_start_text: str) -> tuple[list[int], int]:
+    seed = f"{int(user_id)}:{week_start_text}"
+    rng = Random(seed)
+    rewards = [rng.randint(100, 2000) for _ in range(7)]
+    bonus = rng.randint(1000, 3000)
+    return rewards, bonus
+
+
+def _ensure_reward_row(db: sqlite3.Connection, user_id: int, week_start_text: str):
+    row = db.execute(
+        """
+        SELECT rewards_day1, rewards_day2, rewards_day3, rewards_day4, rewards_day5, rewards_day6, rewards_day7,
+               bonus_day7, claimed_days, last_claim_date, streak_count
+        FROM casino.user_daily_rewards
+        WHERE user_id = ? AND week_start_date = ?
+        """,
+        (int(user_id), week_start_text),
+    ).fetchone()
+    if row:
+        return row
+    rewards, bonus = _week_rewards(user_id, week_start_text)
+    db.execute(
+        """
+        INSERT INTO casino.user_daily_rewards (
+            user_id, week_start_date, rewards_day1, rewards_day2, rewards_day3, rewards_day4, rewards_day5, rewards_day6, rewards_day7, bonus_day7
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (int(user_id), week_start_text, rewards[0], rewards[1], rewards[2], rewards[3], rewards[4], rewards[5], rewards[6], bonus),
+    )
+    return (rewards[0], rewards[1], rewards[2], rewards[3], rewards[4], rewards[5], rewards[6], bonus, 0, "", 0)
+
+
+def dailyrewardstate(user_id: int):
+    now = _turkey_now()
+    today_text = now.date().isoformat()
+    start = _week_start(now)
+    week_start_text = start.date().isoformat()
+    day_index = (now.date() - start.date()).days + 1
+    with connect("accounts") as db:
+        db.execute("ATTACH DATABASE ? AS casino", (str(path("casino/rewards")),))
+        row = _ensure_reward_row(db, int(user_id), week_start_text)
+        rewards = [int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]), int(row[6])]
+        bonus = int(row[7])
+        claimed_days = int(row[8])
+        last_claim_date = row[9] or ""
+        streak_count = int(row[10] or 0)
+        days = []
+        for i, amount in enumerate(rewards, start=1):
+            bit = 1 << (i - 1)
+            claimed = bool(claimed_days & bit)
+            state = "future"
+            if claimed:
+                state = "claimed"
+            elif i == day_index:
+                state = "today"
+            days.append({"day": i, "amount": amount, "claimed": claimed, "state": state})
+    can_claim = 1 <= day_index <= 7 and not bool(claimed_days & (1 << (day_index - 1))) and last_claim_date != today_text
+    return {
+        "week_start_date": week_start_text,
+        "today_index": day_index,
+        "days": days,
+        "bonus_day7": bonus,
+        "claimed_days": claimed_days,
+        "last_claim_date": last_claim_date,
+        "streak_count": streak_count,
+        "can_claim_today": bool(can_claim),
+    }
+
+
+def claimdailyreward(user_id: int):
+    now = _turkey_now()
+    today_text = now.date().isoformat()
+    start = _week_start(now)
+    week_start_text = start.date().isoformat()
+    day_index = (now.date() - start.date()).days + 1
+    if day_index < 1 or day_index > 7:
+        return {"ok": False, "error": "invalid_day"}
+    with connect("accounts") as db:
+        db.execute("ATTACH DATABASE ? AS casino", (str(path("casino/rewards")),))
+        db.execute("BEGIN IMMEDIATE")
+        row = _ensure_reward_row(db, int(user_id), week_start_text)
+        rewards = [int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]), int(row[6])]
+        bonus = int(row[7])
+        claimed_days = int(row[8])
+        last_claim_date = row[9] or ""
+        streak_count = int(row[10] or 0)
+        bit = 1 << (day_index - 1)
+        if claimed_days & bit or last_claim_date == today_text:
+            db.execute("ROLLBACK")
+            return {"ok": False, "error": "already_claimed"}
+
+        amount = rewards[day_index - 1]
+        prev = today_text
+        if last_claim_date:
+            try:
+                prev = (datetime.fromisoformat(today_text) - timedelta(days=1)).date().isoformat()
+            except Exception:
+                prev = ""
+        if last_claim_date == prev:
+            streak_count = min(7, streak_count + 1)
+        else:
+            streak_count = 1
+        if day_index == 7 and streak_count >= 7:
+            amount += bonus
+
+        ref = f"daily_reward:{week_start_text}:day{day_index}"
+        applied = _applyledger(db, int(user_id), int(amount), "daily_reward", "daily reward claim", ref)
+        if not applied:
+            db.execute("ROLLBACK")
+            return {"ok": False, "error": "idempotent"}
+
+        claimed_days |= bit
+        db.execute(
+            """
+            UPDATE casino.user_daily_rewards
+            SET claimed_days = ?, last_claim_date = ?, streak_count = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ? AND week_start_date = ?
+            """,
+            (claimed_days, today_text, streak_count, int(user_id), week_start_text),
+        )
+        db.execute("COMMIT")
+    state = dailyrewardstate(int(user_id))
+    return {"ok": True, "claimed_amount": int(amount), "state": state}
 
 
 def accountbyname(username: str):

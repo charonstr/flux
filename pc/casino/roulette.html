@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette - Euphorium</title>
+  <link rel="stylesheet" href="/pc/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .roulette-root { max-width: 1280px; margin: 0 auto; }
+    .roulette-top { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .balance-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(245,158,11,.45); background: rgba(245,158,11,.16); color: #f59e0b; font-weight: 700; }
+    .roulette-grid { display: grid; grid-template-columns: 1.3fr .9fr; gap: 12px; }
+    .panelx { border: 1px solid rgba(var(--line-rgb), .6); border-radius: 14px; background: rgba(var(--panel-rgb), .65); padding: 10px; }
+    .table-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+    .num-cell, .bet-cell { border: 1px solid rgba(255,255,255,.18); border-radius: 6px; padding: 6px; text-align: center; cursor: pointer; min-height: 34px; position: relative; }
+    .num-cell.red { background: rgba(185, 28, 28, .5); }
+    .num-cell.black { background: rgba(17, 24, 39, .7); }
+    .num-cell.green { background: rgba(6, 95, 70, .8); }
+    .bet-cell { background: rgba(31, 41, 55, .55); }
+    .chip-stack { position: absolute; right: 4px; bottom: 2px; font-size: .72rem; color: #facc15; }
+    .outside { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+    .wheel-wrap { display: grid; place-items: center; }
+    .wheel { width: min(440px, 90vw); height: min(440px, 90vw); border-radius: 50%; border: 10px solid #5b2f12; background: radial-gradient(circle at 50% 50%, #1f2937 0 18%, #0f172a 19% 30%, #111827 31% 100%); position: relative; overflow: hidden; }
+    .wheel-track { position: absolute; inset: 12%; border-radius: 50%; }
+    .pocket { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; width: 50%; height: 2px; }
+    .pocket::after { content: attr(data-num); position: absolute; right: 10px; top: -10px; font-size: .62rem; color: #fff; }
+    .ball { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #f8fafc; box-shadow: 0 0 10px rgba(255,255,255,.75); left: 50%; top: 8%; transform: translate(-50%, -50%); }
+    .winner { outline: 2px solid #34d399; box-shadow: 0 0 0 2px rgba(52,211,153,.25) inset; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .chip-btn { border-radius: 999px; border: 1px solid rgba(var(--line-rgb), .7); background: rgba(var(--bg-rgb), .45); color: var(--text); padding: 6px 10px; cursor: pointer; }
+    .chip-btn.active { border-color: rgba(var(--primary-rgb), .9); color: var(--primary); }
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .status-line { color: var(--muted); margin-top: 8px; min-height: 20px; }
+    .spinfx .wheel-track { animation: spinWheel 4.6s cubic-bezier(.12,.66,.08,1) forwards; }
+    .spinfx .ball { animation: spinBall 4.6s cubic-bezier(.12,.66,.08,1) forwards; }
+    @keyframes spinWheel { from { transform: rotate(0deg); } to { transform: rotate(1440deg); } }
+    @keyframes spinBall { from { transform: translate(-50%, -50%) rotate(0deg) translateX(150px) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(-1680deg) translateX(150px) rotate(1680deg); } }
+    @media (max-width: 960px) { .roulette-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="roulette-root">
+    <div class="roulette-top">
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Casino</a>
+      <button id="newRoundBtn" class="pickbtn" type="button">New round</button>
+      <div class="balance-badge"><i class="fa-solid fa-coins"></i><span id="balanceText">0</span></div>
+    </div>
+    <section class="roulette-grid">
+      <div class="panelx">
+        <div id="rouletteTable"></div>
+        <div class="chips" id="chipBar"></div>
+        <div class="actions">
+          <button id="minBtn" class="linkbtn" type="button">Min</button>
+          <button id="maxBtn" class="linkbtn" type="button">Max</button>
+          <button id="undoBtn" class="linkbtn" type="button">Undo</button>
+          <button id="clearBtn" class="linkbtn" type="button">Clear</button>
+          <button id="lockBtn" class="pickbtn" type="button">No more bets</button>
+          <button id="spinBtn" class="pickbtn" type="button">Spin</button>
+        </div>
+        <div class="status-line">State <b id="stateText">-</b> Timer <b id="timerText">0</b> Result <b id="resultText">-</b> Total bet <b id="totalBetText">0</b></div>
+      </div>
+      <div class="panelx wheel-wrap">
+        <div class="wheel" id="wheel">
+          <div class="wheel-track" id="wheelTrack"></div>
+          <div class="ball" id="ball"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="/pc/app.js"></script>
+  <script src="/pc/roulette.js"></script>
+</body>
+</html>

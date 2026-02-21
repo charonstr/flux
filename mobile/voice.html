@@ -1,28 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ channel[2] }}</title><link rel="stylesheet" href="/mobile/style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ channel.2 }} - {{ server.1 }}</title>
+    <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 <body>
-<main class="wrap" id="voicepage" data-server="{{ server[0] }}" data-channel="{{ channel[0] }}" data-me="{{ session.get('accountid','0') }}">
-<header class="sidebar"><a href="/servers/{{ server[0] }}" data-nav="soft" class="profilebadge"><img src="{{ '/media/' + server[3] if server[3] else '/mobile/avatar.svg' }}" class="avatar" alt="avatar"><span>{{ server[2] }}</span></a><nav class="topnav"><button type="button" class="linkbtn" data-go-back="1">{{ t.get("back","Back") }}</button></nav></header>
-<section class="panel">
-<h2>Sesli Kanal: {{ channel[2] }}</h2>
-<p class="hint">Mikrofon izni verip kanala katıl.</p>
-<button id="voicejoin" class="pickbtn">Kanala bağlan</button>
-<button id="voicemute" class="linkbtn">Mikrofon kapat/aç</button>
-</section>
-<section class="panel">
-<h3>Kanaldakiler</h3>
-<div id="voiceusers">
-{% for u in users %}<div class="cardrow"><div class="who"><img src="{{ u.avatar }}" class="avatar sm"> {{ u.username }}</div></div>{% endfor %}
-</div>
-</section>
-<section class="panel">
-<h3>Ses Akışları</h3>
-<div id="audios"></div>
-</section>
-</main>
-<script src="/mobile/app.js?v=3"></script>
-<script src="/mobile/voice.js?v=1"></script>
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <div class="sidebar">
+                    <a href="/servers/{{ server.0 }}" class="navbtn" data-nav="soft"><i class="fa-solid fa-arrow-left"></i></a>
+                    <div class="profilebadge">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>{{ channel.2 }}</span>
+                    </div>
+                </div>
+                <div style="text-align:center; padding:20px;">
+                    <div class="pulse-ring" style="width:80px; height:80px; background:var(--primary); border-radius:50%; margin:0 auto 20px auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:2rem;">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <p>{{ t.active }}</p>
+                </div>
+                <div id="voice-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px;">
+                    {% for u in users %}<div style="text-align:center;"><img src="{{ u.avatar }}" class="avatar"><div>{{ u.username }}</div></div>{% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/mobile/app.js"></script>
+    <script src="/pc/voice.js"></script>
 </body>
 </html>
-

@@ -1,31 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("sitesettings", "Site settings") }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.sitesettings }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <button type="button" class="navbtn" data-go-back="1"><i class="fa-solid fa-arrow-left"></i></button>
-            <span style="font-weight:600;">{{ t.get("sitesettings", "Site settings") }}</span>
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <h2>{{ t.sitesettings }}</h2>
+                <p>{{ t.sitesettingsdesc }}</p>
+                <div style="display:grid; gap:10px;">
+                    <a href="/set/tr" class="linkbtn">Türkçe</a>
+                    <a href="/set/en" class="linkbtn">English</a>
+                    <button class="linkbtn" data-theme-set="light"><i class="fa-solid fa-sun"></i> Light</button>
+                    <button class="linkbtn" data-theme-set="dark"><i class="fa-solid fa-moon"></i> Dark</button>
+                </div>
+            </div>
         </div>
-        <nav class="topbar-right">
-            <a href="/settings" class="navbtn"><i class="fa-solid fa-gear"></i></a>
-        </nav>
-    </header>
-    <main class="wrap">
-        <section class="panel authwrap">
-            <h1>{{ t.get("sitesettings", "Site settings") }}</h1>
-            <p>{{ t.get("language", "Language") }}</p>
-            <p>
-                <a href="/set/tr" class="linkbtn">TR</a>
-                <a href="/set/en" class="linkbtn">EN</a>
-            </p>
-        </section>
     </main>
     <script src="/mobile/app.js"></script>
 </body>

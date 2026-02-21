@@ -1,196 +1,97 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("dm", "DM") }} - Euphorium</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.dm }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .conversations-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .conversation-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: var(--text);
-            background-color: var(--panel);
-            border: 1px solid var(--line);
-        }
-        .conversation-item.active {
-            background: var(--primary);
-            color: #fff;
-        }
-        .conversation-item .avatar {
-            width: 45px;
-            height: 45px;
-        }
-        .chat-area {
-            background: var(--panel);
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 250px); /* Adjust based on your layout */
-        }
-        .chat-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px;
-            border-bottom: 1px solid var(--line);
-        }
-        .chat-header .avatar {
-            width: 38px;
-            height: 38px;
-        }
-        .chat-header h2 {
-            margin: 0;
-            font-size: 1.1rem;
-        }
-        .chat-messages {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        .msg-bubble {
-            max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-        .msg-bubble.mine {
-            background: var(--primary);
-            color: #ffffff !important;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-        .msg-bubble.other {
-            background: var(--bg);
-            border: 1px solid var(--line);
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-            color: #111827;
-        }
-        body[data-theme="dark"] .msg-bubble.other { color: #f8fafc; }
-        .msg-bubble p { color: inherit !important; margin: 0; }
-        .chat-input {
-            padding: 15px;
-            border-top: 1px solid var(--line);
-        }
-        .chat-input form {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .chat-input input[type="text"] {
-            flex-grow: 1;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="topbar-left">
-            <button class="profile-btn" id="profileBtn">
-                <img src="{{ avatar }}" class="avatar" alt="avatar">
-            </button>
-        </div>
-        <nav class="topbar-right">
-            <a href="/dm" data-nav="soft" class="navbtn active" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
-            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
-        </nav>
-    </header>
-
-    <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="profileModal">
-        <div class="modal-content">
-            <a href="/profile" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-user"></i>
-                <span>{{ username or t.get("profile", "Profile") }}</span>
-            </a>
-            <a href="/settings" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-cog"></i>
-                <span>{{ t.get("settings", "Settings") }}</span>
-            </a>
-            <a href="/logout" data-nav="soft" class="modal-link">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>{{ t.get("logout", "Logout") }}</span>
-            </a>
-            <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <main class="wrap" id="dmpage" data-peer="{{ peer.id if peer else '' }}" data-convid="{{ convid if convid else '' }}" data-last="{{ lastid if lastid else 0 }}">
-        <div class="conversations-list">
-             {% for p in peers %}
-                <a href="/dm/{{ p.id }}" data-nav="soft" class="conversation-item {% if peer and p.id == peer.id %}active{% endif %}">
-                    <img src="{{ p.avatar }}" class="avatar" alt="{{ p.username }}'s avatar">
-                    <div>
-                        <strong>{{ p.username }}</strong>
-                        <p style="color:var(--muted);font-size:0.9rem;margin:0;">{{ p.status if p.status != 'active' else t.get('active','Active') }}</p>
-                    </div>
-                </a>
-            {% endfor %}
-        </div>
-
-        {% if peer %}
-        <section class="chat-area">
-            <div class="chat-header">
-                <img src="{{ peer.avatar }}" class="avatar" alt="">
-                <div>
-                    <h2>{{ peer.username }}</h2>
+    <main>
+        <div class="wrap">
+            {% if peer %}
+            <div class="panel" id="dmpage" data-peer="{{ peer.id }}" data-convid="{{ convid }}" data-last="{{ lastid }}">
+                <div class="sidebar">
+                    <a href="/dm" class="navbtn" data-nav="soft"><i class="fa-solid fa-arrow-left"></i></a>
+                    <a href="/profile" class="profilebadge">
+                        <img src="{{ peer.avatar }}" class="avatar sm">
+                        <span>{{ peer.username }}</span>
+                    </a>
+                    <div style="flex:1"></div>
                 </div>
-            </div>
-            <div class="chat-messages">
-                <div> 
-                    {% for m in messages %}
-                    <div class="msg-bubble {% if m.sender == myid %}mine{% else %}other{% endif %}" data-mid="{{ m.id }}">
-                        {% if m.kind == 'text' %}
-                            <p style="margin:0;color:inherit;">{{ m.body }}</p>
-                        {% elif m.kind == 'image' %}
-                            <img src="/media/{{ m.path }}" class="chatimg" style="max-width:100%;border-radius:10px;">
-                        {% elif m.kind == 'video' %}
-                            <video controls class="chatvid" src="/media/{{ m.path }}" style="max-width:100%;border-radius:10px;"></video>
-                        {% endif %}
+
+                <div class="chatbox">
+                    {% for msg in messages %}
+                    <div class="msg" data-mid="{{ msg.id }}">
+                        <div style="font-weight:600; font-size:0.85rem; color:var(--primary);">{{ msg.author }}</div>
+                        {% if msg.type == 'text' %}{{ msg.content }}{% endif %}
+                        {% if msg.type == 'image' %}<img src="/media/{{ msg.file }}" class="chatimg" loading="lazy">{% endif %}
                     </div>
                     {% endfor %}
                 </div>
-            </div>
-            <div class="chat-input">
-                <form id="dmform" method="post" enctype="multipart/form-data" data-nav="soft">
-                    <button type="button" class="navbtn" onclick="document.getElementById('file-input').click()"><i class="fa-solid fa-paperclip"></i></button>
-                    <input name="file" id="file-input" type="file" accept="image/*,video/*" style="display:none;">
-                    
-                    <input name="text" type="text" placeholder="{{ t.get('message', 'Message') }}" autocomplete="off" style="padding-left:15px;padding-right:15px;flex-grow:1;">
-                    
-                    <button class="pickbtn" type="submit" style="border-radius:50%;width:42px;height:42px;padding:0;"><i class="fa-solid fa-paper-plane"></i></button>
+
+                <form class="form" method="POST" enctype="multipart/form-data" style="margin-top:10px;">
+                    <div class="input-group">
+                        <i class="fa-solid fa-comment"></i>
+                        <input type="text" name="text" placeholder="{{ t.message }}..." autocomplete="off">
+                    </div>
+                    <div class="acts">
+                        <label class="linkbtn" style="flex:1;">
+                            <i class="fa-solid fa-paperclip"></i>
+                            <input type="file" name="file" style="display:none;">
+                        </label>
+                        <button class="pickbtn" style="flex:1;"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
                 </form>
             </div>
-        </section>
-        {% else %}
-        <div class="panel" style="text-align:center;padding:4rem 2rem;">
-            <i class="fa-solid fa-comments" style="font-size:3rem;color:var(--muted);margin-bottom:1rem;"></i>
-            <h2>{{ t.get("selectdm", "Select a conversation") }}</h2>
-            <p>{{ t.get("dm-welcome-mobile", "Tap on a conversation above to start chatting.") }}</p>
+            {% else %}
+            <div class="panel">
+                <div class="sidebar">
+                    <h2>{{ t.dmbox }}</h2>
+                    <div class="topnav">
+                        <form action="/dm/start" method="POST" style="display:flex; gap:5px; width:100%;">
+                            <input type="text" name="username" placeholder="{{ t.startbyname }}" style="padding:8px 12px; font-size:0.9rem;">
+                            <button class="pickbtn" style="padding:8px 12px;"><i class="fa-solid fa-plus"></i></button>
+                        </form>
+                    </div>
+                </div>
+                
+                {% if error %}<div class="error">{{ error }}</div>{% endif %}
+                
+                <div style="margin-top: 10px;">
+                    <h4 style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem; text-transform: uppercase;">{{ t.active_chats }}</h4>
+                    {% for p in peers %}
+                    <a href="/dm/{{ p.id }}" class="cardrow modal-link" data-nav="soft">
+                        <img src="{{ p.avatar }}" class="avatar">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">{{ p.username }}</div>
+                            <div style="font-size:0.85rem; color:var(--muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ p.status }}</div>
+                        </div>
+                        {% if p.unread > 0 %}<span style="background:var(--primary); color:#fff; padding:2px 8px; border-radius:10px; font-size:0.8rem;">{{ p.unread }}</span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem; text-transform: uppercase;">{{ t.friends }}</h4>
+                    {% for f in friends %}
+                    <a href="/dm/{{ f.id }}" class="cardrow modal-link" data-nav="soft">
+                        <img src="{{ f.avatar }}" class="avatar">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">{{ f.username }}</div>
+                            <div style="font-size:0.85rem; color:var(--primary);">{{ t.click_to_chat }}</div>
+                        </div>
+                        <i class="fa-solid fa-message" style="color: var(--muted);"></i>
+                    </a>
+                    {% else %}
+                    <p class="hint" style="text-align:center; padding: 10px;">{{ t.nofriends }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </main>
     <script src="/mobile/app.js"></script>
 </body>
 </html>
-
-
-

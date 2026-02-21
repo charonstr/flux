@@ -1,44 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Davet Onayı - Euphorium</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.joinserver }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        body { margin: 0; min-height: 100vh; }
-        .server-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
-        .server-main { display: grid; place-items: center; padding: 18px; }
-        .join-card { width: 100%; max-width: 520px; background: rgba(var(--panel-rgb), 0.86); border: 1px solid rgba(var(--line-rgb), 0.55); border-radius: 16px; padding: 20px; }
-        .server-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .server-head img { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border: 2px solid rgba(var(--primary-rgb), 0.35); }
-        .server-head h1 { margin: 0; font-size: 1.1rem; }
-        .hint { color: var(--muted); margin-bottom: 14px; }
-        .invite-code { background: rgba(var(--bg-rgb), 0.45); border: 1px dashed rgba(var(--primary-rgb), 0.5); border-radius: 10px; padding: 8px 10px; margin-bottom: 16px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-        .actions { display: flex; gap: 10px; }
-        .actions .pickbtn, .actions .linkbtn { flex: 1; text-align: center; }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="server-shell">
-        <main class="server-main">
-            <section class="join-card">
-                <div class="server-head">
-                    <img src="{{ server.avatar }}" alt="server avatar">
-                    <div>
-                        <h1>{{ server.name }}</h1>
-                        <div class="hint">Bu sunucuya katılmak istiyor musun?</div>
-                    </div>
-                </div>
-                <div class="invite-code"><i class="fa-solid fa-link"></i> {{ invitecode }}</div>
-                <form method="post" class="actions" data-nav="soft">
-                    <button type="submit" name="action" value="join" class="pickbtn"><i class="fa-solid fa-check"></i> Katıl</button>
-                    <button type="submit" name="action" value="cancel" class="linkbtn"><i class="fa-solid fa-xmark"></i> İptal</button>
+    <main>
+        <div class="wrap">
+            <div class="panel" style="text-align:center;">
+                <h2>{{ t.joinserver }}</h2>
+                <img src="{{ server.avatar }}" class="avatar" style="width:80px; height:80px; margin:15px auto;">
+                <h3>{{ server.name }}</h3>
+                <p>{{ t.invitecode }}: {{ invitecode }}</p>
+                <form method="POST">
+                    <input type="hidden" name="action" value="join">
+                    <button class="pickbtn">{{ t.join }}</button>
+                    <a href="/servers" class="linkbtn" style="margin-top:10px;">{{ t.back }}</a>
                 </form>
-            </section>
-        </main>
-    </div>
+            </div>
+        </div>
+    </main>
     <script src="/mobile/app.js"></script>
 </body>
 </html>

@@ -1,50 +1,48 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ t.get("profile", "Profile") }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ t.profile }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <main class="wrap">
-        <header class="sidebar">
-            <a href="/profile" data-nav="soft" class="profilebadge"><img src="{{ avatar }}" class="avatar" alt="avatar"><span>{{ username }}</span></a>
-            <nav class="topnav">                <button type="button" class="linkbtn" data-go-back="1">{{ t.get("back", "Back") }}</button>
-                <a href="/set/tr" data-nav="soft" class="langbtn">TR</a>
-                <a href="/set/en" data-nav="soft" class="langbtn">EN</a>
-                <a href="/dm" data-nav="soft" class="linkbtn">{{ t.get("dm", "DM") }}</a>
+    <main>
+        <div class="wrap">
+            <div class="panel">
+                <h2>{{ t.profile }}</h2>
+                {% if error %}<div class="error">{{ error }}</div>{% endif %}
+                {% if success %}<div class="error" style="background:rgba(72,187,120,0.1); color:#2f855a;">{{ success }}</div>{% endif %}
                 
-                <a href="/settings" data-nav="soft" class="linkbtn">{{ t.get("settings", "Settings") }}</a>
-                <a href="/logout" data-nav="soft" class="linkbtn">{{ t.get("logout", "Logout") }}</a>
-            </nav>
-        </header>
-        <section class="panel authwrap">
-            <h1>{{ t.get("profile", "Profile") }}</h1>
-            <p><a href="/friends" data-nav="soft" class="linkbtn">{{ t.get("friends", "Friends") }}: {{ friendcount }}</a></p><form method="post" action="/dm/start" data-nav="soft" class="form"><input name="username" type="text" placeholder="{{ t.get("startbyname", "Start with username") }}"><button type="submit" class="linkbtn">{{ t.get("messagebutton", "Message") }}</button></form>
-            {% if error %}<p class="error">{{ error }}</p>{% endif %}
-            {% if success %}<p class="ok">{{ success }}</p>{% endif %}
-            <form method="post" enctype="multipart/form-data" class="form" data-nav="soft">
-                <label>{{ t.get("username", "Username") }}</label>
-                <input name="username" type="text" value="{{ username }}" {% if not canchangeusername %}disabled{% endif %}>
-                {% if not canchangeusername %}<p class="hint">{{ t.get("renamewait", "Username can be changed once every 7 days") }}</p>{% endif %}
-                <label>{{ t.get("avatar", "Profile photo") }}</label>
-                <input id="avatarfile" name="avatar" type="file" accept="image/*">
-                <input id="cropval" name="crop" type="hidden" value="0">
-                <div id="croppanel" class="cropbox" style="display:none;">
-                    <p>{{ t.get("cropauto", "Photo selected. You can apply square crop or continue original.") }}</p>
-                    <button type="button" class="linkbtn" onclick="setcrop(1)">{{ t.get("cropapply", "Apply crop") }}</button>
-                    <button type="button" class="linkbtn" onclick="setcrop(0)">{{ t.get("cropkeep", "Keep original") }}</button>
+                <form class="form" method="POST" enctype="multipart/form-data">
+                    <div style="text-align:center; margin-bottom:10px;">
+                        <img src="{{ avatar }}" class="avatar" style="width:100px; height:100px;">
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" name="username" value="{{ username }}" {% if not canchangeusername %}disabled{% endif %}>
+                    </div>
+                    {% if not canchangeusername %}<p class="hint">{{ t.renamewait }}</p>{% endif %}
+                    
+                    <div class="input-group">
+                        <i class="fa-solid fa-image"></i>
+                        <input type="file" name="avatar" id="avatarfile">
+                    </div>
+                    <input type="hidden" name="crop" id="cropval" value="0">
+                    <div id="croppanel" style="display:none; text-align:center;">
+                        <p>{{ t.cropauto }}</p>
+                        <div class="acts"><button type="button" class="pickbtn" onclick="setcrop(1)">{{ t.cropapply }}</button><button type="button" class="linkbtn" onclick="setcrop(0)">{{ t.cropkeep }}</button></div>
+                    </div>
+                    <button class="pickbtn">{{ t.save }}</button>
+                </form>
+                <div style="margin-top:15px; display:grid; gap:10px;">
+                    <a href="/settings" class="linkbtn" data-nav="soft"><i class="fa-solid fa-gear" style="margin-right:8px;"></i> {{ t.settings }}</a>
+                    <a href="/logout" class="linkbtn" style="color:#ef4444; border-color:#ef4444;"><i class="fa-solid fa-right-from-bracket" style="margin-right:8px;"></i> {{ t.logout }}</a>
                 </div>
-                <button type="submit" class="pickbtn">{{ t.get("save", "Save") }}</button>
-            </form>
-        </section>
+            </div>
+        </div>
     </main>
     <script src="/mobile/app.js"></script>
 </body>
 </html>
-
-
-
-
-

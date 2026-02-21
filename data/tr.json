@@ -103,5 +103,10 @@
   "joinrequests": "Katılma istekleri",
   "sitesettings": "Site ayarları",
   "sitesettingsdesc": "Dil ve genel site tercihleri.",
-  "language": "Dil"
+  "language": "Dil",
+  "casino": "Casino",
+  "casino_balance": "Gold bakiye",
+  "casino_level": "Seviye",
+  "casino_subtitle": "Casino lobi yakinda acilacak",
+  "casino_wait": "Oyunlar yakinda eklenecek"
 }

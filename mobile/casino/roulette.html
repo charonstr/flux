@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Roulette - Euphorium</title>
+  <link rel="stylesheet" href="/mobile/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .balance-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(245,158,11,.45); background: rgba(245,158,11,.16); color: #f59e0b; font-weight: 700; }
+    .panelx { border: 1px solid rgba(var(--line-rgb), .6); border-radius: 12px; background: rgba(var(--panel-rgb), .65); padding: 8px; margin-top: 8px; }
+    .topx { display: flex; gap: 6px; align-items: center; }
+    .table-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+    .num-cell, .bet-cell { border: 1px solid rgba(255,255,255,.18); border-radius: 6px; padding: 5px 3px; text-align: center; cursor: pointer; min-height: 30px; position: relative; font-size: .74rem; }
+    .num-cell.red { background: rgba(185, 28, 28, .5); }
+    .num-cell.black { background: rgba(17, 24, 39, .7); }
+    .num-cell.green { background: rgba(6, 95, 70, .8); }
+    .bet-cell { background: rgba(31, 41, 55, .55); }
+    .chip-stack { position: absolute; right: 2px; bottom: 1px; font-size: .64rem; color: #facc15; }
+    .outside { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin-top: 6px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+    .chip-btn { border-radius: 999px; border: 1px solid rgba(var(--line-rgb), .7); background: rgba(var(--bg-rgb), .45); color: var(--text); padding: 6px 9px; font-size: .72rem; }
+    .chip-btn.active { border-color: rgba(var(--primary-rgb), .9); color: var(--primary); }
+    .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+    .status-line { color: var(--muted); margin-top: 8px; min-height: 20px; font-size: .75rem; }
+    .wheel { width: 86vw; height: 86vw; max-width: 330px; max-height: 330px; margin: 0 auto; border-radius: 50%; border: 8px solid #5b2f12; background: radial-gradient(circle at 50% 50%, #1f2937 0 18%, #0f172a 19% 30%, #111827 31% 100%); position: relative; overflow: hidden; }
+    .wheel-track { position: absolute; inset: 12%; border-radius: 50%; }
+    .pocket { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; width: 50%; height: 2px; }
+    .pocket::after { content: attr(data-num); position: absolute; right: 8px; top: -8px; font-size: .56rem; color: #fff; }
+    .ball { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #f8fafc; box-shadow: 0 0 10px rgba(255,255,255,.75); left: 50%; top: 8%; transform: translate(-50%, -50%); }
+    .winner { outline: 2px solid #34d399; box-shadow: 0 0 0 2px rgba(52,211,153,.25) inset; }
+    .spinfx .wheel-track { animation: spinWheel 4.6s cubic-bezier(.12,.66,.08,1) forwards; }
+    .spinfx .ball { animation: spinBall 4.6s cubic-bezier(.12,.66,.08,1) forwards; }
+    @keyframes spinWheel { from { transform: rotate(0deg); } to { transform: rotate(1440deg); } }
+    @keyframes spinBall { from { transform: translate(-50%, -50%) rotate(0deg) translateX(110px) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(-1680deg) translateX(110px) rotate(1680deg); } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="wrap">
+      <div class="panelx topx">
+        <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i></a>
+        <button id="newRoundBtn" class="pickbtn" type="button">New</button>
+        <div class="balance-badge"><i class="fa-solid fa-coins"></i><span id="balanceText">0</span></div>
+      </div>
+      <div class="panelx" id="rouletteTable"></div>
+      <div class="panelx">
+        <div class="chips" id="chipBar"></div>
+        <div class="actions">
+          <button id="minBtn" class="linkbtn" type="button">Min</button>
+          <button id="maxBtn" class="linkbtn" type="button">Max</button>
+          <button id="undoBtn" class="linkbtn" type="button">Undo</button>
+          <button id="clearBtn" class="linkbtn" type="button">Clear</button>
+          <button id="lockBtn" class="pickbtn" type="button">Lock</button>
+          <button id="spinBtn" class="pickbtn" type="button">Spin</button>
+        </div>
+        <div class="status-line">State <b id="stateText">-</b> Timer <b id="timerText">0</b> Result <b id="resultText">-</b> Bet <b id="totalBetText">0</b></div>
+      </div>
+      <div class="panelx">
+        <div class="wheel" id="wheel"><div class="wheel-track" id="wheelTrack"></div><div class="ball" id="ball"></div></div>
+      </div>
+    </div>
+  </main>
+  <script src="/mobile/app.js"></script>
+  <script src="/mobile/roulette.js"></script>
+</body>
+</html>

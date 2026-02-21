@@ -319,6 +319,7 @@
       const isHome = p === '/' || p.startsWith('/home') ? 'active' : '';
       const isDm = p.startsWith('/dm') ? 'active' : '';
       const isServers = p.startsWith('/servers') ? 'active' : '';
+      const isCasino = p.startsWith('/casino') ? 'active' : '';
 
       rail.innerHTML = `
           <div class="rail-btn-wrapper">
@@ -326,6 +327,9 @@
           </div>
           <div class="rail-btn-wrapper">
               <a class="rail-btn ${isDm}" href="/dm" data-nav="soft" title="Mesajlar"><i class="fa-solid fa-paper-plane"></i></a>
+          </div>
+          <div class="rail-btn-wrapper">
+              <a class="rail-btn ${isCasino}" href="/casino" data-nav="soft" title="Casino"><i class="fa-solid fa-dice"></i></a>
           </div>
           <div class="rail-divider"></div>
           <div class="rail-btn-wrapper">
@@ -401,6 +405,9 @@
               </div>
               <div class="rail-btn-wrapper">
                   <a class="rail-btn" href="/dm" data-nav="soft" title="Mesajlar"><i class="fa-solid fa-paper-plane"></i></a>
+              </div>
+              <div class="rail-btn-wrapper">
+                  <a class="rail-btn" href="/casino" data-nav="soft" title="Casino"><i class="fa-solid fa-dice"></i></a>
               </div>
               <div class="rail-divider"></div>
           `;
@@ -816,7 +823,8 @@
     // Sesli sohbet için JavaScript gerekiyorsa çalıştır!
     const scripts = doc.querySelectorAll('script');
     scripts.forEach(s => {
-        if (s.src && s.src.includes('voice.js') && !document.querySelector(`script[src="${s.src}"]`)) {
+        if (!s.src) return;
+        if ((s.src.includes('voice.js') || s.src.includes('blackjack.js') || s.src.includes('roulette.js')) && !document.querySelector(`script[src="${s.src}"]`)) {
             const newScript = document.createElement('script');
             newScript.src = s.src;
             document.body.appendChild(newScript);
@@ -970,6 +978,8 @@
     startPresence();
     initTabs();
     if (typeof window.initVoicePage === 'function') window.initVoicePage();
+    if (typeof window.initBlackjackPage === 'function') window.initBlackjackPage();
+    if (typeof window.initRoulettePage === 'function') window.initRoulettePage();
   }
 
   function initTabs() {

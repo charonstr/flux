@@ -1,22 +1,25 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Language</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Language - Euphorium</title>
     <link rel="stylesheet" href="/mobile/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <main class="wrap">
-        <h1>Choose language</h1>
-        <p>Please select one option.</p>
-        <form method="post" class="picker">
-            <button type="submit" name="language" value="tr" class="pickbtn">Türkçe</button>
-            <button type="submit" name="language" value="en" class="pickbtn">English</button>
-        </form>
+    <main>
+        <div class="authwrap">
+            <div class="panel">
+                <h1><i class="fa-solid fa-language"></i> Language</h1>
+                <p style="text-align:center;">Please select your language / Lütfen dil seçiniz</p>
+                <form class="form" method="POST" action="/choose">
+                    <button name="language" value="tr" class="pickbtn">Türkçe</button>
+                    <button name="language" value="en" class="linkbtn">English</button>
+                </form>
+            </div>
+        </div>
     </main>
+    <script src="/mobile/app.js"></script>
 </body>
 </html>
-
-
-
