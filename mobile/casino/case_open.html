@@ -4,42 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kasa Açılımı - Euphorium</title>
-  <link rel="stylesheet" href="/pc/css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/mobile/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .case-wrap { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+    .case-wrap { max-width: 1200px; margin: 0 auto; padding: 16px 12px; }
     
-    .case-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 15px; flex-wrap: wrap; }
-    .header-left { display: flex; align-items: center; gap: 15px; }
-    .header-left h1 { margin: 0; font-size: 2rem; color: var(--text); }
-    .balance-badge { display: flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 1.2rem; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .case-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-left h1 { margin: 0; font-size: 1.25rem; color: var(--text); line-height: 1.1; }
+    .balance-badge { display: flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 7px 12px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; border: 1px solid rgba(245, 158, 11, 0.2); }
 
-    .controls-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .controls-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
     
-    .actions-row { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; }
+    .actions-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
     
-    .qty-picker { display: flex; gap: 8px; background: var(--bg); padding: 6px; border-radius: 14px; border: 1px solid var(--line); }
-    .qty-picker button { width: 48px; height: 48px; border-radius: 10px; border: none; background: transparent; color: var(--muted); font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+    .qty-picker { display: flex; gap: 6px; background: var(--bg); padding: 4px; border-radius: 12px; border: 1px solid var(--line); }
+    .qty-picker button { width: 40px; height: 40px; border-radius: 9px; border: none; background: transparent; color: var(--muted); font-size: 0.95rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
     .qty-picker button:hover { background: rgba(var(--text-rgb), 0.05); color: var(--text); }
     .qty-picker button.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); }
 
-    .open-btn { padding: 0 40px; height: 60px; border-radius: 14px; border: none; font-size: 1.2rem; font-weight: 900; background: linear-gradient(135deg, #10b981, #059669); color: #fff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+    .open-btn { padding: 0 20px; height: 48px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 900; background: linear-gradient(135deg, #10b981, #059669); color: #fff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
     .open-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
     .open-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: var(--muted); }
 
-    .stats-row { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; padding-top: 15px; border-top: 1px solid var(--line); }
-    .stat-badge { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.95rem; }
+    .stats-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-top: 10px; border-top: 1px solid var(--line); }
+    .stat-badge { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; }
     .stat-win { background: rgba(16, 185, 129, 0.1); color: #10b981; }
     .stat-lose { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     .stat-net { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 
     /* YENİ EKRANA SIĞAN GRID/FLEX TASARIMI (2x2 + 1 Ortada) */
-    .lane-stack { 
+    .lane-stack {
+        --item-width: 160px;
         display: flex; 
         flex-wrap: wrap; 
         justify-content: center; 
-        gap: 16px; 
-        margin-bottom: 25px; 
+        gap: 10px;
+        margin-bottom: 12px;
         width: 100%; 
         min-width: 0; 
     }
@@ -47,7 +48,7 @@
     .lane { 
         flex: 0 0 calc(50% - 8px); /* Yan yana 2 adet sığması için */
         max-width: calc(50% - 8px);
-        height: 165px; /* Dikeyde ekranı kaplamaması için hafif daraltıldı */
+        height: 132px;
         background: #0f172a; 
         border: 2px solid var(--line); 
         border-radius: 12px; 
@@ -64,35 +65,46 @@
         height: 180px;
     }
 
-    .line { position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%); background: #facc15; z-index: 10; box-shadow: 0 0 15px #facc15, 0 0 5px #facc15; }
+    .line { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; transform: translateX(-50%); background: #facc15; z-index: 10; box-shadow: 0 0 10px #facc15, 0 0 4px #facc15; }
     .track { display: flex; height: 100%; width: max-content; will-change: transform; transform: translate3d(0,0,0); backface-visibility: hidden; }
     .item { 
-        width: 180px; height: 100%; flex-shrink: 0; /* İçerik genişliği daraltıldı (180px) */
+        width: var(--item-width); height: 100%; flex-shrink: 0;
         display: flex; flex-direction: column; justify-content: center; align-items: center; 
         border-bottom: 6px solid; 
         background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.3)); 
-        padding: 10px;
+        padding: 8px;
     }
-    .item img { max-width: 80%; max-height: 85px; object-fit: contain; pointer-events: none; user-select: none; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); }
-    .item .n { font-size: 0.85rem; font-weight: 700; margin-top: 10px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%; color: #f8fafc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .item img { max-width: 80%; max-height: 70px; object-fit: contain; pointer-events: none; user-select: none; filter: drop-shadow(0 8px 8px rgba(0,0,0,0.5)); }
+    .item .n { font-size: 0.72rem; font-weight: 700; margin-top: 6px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 100%; color: #f8fafc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
-    .grid-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .panel-box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .panel-box h3 { margin-top: 0; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 15px; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text); }
+    .grid-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .panel-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .panel-box h3 { margin-top: 0; border-bottom: 1px solid var(--line); padding-bottom: 7px; margin-bottom: 9px; font-size: 0.96rem; display: flex; align-items: center; gap: 8px; color: var(--text); }
     
-    .odds-row { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; background: var(--bg); font-weight: 600; color: var(--text); }
-    .history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 15px; padding: 10px; border-bottom: 1px solid var(--line); align-items: center; color: var(--text); }
+    .odds-row { display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 8px; margin-bottom: 4px; background: var(--bg); font-weight: 600; color: var(--text); font-size: 0.82rem; }
+    .history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 7px; border-bottom: 1px solid var(--line); align-items: center; color: var(--text); }
     .history-row:last-child { border-bottom: none; }
-    .history-row img { height: 40px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
-    .history-row-name { font-weight: 700; font-size: 0.95rem; }
-    .history-row-price { font-weight: 800; color: #10b981; }
+    .history-row img { height: 30px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+    .history-row-name { font-weight: 700; font-size: 0.82rem; }
+    .history-row-price { font-weight: 800; color: #10b981; font-size: 0.82rem; }
 
     /* Mobilde alt alta olması için kurallar */
-    @media (max-width: 860px) { 
+    @media (max-width: 860px) {
+        .lane-stack { --item-width: 150px; }
         .grid-panels { grid-template-columns: 1fr; } 
         .actions-row { flex-direction: column; width: 100%; }
         .open-btn { width: 100%; }
         .lane { flex: 0 0 100%; max-width: 100%; }
+    }
+    @media (max-width: 480px) {
+        .lane-stack { --item-width: 136px; }
+        .case-header { margin-bottom: 8px; }
+        .header-left h1 { font-size: 1.05rem; }
+        .balance-badge { font-size: 0.85rem; padding: 6px 10px; }
+        .qty-picker button { width: 34px; height: 34px; font-size: 0.82rem; }
+        .open-btn { height: 42px; font-size: 0.9rem; }
+        .lane { height: 116px; }
+        .item img { max-height: 58px; }
     }
   </style>
 </head>
@@ -139,7 +151,7 @@
     </div>
   </main>
 
-  <script src="/pc/js/app.js"></script>
+  <script src="/mobile/js/app.js"></script>
   <script>
     (function(){
       const caseId = {{ caseid|tojson }};
@@ -267,8 +279,8 @@
         track.style.transform = 'translateX(0px)';
         void track.offsetWidth;
 
-        /* JS HESAPLAMASININ CSS İLE SENKRONİZE EDİLMESİ (180px) */
-        const itemWidth = 180; 
+        const firstItem = track.querySelector('.item');
+        const itemWidth = firstItem ? firstItem.getBoundingClientRect().width : 180;
         const winnerIndex = 35;
         const lane = track.parentElement;
         const containerWidth = lane ? lane.offsetWidth : 1000;

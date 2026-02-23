@@ -115,7 +115,7 @@
             <section class="box box-games" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(var(--panel-rgb), 0.8));">
                 <h2><i class="fa-solid fa-gamepad"></i> Oyunlar</h2>
                 <div class="game-links">
-                    <a href="/casino/blackjack" data-nav="soft"><i class="fa-solid fa-cards"></i> Blackjack</a>
+                    <a href="/casino/blackjack" data-nav="soft"><i class="fa-solid fa-clover"></i> Blackjack</a>
                     <a href="/casino/roulette" data-nav="soft"><i class="fa-solid fa-bullseye"></i> Roulette</a>
                     <a href="/casino/multiplier" data-nav="soft"><i class="fa-solid fa-chart-line"></i> Carpan</a>
                     <a href="/casino/case" data-nav="soft"><i class="fa-solid fa-box-open"></i> Kasalar</a>
@@ -195,7 +195,7 @@
                     const cls = d >= 0 ? "win" : "lose";
                     const sign = d >= 0 ? "+" : "";
                     const low = String(g.game_name || "").toLowerCase();
-                    const icon = low.includes("blackjack") ? "fa-cards" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : (low.includes("case") ? "fa-box-open" : "fa-bullseye"));
+                    const icon = low.includes("blackjack") ? "fa-clover" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : (low.includes("case") ? "fa-box-open" : "fa-bullseye"));
                     return '<div class="row"><div class="name"><i class="fa-solid ' + icon + '"></i> ' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
                 }).join("");
             }

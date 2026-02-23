@@ -78,10 +78,12 @@
     }
 
     function setControlState() {
-      const turn = phaseEl.textContent === 'player_turn';
+      const phase = String(phaseEl.textContent || 'idle');
+      const turn = phase === 'player_turn';
+      const activeRound = phase === 'player_turn' || phase === 'dealer_turn';
       hitBtn.disabled = !turn || pending;
       standBtn.disabled = !turn || pending;
-      newBtn.disabled = pending;
+      newBtn.disabled = pending || activeRound;
       betInput.disabled = turn || pending;
       if (betMinBtn) betMinBtn.disabled = turn || pending;
       if (betMaxBtn) betMaxBtn.disabled = turn || pending;
@@ -145,7 +147,8 @@
         if (!data.ok) {
           console.log('blackjack error', data);
           if (data.error === 'invalid_bet' || data.error === 'invalid_bet_min') msgEl.textContent = 'Minimum bahis 100';
-          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti asildi';
+          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti aşıldı';
+          if (data.error === 'round_in_progress') msgEl.textContent = 'Aktif tur bitmeden tekrar dağıtamazsın';
           return null;
         }
         return data.state;
@@ -185,3 +188,6 @@
     window.initBlackjackPage();
   }
 })();
+
+
+

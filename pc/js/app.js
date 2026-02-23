@@ -87,7 +87,6 @@
   window.triggerBackgroundRefresh = async function() {
       if (globalRefreshing) return;
       const p = window.location.pathname || '';
-      // Keep case opening page stable; background refresh can reset multi-open controls.
       if (p.startsWith('/casino/case/')) return;
       
       const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => m.style.display === 'block');
@@ -277,14 +276,17 @@
           .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.25; will-change: transform; }
           .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -15%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
           .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+          
+          /* KUSURSUZ MOBİL UYUM (Alt menü barı) */
           @media(max-width: 900px) {
-              body.shell-active { overflow: auto; }
-              .server-shell { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 100vh;}
-              .server-rail { grid-column: 1; grid-row: 1; flex-direction: row; justify-content: flex-start; padding: 15px 20px; overflow-x: auto; border-right: none; border-bottom: 1px solid rgba(var(--line-rgb), 0.5); }
-              .rail-divider { width: 2px; height: 30px; margin: 0 5px; }
+              body.shell-active { overflow: auto; padding-bottom: 75px !important; }
+              .server-shell { display: block; height: auto; min-height: 100vh;}
+              .server-rail { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; flex-direction: row; justify-content: space-evenly; align-items: center; padding: 0 10px; overflow-x: auto; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(var(--line-rgb), 0.5); border-right: none; border-bottom: none; z-index: 9999; }
+              .rail-divider { width: 2px; height: 30px; margin: 0 2px; }
               .rail-btn-wrapper::before { top: 0; left: 50%; width: 0; height: 4px; border-radius: 0 0 4px 4px; transform: translateX(-50%); transition: width 0.3s ease; }
-              .rail-btn-wrapper:hover::before { width: 24px; height: 4px; }
-              .server-main { grid-column: 1; grid-row: 2; padding: 25px 20px 60px 20px; }
+              .rail-btn-wrapper:hover::before, .rail-btn-wrapper.active::before { width: 24px; height: 4px; }
+              .server-main { padding: 15px 15px 20px 15px; }
+              .rail-btn, .rail-avatar { width: 46px; height: 46px; font-size: 1.1rem; }
           }
       `;
       document.head.appendChild(style);
@@ -350,8 +352,8 @@
       serverMain.className = 'server-main';
       if (oldMain) {
           oldMain.style.paddingTop = '0';
-          serverMain.appendChild(oldMain.cloneNode(true));
-          oldMain.remove();
+          // DOM KOPMA HATASI ÇÖZÜMÜ: cloneNode(true) İPTAL EDİLDİ
+          serverMain.appendChild(oldMain);
       }
 
       shell.appendChild(rail);
@@ -816,7 +818,6 @@
         if (!document.querySelector('.server-shell').contains(el)) el.remove();
     });
 
-    // HARİKA SCRIPT ÇALIŞTIRICI: Inline script'leri ve dış script'leri ayıklayıp çalıştırır (0 bakiye bugunu çözer)
     const newScripts = doc.querySelectorAll('script');
     newScripts.forEach(s => {
         if (s.src) {

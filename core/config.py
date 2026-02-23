@@ -1,13 +1,13 @@
-﻿import os
+import os
 from dotenv import load_dotenv
 
 
 def load():
     load_dotenv()
     return {
-        "host": os.getenv("HOST", "127.0.0.1"),
-        "port": int(os.getenv("PORT", "5000")),
-        "debug": os.getenv("DEBUG", "true").lower() == "true",
-        "baseurl": os.getenv("BASEURL", "http://localhost:5000"),
+        "host": os.getenv("HOST", "0.0.0.0"),
+        "port": int(os.getenv("PORT", "24705")),
+        "debug": os.getenv("DEBUG", "false").lower() == "true",
+        "baseurl": os.getenv("BASEURL", "http://jacob.hidencloud.com:24705"),
         "secret": os.getenv("SECRET", "devsecret"),
     }

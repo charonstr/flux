@@ -1,25 +1,193 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Language - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem("theme");
+                var l = t === "light";
+                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
+                document.documentElement.style.colorScheme = l ? "light" : "dark";
+            } catch(e) {
+                document.documentElement.style.backgroundColor = "#1a202c";
+            }
+        })();
+    </script>
+    <style>html{background:#1a202c}</style>
+    <title>Euphorium - {% if t is defined %}{{ t.get("choose", "Language") }}{% else %}Language{% endif %}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Asil ve Modern Dil Seçim Ekranı === */
+        body { 
+            position: relative; 
+            background-color: var(--bg); 
+            overflow-x: hidden; 
+            overflow-y: auto;
+            min-height: 100dvh; /* Mobilde tarayıcı barı sorunu için dvh */
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin: 0; 
+        }
+        
+        /* Arka Plan Dokusu ve Yavaş Işıklar */
+        .bg-texture { 
+            position: fixed; 
+            inset: 0; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); 
+            pointer-events: none; 
+            z-index: -1; 
+            opacity: 0.5; 
+        }
+
+        .ambient-orb { 
+            position: fixed; 
+            border-radius: 50%; 
+            filter: blur(120px); 
+            z-index: -2; 
+            opacity: 0.25; 
+            will-change: transform; 
+            transform: translateZ(0); /* Donanım Hızlandırması - Kasmayı önler */
+        }
+
+        .orb-1 { 
+            width: 45vw; height: 45vw; 
+            max-width: 600px; max-height: 600px;
+            background: var(--primary); 
+            top: -15%; left: -10%; 
+            animation: driftPrimary 30s ease-in-out infinite alternate; 
+        }
+
+        .orb-2 { 
+            width: 40vw; height: 40vw; 
+            max-width: 500px; max-height: 500px;
+            background: #818cf8; 
+            bottom: -15%; right: -10%; 
+            animation: driftPurple 25s ease-in-out infinite alternate; 
+        }
+
+        @keyframes driftPrimary { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); } 
+        }
+
+        @keyframes driftPurple { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); } 
+        }
+
+        /* Merkez Panel */
+        .lang-panel {
+            background: rgba(var(--panel-rgb), 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(var(--line-rgb), 0.5);
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: scale(0.95);
+            box-sizing: border-box;
+        }
+
+        body[data-theme="dark"] .lang-panel {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .lang-panel h1 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .lang-panel h1 i { color: var(--primary); }
+        .lang-panel p { color: var(--muted); margin-bottom: 30px; font-size: 0.95rem; }
+
+        .lang-grid { display: flex; flex-direction: column; gap: 15px; }
+
+        /* Buton Stilleri */
+        .lang-btn {
+            background: rgba(var(--bg-rgb), 0.5);
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            padding: 18px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text);
+            font-family: var(--font-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            touch-action: manipulation; /* Tıklama gecikmesini sıfırlar */
+        }
+
+        .lang-btn:hover {
+            background: rgba(var(--bg-rgb), 0.9);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.2);
+        }
+
+        .lang-btn:active {
+            transform: scale(0.97); /* Basma hissi */
+        }
+        
+        .lang-btn .lang-name { flex-grow: 1; text-align: left; }
+        .lang-btn i { color: var(--muted); transition: color 0.3s; }
+        .lang-btn:hover i { color: var(--primary); }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 600px) {
+            .lang-panel {
+                padding: 30px 20px;
+            }
+            .ambient-orb { filter: blur(60px); }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="authwrap">
-            <div class="panel">
-                <h1><i class="fa-solid fa-language"></i> Language</h1>
-                <p style="text-align:center;">Please select your language / Lütfen dil seçiniz</p>
-                <form class="form" method="POST" action="/choose">
-                    <button name="language" value="tr" class="pickbtn">Türkçe</button>
-                    <button name="language" value="en" class="linkbtn">English</button>
-                </form>
-            </div>
-        </div>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <main class="lang-panel">
+        <h1><i class="fa-solid fa-earth-americas"></i> {% if t is defined %}{{ t.get("choose", "Language") }}{% else %}Language{% endif %}</h1>
+        <p>{% if t is defined %}{{ t.get("choosehelp", "Please select one option.") }}{% else %}Please select a language to continue.{% endif %}</p>
+        
+        <form method="post" class="lang-grid">
+            <button type="submit" name="language" value="tr" class="lang-btn">
+                <span style="font-size: 1.5rem;">🇹🇷</span>
+                <span class="lang-name">Türkçe</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button type="submit" name="language" value="en" class="lang-btn">
+                <span style="font-size: 1.5rem;">🇺🇸</span>
+                <span class="lang-name">English</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </form>
     </main>
+    
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>

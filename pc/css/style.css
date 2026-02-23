@@ -465,3 +465,17 @@ input:focus, select:focus, textarea:focus {
     border-radius: 8px;
     text-align: center;
 }
+
+/* --- Mobile Optimization --- */
+@media(max-width: 900px) {
+    html { font-size: 14px; }
+    .panel { padding: 1.25rem; border-radius: 12px; }
+    input, select, textarea { padding: 10px 10px 10px 35px; font-size: 14px; }
+    .input-group i { left: 12px; }
+    .pickbtn, .linkbtn { padding: 10px 16px; font-size: 14px; border-radius: 8px; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    .topbar { padding: 10px 15px; }
+    .avatar { width: 36px; height: 36px; }
+    .navbtn { width: 36px; height: 36px; font-size: 1rem; }
+}

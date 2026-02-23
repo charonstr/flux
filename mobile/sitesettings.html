@@ -1,26 +1,279 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.sitesettings }} - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem("theme");
+                var l = t === "light";
+                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
+                document.documentElement.style.colorScheme = l ? "light" : "dark";
+            } catch(e) {
+                document.documentElement.style.backgroundColor = "#1a202c";
+            }
+        })();
+    </script>
+    <style>html{background:#1a202c}</style>
+    <title>{{ t.get("sitesettings", "Site settings") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Minimal ve Asil Ayarlar Tasarımı === */
+
+        body {
+            position: relative;
+            background-color: var(--bg);
+            overflow-x: hidden;
+            min-height: 100dvh;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Arka Plan Dokusu ve Yavaş Işıklar */
+        .bg-texture {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -2;
+            opacity: 0.3;
+            will-change: transform;
+            transform: translateZ(0); /* Donanım hızlandırması ile kasmayı önler */
+        }
+
+        .orb-1 {
+            width: 45vw; height: 45vw;
+            max-width: 600px; max-height: 600px;
+            background: var(--primary);
+            top: -10%; left: -10%;
+            animation: driftPrimary 30s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 40vw; height: 40vw;
+            max-width: 500px; max-height: 500px;
+            background: #818cf8;
+            bottom: -10%; right: -10%;
+            animation: driftPurple 25s ease-in-out infinite alternate;
+        }
+
+        @keyframes driftPrimary {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); }
+        }
+
+        @keyframes driftPurple {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); }
+        }
+
+        /* Topbar - Glassmorphism Efekti */
+        .topbar {
+            background: rgba(var(--panel-rgb), 0.65) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 25px;
+            box-sizing: border-box;
+        }
+
+        /* --- TEKİL KOMPAKT AYARLAR KARTI --- */
+        .settings-container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 90px 20px 60px 20px;
+            box-sizing: border-box;
+        }
+
+        .settings-card {
+            background: rgba(var(--panel-rgb), 0.8) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding: 35px !important;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        body[data-theme="dark"] .settings-card {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ana Başlık */
+        .settings-header {
+            margin-bottom: 30px;
+            text-align: left;
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
+            padding-bottom: 20px;
+        }
+
+        .settings-header h1 {
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .settings-header h1 i {
+            color: var(--primary);
+        }
+
+        .settings-header p {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Modern Dil Seçim Butonları */
+        .lang-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .lang-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 25px 10px;
+            background: rgba(var(--bg-rgb), 0.4);
+            border: 2px solid rgba(var(--line-rgb), 0.5);
+            border-radius: 16px;
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            touch-action: manipulation;
+        }
+
+        .lang-btn i {
+            font-size: 2.2rem;
+            color: var(--muted);
+            transition: color 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: rgba(var(--bg-rgb), 0.8);
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .lang-btn:hover i {
+            color: var(--primary);
+        }
+
+        .lang-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 600px) {
+            .settings-card {
+                padding: 25px 20px !important;
+            }
+            .lang-options {
+                flex-direction: column; /* Mobilde alt alta daha rahat basılır */
+            }
+            .lang-btn {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 18px 25px;
+            }
+            .lang-btn i {
+                font-size: 1.8rem;
+                width: 40px;
+            }
+            .ambient-orb {
+                filter: blur(60px); 
+            }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="wrap">
-            <div class="panel">
-                <h2>{{ t.sitesettings }}</h2>
-                <p>{{ t.sitesettingsdesc }}</p>
-                <div style="display:grid; gap:10px;">
-                    <a href="/set/tr" class="linkbtn">Türkçe</a>
-                    <a href="/set/en" class="linkbtn">English</a>
-                    <button class="linkbtn" data-theme-set="light"><i class="fa-solid fa-sun"></i> Light</button>
-                    <button class="linkbtn" data-theme-set="dark"><i class="fa-solid fa-moon"></i> Dark</button>
-                </div>
-            </div>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <header class="topbar">
+        <div class="topbar-left">
+            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <span style="font-weight:600; margin-left: 10px; color: var(--text);">{{ t.get("sitesettings", "Site settings") }}</span>
         </div>
+        <nav class="topbar-right">
+            <a href="/settings" data-nav="soft" class="navbtn" title="{{ t.get('settings', 'Settings') }}">
+                <i class="fa-solid fa-gear"></i>
+            </a>
+        </nav>
+    </header>
+
+    <main class="wrap settings-container">
+        
+        <section class="settings-card">
+            
+            <div class="settings-header">
+                <h1><i class="fa-solid fa-globe"></i> {{ t.get("sitesettings", "Site settings") }}</h1>
+                <p>{{ t.get("sitesettingsdesc", "Language and general site preferences.") }}</p>
+            </div>
+
+            <h3 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+                {{ t.get("language", "Language") }}
+            </h3>
+            
+            <div class="lang-options">
+                <a href="/set/tr" data-nav="soft" class="lang-btn">
+                    <i class="fa-solid fa-language"></i>
+                    <span>Türkçe (TR)</span>
+                </a>
+                <a href="/set/en" data-nav="soft" class="lang-btn">
+                    <i class="fa-solid fa-earth-americas"></i>
+                    <span>English (EN)</span>
+                </a>
+            </div>
+
+        </section>
+
     </main>
     <script src="/mobile/js/app.js"></script>
 </body>

@@ -120,7 +120,6 @@ def _turkey_tz():
     try:
         return ZoneInfo("Europe/Istanbul")
     except ZoneInfoNotFoundError:
-        # Fallback for environments without tzdata package
         return timezone(timedelta(hours=3))
 
 
@@ -576,7 +575,7 @@ def casinocasehome():
         return redirect(url_for("login"))
     content = texts(current)
     initialize_user_economy(account[0])
-    return render_template("pc/casino/case_home.html", **navcontext(content, current))
+    return render_template(viewfile("casino/case_home.html"), **navcontext(content, current))
 
 
 @app.route("/casino/case/<caseid>")
@@ -591,7 +590,7 @@ def casinocaseopen(caseid: str):
         return redirect(url_for("casinocasehome"))
     content = texts(current)
     initialize_user_economy(account[0])
-    return render_template("pc/casino/case_open.html", caseid=caseid, **navcontext(content, current))
+    return render_template(viewfile("casino/case_open.html"), caseid=caseid, **navcontext(content, current))
 
 
 def caseconstants(userid: int, caseid: str) -> dict:
@@ -657,7 +656,12 @@ def casinocaseopenapi():
     if ok and not bool(data.get("idempotent_replay")):
         state = data.get("state", {})
         price = int(CS2CASE.constants(caseid).get("case", {}).get("price", 0))
-        recordcasinogame(me[0], f"case:{caseid}", int(state.get("payout", 0)) - price)
+        payout = int(state.get("payout", 0))
+        recordcasinogame(me[0], f"case:{caseid}", payout - price)
+        # XP SISTEMI
+        xp_amount = max(5, price // 50) + max(0, payout // 100)
+        add_xp(me[0], xp_amount, "casino_case", f"case:{caseid}:{idem}")
+
     code = 200 if ok else 400
     return {"ok": ok, **data, "constants": caseconstants(me[0], caseid), "balance": int(get_balance(me[0]))}, code
 
@@ -775,7 +779,7 @@ def casinomultiplier():
         return redirect(url_for("login"))
     content = texts(current)
     initialize_user_economy(account[0])
-    return render_template("pc/casino/multiplier.html", **navcontext(content, current))
+    return render_template(viewfile("casino/multiplier.html"), **navcontext(content, current))
 
 
 def multiplierconstants(userid: int) -> dict:
@@ -831,6 +835,10 @@ def multiplierplay():
         bet = int(state.get("bet_amount", 0) or 0)
         payout = int(state.get("payout_amount", 0) or 0)
         recordcasinogame(me[0], "multiplier", payout - bet)
+        # XP SISTEMI
+        xp_amount = max(5, bet // 50) + max(0, payout // 100)
+        add_xp(me[0], xp_amount, "casino_multiplier", f"multiplier:{idem}")
+
     code = 200 if ok else 400
     return {"ok": ok, **data, "constants": multiplierconstants(me[0]), "balance": int(get_balance(me[0]))}, code
 
@@ -964,9 +972,16 @@ def roulettesettle():
     total_payout = int(data.get("total_payout", 0) or 0)
     total_stake = int(data.get("total_stake", 0) or 0)
     net_delta = int(data.get("net_delta", 0) or 0)
+    
     if total_payout > 0:
         applyledger(me[0], total_payout, "roulette_payout", "roulette payout", f"roulette:{round_id}:payout")
     recordcasinogame(me[0], "roulette", net_delta if total_stake > 0 else 0)
+    
+    # XP SISTEMI
+    if total_stake > 0:
+        xp_amount = max(5, total_stake // 50) + max(0, total_payout // 100)
+        add_xp(me[0], xp_amount, "casino_roulette", f"roulette:{round_id}")
+        
     state["settled"] = True
     return {"ok": True, **data, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
 
@@ -1017,6 +1032,11 @@ def blackjacksettle(userid: int, state: dict) -> dict:
     if payout > 0:
         applyledger(userid, payout, "blackjack_payout", f"blackjack {result}", f"blackjack:{round_id}:payout")
     recordcasinogame(userid, "blackjack", net_delta)
+    
+    # XP SISTEMI
+    xp_amount = max(5, bet // 50) + max(0, payout // 100)
+    add_xp(userid, xp_amount, "casino_blackjack", f"blackjack:{round_id}:xp")
+    
     return BLACKJACK.mark_settled(userid)
 
 
@@ -1034,6 +1054,10 @@ def blackjacknew():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    current = BLACKJACK.get_state(me[0]) or {}
+    phase = str(current.get("phase", "idle") or "idle")
+    if phase in {"player_turn", "dealer_turn"}:
+        return {"ok": False, "error": "round_in_progress", "limits": blackjacklimits(me[0]), "state": current}, 409
     payload = request.get_json(silent=True) or {}
     bet_raw = payload.get("bet", request.form.get("bet", "0"))
     try:

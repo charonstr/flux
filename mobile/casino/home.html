@@ -1,223 +1,319 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ t.get("casino", "Casino") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .box { border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 12px; padding: 12px; margin-top: 10px; }
-        .box h3 { margin: 0 0 10px 0; font-size: 0.95rem; }
-        .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .stat { border: 1px solid rgba(var(--line-rgb), 0.6); border-radius: 10px; padding: 8px; }
-        .label { color: var(--muted); font-size: 0.72rem; }
-        .value { font-weight: 700; margin-top: 4px; font-size: 0.87rem; }
-        .profile-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
-        .avatarx { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(var(--line-rgb), 0.7); object-fit: cover; }
-        .xp-track { margin-top: 8px; height: 8px; border-radius: 999px; background: rgba(var(--line-rgb), 0.65); overflow: hidden; }
-        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); }
-        .row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.35); }
+        /* Genişlik ve merkez hizalama */
+        .casino-wrap {
+            width: min(100%, 1320px);
+            margin: 0 auto;
+            padding: 20px clamp(12px, 2vw, 24px) 28px;
+        }
+        
+        /* 3 sütunlu ana grid */
+        .casino-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+        
+        .box { background: linear-gradient(145deg, rgba(var(--panel-rgb), 0.9), rgba(var(--panel-rgb), 0.6)); border: 1px solid rgba(var(--primary-rgb), 0.2); border-radius: 20px; padding: 24px; min-height: 220px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(10px); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .box:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); border-color: rgba(var(--primary-rgb), 0.4); }
+        
+        /* Grid yerleşim sınıfları */
+        .box-stats { grid-column: span 1; }
+        .box-games { grid-column: span 2; display: flex; flex-direction: column; }
+        .box-leaders { grid-column: span 1; }
+        .box-wide { grid-column: 1 / -1; min-height: auto; }
+        
+        .box h2 { margin: 0 0 20px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
+        .box h2 i { color: var(--primary); font-size: 1.4rem; }
+        .muted { color: var(--muted); }
+        
+        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+        .stat { background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.4); border-radius: 16px; padding: 16px; text-align: center; transition: background 0.2s ease; }
+        .stat:hover { background: rgba(var(--bg-rgb), 0.8); }
+        .stat .label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat .value { font-size: 1.4rem; font-weight: 800; margin-top: 8px; color: var(--text); }
+        
+        .leader-tabs { display: flex; gap: 10px; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 999px; width: fit-content; }
+        .leader-tabs button { background: transparent; border: none; color: var(--muted); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .leader-tabs button.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4); }
+        
+        .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.2); transition: padding 0.2s ease; }
+        .row:hover { padding-left: 8px; padding-right: 8px; background: rgba(var(--line-rgb), 0.1); border-radius: 8px; border-bottom-color: transparent; }
         .row:last-child { border-bottom: 0; }
-        .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
-        .tabs button { border: 1px solid rgba(var(--line-rgb), 0.7); background: rgba(var(--bg-rgb), 0.4); color: var(--text); border-radius: 999px; padding: 6px 10px; font-size: 0.78rem; }
-        .tabs button.active { color: var(--primary); border-color: rgba(var(--primary-rgb), 0.8); }
-        .win { color: #16a34a; }
-        .lose { color: #dc2626; }
-        .empty { color: var(--muted); padding: 8px 0; }
-        .steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
-        .step { border: 1px solid rgba(var(--line-rgb), 0.7); border-radius: 8px; padding: 6px; text-align: center; font-size: 0.72rem; background: rgba(var(--bg-rgb), 0.25); }
-        .step.today { border-color: rgba(var(--primary-rgb), 0.9); }
-        .step.claimed { opacity: 0.6; background: rgba(var(--text-rgb), 0.2); }
-        .reward-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-        .reward-msg { color: var(--muted); font-size: 0.78rem; min-height: 20px; }
-        .claim-pop { position: fixed; right: 12px; bottom: 72px; background: rgba(16,185,129,.14); border: 1px solid rgba(16,185,129,.45); color: #059669; padding: 8px 12px; border-radius: 999px; opacity: 0; transform: translateY(8px); transition: all .25s ease; pointer-events: none; z-index: 9999; }
+        .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        
+        .profile-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; background: rgba(0,0,0,0.15); padding: 16px; border-radius: 16px; }
+        .profile-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
+        
+        .xp-track { margin-top: 12px; height: 12px; border-radius: 999px; background: rgba(0,0,0,0.3); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .rank-icon { width: 24px; text-align: center; }
+        .win { color: #10b981; }
+        .lose { color: #ef4444; }
+        .empty { color: var(--muted); padding: 20px 0; text-align: center; font-style: italic; }
+        
+        .rewards-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+        .step { border: 2px solid rgba(var(--line-rgb), 0.3); border-radius: 16px; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); transition: all 0.3s ease; }
+        .step .day { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+        .step .amt { font-weight: 800; margin-top: 8px; font-size: 1.1rem; color: #f59e0b; }
+        .step.today { border-color: #10b981; background: rgba(16, 185, 129, 0.1); transform: scale(1.05); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2); }
+        .step.claimed { border-color: rgba(var(--line-rgb), 0.1); background: rgba(0,0,0,0.4); opacity: 0.5; }
+        .reward-actions { margin-top: 20px; display: flex; gap: 16px; align-items: center; justify-content: center; }
+        
+        .claim-pop { position: fixed; right: 30px; bottom: 30px; background: #10b981; color: #fff; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); font-weight: 700; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 9999; }
         .claim-pop.show { opacity: 1; transform: translateY(0); }
+        
+        /* Oyunlar bölümü 4 kolon */
+        .game-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; flex: 1; }
+        .game-links a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; border-radius: 16px; background: rgba(0,0,0,0.3); text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.2rem; border: 1px solid rgba(var(--line-rgb), 0.2); transition: all 0.3s ease; height: 100%; }
+        .game-links a i { font-size: 2.5rem; color: var(--primary); transition: transform 0.3s ease; }
+        .game-links a:hover { background: rgba(var(--primary-rgb), 0.15); border-color: var(--primary); transform: translateY(-4px); }
+        .game-links a:hover i { transform: scale(1.1) rotate(5deg); }
+        
+        /* Responsive tasarım ayarları */
+        @media (max-width: 1100px) { 
+            .casino-grid { grid-template-columns: repeat(2, 1fr); } 
+            .box-games { grid-column: 1 / -1; } 
+            .game-links { grid-template-columns: repeat(2, 1fr); } 
+        }
+        @media (max-width: 768px) { 
+            .casino-grid { grid-template-columns: 1fr; } 
+            .box-stats, .box-games, .box-leaders { grid-column: 1 / -1; }
+            .summary-grid { grid-template-columns: 1fr; } 
+            .rewards-steps { grid-template-columns: repeat(3, 1fr); } 
+            .game-links { grid-template-columns: 1fr; } 
+        }
+        @media (max-width: 480px) { 
+            .rewards-steps { grid-template-columns: repeat(2, 1fr); } 
+        }
     </style>
 </head>
 <body>
-    <main>
-        <div class="wrap">
-            <div class="panel">
-                <h2>{{ t.get("casino", "Casino") }}</h2>
-                <div class="box">
-                    <h3>{{ t.get("casino_stats", "Kumar istatistikleri") }}</h3>
-                    <div class="profile-head">
-                        <img id="profileAvatar" class="avatarx" src="{{ avatar }}" alt="avatar">
-                        <div>
-                            <div id="profileName">{{ username }}</div>
-                            <div class="hint" id="profileMeta">Level 1 | Balance 0</div>
+    <main class="casino-wrap">
+        <div class="casino-grid">
+            
+            <section class="box box-stats">
+                <h2><i class="fa-solid fa-chart-simple"></i> {{ t.get("casino_stats", "Kumar istatistikleri") }}</h2>
+                <div class="profile-head">
+                    <img id="profileAvatar" class="profile-avatar" src="{{ avatar }}" alt="avatar">
+                    <div style="flex: 1;">
+                        <div id="profileName" style="font-size: 1.2rem; font-weight: 700; margin-bottom: 4px;">{{ username }}</div>
+                        <div class="muted" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span id="profileLevel">1</span>
+                            <span id="profileBalance" style="color: #f59e0b; font-weight: 700;">0</span>
                         </div>
                     </div>
-                    <div class="summary-grid">
-                        <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanc") }}</div><div id="sumWin" class="value">0</div></div>
-                        <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayip") }}</div><div id="sumLose" class="value">0</div></div>
-                        <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win lose orani") }}</div><div id="sumRatio" class="value">0</div></div>
-                    </div>
-                    <div class="xp-track"><div id="xpFill" class="xp-fill" style="width:0%"></div></div>
-                    <div class="hint" id="xpText">0 / 0 XP</div>
                 </div>
+                <div class="summary-grid">
+                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanç") }}</div><div id="sumWin" class="value win">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayıp") }}</div><div id="sumLose" class="value lose">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win/Lose") }}</div><div id="sumRatio" class="value">0</div></div>
+                </div>
+                <div class="xp-track"><div id="xpFill" class="xp-fill" style="width:0%"></div></div>
+                <div class="muted" id="xpText" style="margin-top:10px; text-align: center; font-size: 0.85rem; font-weight: 600;">0 / 0 XP</div>
+            </section>
 
-                <div class="box">
-                    <h3>{{ t.get("casino_leaderboard", "En cok kazananlar") }}</h3>
-                    <div class="tabs">
-                        <button id="tabDaily" class="active" type="button">Gunluk</button>
-                        <button id="tabWeekly" type="button">Haftalik</button>
-                        <button id="tabMonthly" type="button">Aylik</button>
-                    </div>
-                    <div id="leaderRows" class="empty">Kimse yok</div>
+            <section class="box box-games" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(var(--panel-rgb), 0.8));">
+                <h2><i class="fa-solid fa-gamepad"></i> Oyunlar</h2>
+                <div class="game-links">
+                    <a href="/casino/blackjack" data-nav="soft"><i class="fa-solid fa-clover"></i> Blackjack</a>
+                    <a href="/casino/roulette" data-nav="soft"><i class="fa-solid fa-bullseye"></i> Rulet</a>
+                    <a href="/casino/multiplier" data-nav="soft"><i class="fa-solid fa-chart-line"></i> Çarpan</a>
+                    <a href="/casino/case" data-nav="soft"><i class="fa-solid fa-box-open"></i> Kasalar</a>
                 </div>
+            </section>
 
-                <div class="box">
-                    <h3>{{ t.get("casino_richest", "Guncel en zenginler") }}</h3>
-                    <div id="richRows" class="empty">Kimse yok</div>
+            <section class="box box-leaders">
+                <h2><i class="fa-solid fa-crown"></i> {{ t.get("casino_leaderboard", "En çok kazananlar") }}</h2>
+                <div class="leader-tabs">
+                    <button id="tabDaily" class="active" type="button">Günlük</button>
+                    <button id="tabWeekly" type="button">Haftalık</button>
+                    <button id="tabMonthly" type="button">Aylık</button>
                 </div>
+                <div id="leaderRows" class="muted">Kimse yok</div>
+            </section>
 
-                <div class="box">
-                    <h3>{{ t.get("casino_last_games", "Son 10 oyun") }}</h3>
-                    <div id="gameRows" class="empty">Kimse yok</div>
+            <section class="box box-leaders">
+                <h2><i class="fa-solid fa-gem"></i> {{ t.get("casino_richest", "Güncel en zenginler") }}</h2>
+                <div id="richRows" class="muted">Kimse yok</div>
+            </section>
+
+            <section class="box box-leaders">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("casino_last_games", "Son 10 oyun") }}</h2>
+                <div id="gameRows" class="muted">Kimse yok</div>
+            </section>
+
+            <section class="box box-wide">
+                <h2><i class="fa-solid fa-gift"></i> Günlük Ödül</h2>
+                <div id="rewardSteps" class="rewards-steps"></div>
+                <div class="reward-actions">
+                    <button id="claimBtn" class="pickbtn" type="button" disabled style="padding: 12px 32px; font-size: 1.1rem; border-radius: 999px;">Ödülü Al</button>
+                    <div id="rewardMsg" class="reward-msg">Yükleniyor...</div>
                 </div>
-                <div class="box">
-                    <h3>Games</h3>
-                    <a href="/casino/blackjack" data-nav="soft" class="linkbtn"><i class="fa-solid fa-clover"></i> Blackjack</a>
-                    <a href="/casino/roulette" data-nav="soft" class="linkbtn"><i class="fa-solid fa-bullseye"></i> Roulette</a>
-                    <a href="/casino/multiplier" data-nav="soft" class="linkbtn"><i class="fa-solid fa-chart-line"></i> Carpan</a>
-                </div>
-                <div class="box">
-                    <h3>Daily reward</h3>
-                    <div id="rewardSteps" class="steps"></div>
-                    <div class="reward-actions">
-                        <button id="claimBtn" class="pickbtn" type="button" disabled>Claim</button>
-                        <div id="rewardMsg" class="reward-msg">Loading</div>
-                    </div>
-                </div>
-            </div>
+            </section>
+
         </div>
     </main>
     <div id="claimPop" class="claim-pop">+0 gold</div>
+    
     <script src="/mobile/js/app.js"></script>
     <script>
-        (function () {
+        window.initCasinoHome = function () {
+            if(!document.querySelector('.casino-wrap')) return;
+
             let leaders = { daily_top5: [], weekly_top5: [], monthly_top5: [] };
             let currentTab = "daily_top5";
-            function esc(v) { return String(v || "").replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; }); }
+
+            function esc(v) { return String(v || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+
             function renderLeader() {
-                const w = document.getElementById("leaderRows");
+                const wrap = document.getElementById("leaderRows");
+                if(!wrap) return;
                 const rows = leaders[currentTab] || [];
-                if (!rows.length) { w.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
-                w.innerHTML = rows.map(function (r) { return '<div class="row"><div>' + esc(r.username) + '</div><div><b>+' + Number(r.amount || 0) + '</b></div></div>'; }).join("");
+                if (!rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map(r => '<div class="row"><div class="name"><i class="fa-solid fa-user-astronaut" style="color:var(--muted);font-size:0.8rem;"></i> ' + esc(r.username) + '</div><div class="amt win">+' + Number(r.amount || 0) + '</div></div>').join("");
             }
-            function renderRich(rows) {
-                const w = document.getElementById("richRows");
-                if (!rows || !rows.length) { w.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
-                w.innerHTML = rows.map(function (r, i) {
-                    let icon = '<i class="fa-solid fa-circle" style="margin-right:6px;"></i>';
-                    if (i === 0) icon = '<i class="fa-solid fa-gem" style="color:#60a5fa;margin-right:6px;"></i>';
-                    if (i === 1) icon = '<i class="fa-solid fa-medal" style="color:#f59e0b;margin-right:6px;"></i>';
-                    if (i === 2) icon = '<i class="fa-solid fa-medal" style="color:#b45309;margin-right:6px;"></i>';
-                    return '<div class="row"><div>' + icon + esc(r.username) + '</div><div><b>' + Number(r.balance || 0) + '</b></div></div>';
+
+            function renderRichest(rows) {
+                const wrap = document.getElementById("richRows");
+                if(!wrap) return;
+                if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map((r, i) => {
+                    let icon = '<i class="fa-solid fa-circle rank-icon" style="color:rgba(var(--line-rgb),0.8);"></i>';
+                    if (i === 0) icon = '<i class="fa-solid fa-gem rank-icon" style="color:#60a5fa;font-size:1.2rem;text-shadow:0 0 10px rgba(96,165,250,0.5);"></i>';
+                    if (i === 1) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#fcd34d;font-size:1.1rem;"></i>';
+                    if (i === 2) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#b45309;font-size:1rem;"></i>';
+                    return '<div class="row"><div class="name">' + icon + esc(r.username) + '</div><div class="amt" style="color:#f59e0b;"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(r.balance || 0) + '</div></div>';
                 }).join("");
             }
+
             function renderGames(rows) {
-                const w = document.getElementById("gameRows");
-                if (!rows || !rows.length) { w.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
-                w.innerHTML = rows.map(function (g) {
+                const wrap = document.getElementById("gameRows");
+                if(!wrap) return;
+                if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
+                wrap.innerHTML = rows.map(g => {
                     const d = Number(g.delta_amount || 0);
-                    return '<div class="row"><div>' + esc(g.game_name || "Game") + '</div><div class="' + (d >= 0 ? "win" : "lose") + '"><b>' + (d >= 0 ? "+" : "") + d + '</b></div></div>';
+                    const cls = d >= 0 ? "win" : "lose";
+                    const sign = d >= 0 ? "+" : "";
+                    const low = String(g.game_name || "").toLowerCase();
+                    const icon = low.includes("blackjack") ? "fa-clover" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : (low.includes("case") ? "fa-box-open" : "fa-bullseye"));
+                    return '<div class="row"><div class="name"><i class="fa-solid ' + icon + '"></i> ' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
                 }).join("");
             }
-            async function load() {
+
+            async function loadCasinoProfile() {
                 try {
                     const res = await fetch("/api/casino/profile", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
                     if (!data || !data.ok) return;
-                    document.getElementById("profileName").textContent = data.profile?.username || "";
-                    document.getElementById("profileAvatar").src = data.profile?.avatar || "";
-                    document.getElementById("profileMeta").textContent = "Level " + Number(data.level?.level || 1) + " | Balance " + Number(data.profile?.balance || 0);
-                    document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
-                    document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
-                    document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
-                    const xp = Number(data.level?.xp || 0);
-                    const next = Number(data.level?.next_level_xp || 0);
-                    const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
-                    document.getElementById("xpFill").style.width = pct + "%";
-                    document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAX LEVEL";
+                    if(document.getElementById("profileName")) document.getElementById("profileName").textContent = data.profile?.username || "";
+                    if(document.getElementById("profileAvatar")) document.getElementById("profileAvatar").src = data.profile?.avatar || "";
+                    if(document.getElementById("profileLevel")) document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level?.level || 1);
+                    if(document.getElementById("profileBalance")) document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile?.balance || 0);
+                    if(document.getElementById("sumWin")) document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
+                    if(document.getElementById("sumLose")) document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
+                    if(document.getElementById("sumRatio")) document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
+                    
+                    if(document.getElementById("xpFill") && document.getElementById("xpText")) {
+                        const xp = Number(data.level?.xp || 0);
+                        const next = Number(data.level?.next_level_xp || 0);
+                        const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
+                        document.getElementById("xpFill").style.width = pct + "%";
+                        document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAKSİMUM SEVİYE";
+                    }
+
                     leaders = { daily_top5: data.daily_top5 || [], weekly_top5: data.weekly_top5 || [], monthly_top5: data.monthly_top5 || [] };
                     renderLeader();
-                    renderRich(data.richest_top5 || []);
+                    renderRichest(data.richest_top5 || []);
                     renderGames(data.last10_games || []);
-                } catch (e) {
-                    console.log("casino profile load error", e);
-                }
+                } catch (err) {}
             }
+
             function renderReward(state) {
                 const wrap = document.getElementById("rewardSteps");
-                const btn = document.getElementById("claimBtn");
                 const msg = document.getElementById("rewardMsg");
+                const btn = document.getElementById("claimBtn");
+                if(!wrap || !msg || !btn) return;
+                
                 if (!state || !state.days) {
                     wrap.innerHTML = '<div class="empty">Veri yok</div>';
-                    btn.disabled = true;
-                    msg.textContent = "Veri yok";
-                    return;
+                    btn.disabled = true; msg.textContent = "Veri yok"; return;
                 }
-                wrap.innerHTML = state.days.map(function (d) {
+                wrap.innerHTML = state.days.map(d => {
                     const cls = [d.state === "today" ? "today" : "", d.claimed ? "claimed" : ""].join(" ").trim();
-                    return '<div class="step ' + cls + '"><div>D' + d.day + '</div><div>' + Number(d.amount || 0) + '</div></div>';
+                    let icon = '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-top:4px;"></i>';
+                    if(!d.claimed && d.state !== "today") icon = '<i class="fa-solid fa-lock" style="color:var(--muted); margin-top:4px; font-size:0.8rem;"></i>';
+                    if(d.state === "today" && !d.claimed) icon = '<i class="fa-solid fa-gift" style="color:#10b981; margin-top:4px;"></i>';
+                    return '<div class="step ' + cls + '"><div class="day">Gün ' + d.day + '</div><div class="amt"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(d.amount || 0) + '</div><div>' + icon + '</div></div>';
                 }).join("");
+                if (state.days[6] && wrap.children[6]) wrap.children[6].innerHTML += '<div class="day" style="color:#f59e0b; margin-top:4px;">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
                 btn.disabled = !state.can_claim_today;
-                msg.textContent = state.can_claim_today ? "Hazir" : "Alindi";
+                msg.textContent = state.can_claim_today ? "Bugünün ödülü hazır" : "Bugünün ödülü zaten alındı";
             }
+
             async function loadReward() {
                 const msg = document.getElementById("rewardMsg");
-                msg.textContent = "Loading";
+                if(msg) msg.textContent = "Yükleniyor...";
                 try {
                     const res = await fetch("/rewards/daily", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
-                    if (!data || !data.ok) {
-                        msg.textContent = "Yuklenemedi";
-                        return;
-                    }
+                    if (!data || !data.ok) { if(msg) msg.textContent = "Yüklenemedi"; return; }
                     renderReward(data);
-                } catch (e) {
-                    console.log("daily reward load error", e);
-                    msg.textContent = "Hata";
-                }
+                } catch (err) {}
             }
+
             async function claimReward() {
                 const btn = document.getElementById("claimBtn");
                 const msg = document.getElementById("rewardMsg");
-                btn.disabled = true;
-                msg.textContent = "Claiming";
+                if(btn) btn.disabled = true;
+                if(msg) msg.textContent = "Alınıyor...";
                 try {
                     const res = await fetch("/rewards/daily/claim", { method: "POST", headers: { "X-Requested-With": "fetch" } });
                     const data = await res.json();
                     if (!res.ok || !data.ok) {
-                        msg.textContent = "Basarisiz";
-                        await loadReward();
-                        return;
+                        if(msg) msg.textContent = "İşlem başarısız";
+                        await loadReward(); return;
                     }
                     renderReward(data);
                     const pop = document.getElementById("claimPop");
-                    pop.textContent = "+" + Number(data.claimed_amount || 0) + " gold";
-                    pop.classList.add("show");
-                    setTimeout(function () { pop.classList.remove("show"); }, 1300);
-                    await load();
-                    msg.textContent = "Basarili";
-                } catch (e) {
-                    console.log("daily reward claim error", e);
-                    msg.textContent = "Hata";
+                    if(pop) {
+                        pop.innerHTML = '<i class="fa-solid fa-coins"></i> +' + Number(data.claimed_amount || 0) + " altın kazandın!";
+                        pop.classList.add("show");
+                        setTimeout(() => pop.classList.remove("show"), 2500);
+                    }
+                    await loadCasinoProfile();
+                    if(msg) msg.textContent = "Başarıyla alındı";
+                } catch (err) {
+                    if(msg) msg.textContent = "Hata oluştu";
                     await loadReward();
                 }
             }
-            function setTab(k, b) { currentTab = k; document.querySelectorAll(".tabs button").forEach(function (x) { x.classList.remove("active"); }); b.classList.add("active"); renderLeader(); }
-            document.getElementById("tabDaily").onclick = function () { setTab("daily_top5", this); };
-            document.getElementById("tabWeekly").onclick = function () { setTab("weekly_top5", this); };
-            document.getElementById("tabMonthly").onclick = function () { setTab("monthly_top5", this); };
-            document.getElementById("claimBtn").onclick = claimReward;
-            load();
+
+            function setTab(key, btn) {
+                currentTab = key;
+                document.querySelectorAll(".leader-tabs button").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                renderLeader();
+            }
+
+            if(document.getElementById("tabDaily")) document.getElementById("tabDaily").onclick = function () { setTab("daily_top5", this); };
+            if(document.getElementById("tabWeekly")) document.getElementById("tabWeekly").onclick = function () { setTab("weekly_top5", this); };
+            if(document.getElementById("tabMonthly")) document.getElementById("tabMonthly").onclick = function () { setTab("monthly_top5", this); };
+            if(document.getElementById("claimBtn")) document.getElementById("claimBtn").onclick = claimReward;
+            
+            if (window._casinoHomeInterval) clearInterval(window._casinoHomeInterval);
+            window._casinoHomeInterval = setInterval(loadCasinoProfile, 15000);
+            
+            loadCasinoProfile();
             loadReward();
-            setInterval(load, 15000);
-        })();
+        };
+
+        // Otomatik olarak başlat (Hem F5 hem SPA geçişleri için)
+        window.initCasinoHome();
+        window.addEventListener('spa-loaded', window.initCasinoHome);
     </script>
 </body>
 </html>

@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kasalar - Euphorium</title>
+  <link rel="stylesheet" href="/mobile/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .case-home { max-width: 1100px; margin: 0 auto; padding: 8px 12px 12px; }
+    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px; }
+    .top h1 { margin: 0; font-size: 1.15rem; line-height: 1.1; }
+    .grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+    .card { background: transparent; border: none; border-radius: 0; padding: 0; text-decoration:none; color:var(--text); display:flex; flex-direction:column; align-items:center; }
+    .cover { width: 100%; aspect-ratio: 1 / 1; background: transparent; display:grid; place-items:center; margin-bottom:2px; overflow:visible; }
+    .cover img { width: 100%; height: 100%; object-fit: contain; display:block; transition: filter 0.2s ease; }
+    .card:hover .cover img { filter: brightness(1.18); }
+    .cover i { display: none; }
+    .cover.noimg i { display: block; }
+    .price { color: #f59e0b; margin-top: 0; font-weight: 800; font-size: 0.82rem; position: relative; top: -16px; }
+    @media (max-width: 900px) {
+      .case-home { padding-top: 6px; }
+      .grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+    }
+    @media (max-width: 640px) {
+      .top { margin-bottom: 4px; }
+      .top h1 { font-size: 1.05rem; }
+      .grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+      .price { top: -12px; font-size: 0.76rem; }
+      .linkbtn { padding: 7px 10px; font-size: 0.78rem; }
+    }
+    @media (max-width: 420px) {
+      .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="case-home">
+    <div class="top">
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Casino</a>
+      <h1>Kasalar</h1>
+      <div></div>
+    </div>
+    <section id="caseGrid" class="grid"></section>
+  </main>
+  <script src="/mobile/js/app.js"></script>
+  <script>
+    (function(){
+      const grid = document.getElementById('caseGrid');
+      async function init(){
+        const res = await fetch('/api/casino/case/state?case=afet', { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
+        const data = await res.json();
+        if (!res.ok || !data.ok) return;
+        const cases = data.constants?.cases || [];
+        grid.innerHTML = cases.map(function(c){
+          return '<a class="card" href="/casino/case/' + c.id + '" data-nav="soft">' +
+                 '<div class="cover"><img src="/assets/casino/case/' + c.id + '/' + c.id + 'case.png" alt="' + c.name + '" onerror="if(!this.dataset.fallback){this.dataset.fallback=\'1\';this.src=\'/assets/casino/case/' + c.id + '/felaketcase.png\';return;}this.parentElement.classList.add(\'noimg\');this.remove();"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+                 '<div class="price"><i class="fa-solid fa-coins"></i> ' + Number(c.price || 0) + '</div>' +
+                 '</a>';
+        }).join('');
+      }
+      init().catch(function(){});
+    })();
+  </script>
+</body>
+</html>
+

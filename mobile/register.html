@@ -1,32 +1,364 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.register }} - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem("theme");
+                var l = t === "light";
+                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
+                document.documentElement.style.colorScheme = l ? "light" : "dark";
+            } catch(e) {
+                document.documentElement.style.backgroundColor = "#1a202c";
+            }
+        })();
+    </script>
+    <style>html{background:#1a202c}</style>
+    <title>{{ t.get("register", "Register") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Asil ve Modern Auth Düzeni === */
+        
+        /* Ana kapsayıcı */
+        .auth-modern-wrap {
+            min-height: 100dvh; /* Mobilde klavye açılınca UI'ı bozmaması için dvh (Dynamic Viewport) */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 !important;
+            padding: 20px !important;
+            width: 100%;
+            max-width: 100%;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto; /* Mobilde aşağı kaydırabilmek için auto yapıldı */
+            background-color: var(--bg);
+        }
+
+        /* Film Greni Dokusu */
+        .auth-modern-wrap::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        /* Yavaşça Yüzerek Yer Değiştiren Ortam Işıkları (Performans İçin GPU Hızlandırma Eklendi) */
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 0;
+            opacity: 0.4;
+            will-change: transform;
+            transform: translateZ(0); /* Donanım hızlandırması (GPU) zorlaması - Mobilde kasmayı önler */
+        }
+
+        .orb-1 {
+            width: 45vw; height: 45vw;
+            max-width: 600px; max-height: 600px;
+            background: var(--primary); 
+            top: -10%; left: -10%;
+            animation: driftPrimary 25s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 40vw; height: 40vw;
+            max-width: 500px; max-height: 500px;
+            background: #818cf8; /* Morluk */
+            bottom: -10%; right: -10%;
+            animation: driftPurple 22s ease-in-out infinite;
+        }
+
+        /* Ekranın içinde süzülme rotaları */
+        @keyframes driftPrimary {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            33% { transform: translate3d(35vw, 15vh, 0) scale(1.1); }
+            66% { transform: translate3d(15vw, 45vh, 0) scale(0.9); }
+            100% { transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        @keyframes driftPurple {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            33% { transform: translate3d(-30vw, -40vh, 0) scale(1.2); }
+            66% { transform: translate3d(-50vw, -10vh, 0) scale(0.95); }
+            100% { transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        /* İkiye Bölünmüş Merkezi Panel */
+        .auth-box {
+            display: flex;
+            width: 100%;
+            max-width: 900px;
+            min-height: 550px;
+            margin: auto; /* Dikeyde de ortalamayı korumak için */
+            background: rgba(var(--panel-rgb), 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+            z-index: 10;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: smoothFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        body[data-theme="dark"] .auth-box {
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        @keyframes smoothFadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sol Taraf: Görsel ve Marka Alanı */
+        .auth-visual {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), transparent);
+            border-right: 1px solid var(--line);
+            text-align: center;
+            position: relative;
+        }
+
+        /* --- Yıldız Simgesi --- */
+        .star-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+
+        .star-container i {
+            font-size: 4.5rem;
+            margin: 0;
+            color: transparent;
+            background: rgba(var(--text-rgb), 0.05);
+            -webkit-background-clip: text;
+            -webkit-text-stroke: 1.5px rgba(var(--primary-rgb), 0.5);
+            position: relative;
+            z-index: 3; 
+            filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.2));
+            animation: pulseIcon 3s ease-in-out infinite alternate; /* Nabız efekti eklendi */
+        }
+        
+        @keyframes pulseIcon {
+            from { filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.2)); }
+            to { filter: drop-shadow(0 0 20px rgba(var(--primary-rgb), 0.6)); }
+        }
+        /* ------------------------------------------------------------- */
+
+        .auth-visual h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .auth-visual p {
+            color: var(--muted);
+            font-size: 1.05rem;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        /* Sağ Taraf: Form Alanı */
+        .auth-form-side {
+            flex: 1.1;
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-form-side h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .auth-form-side .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        /* Form Elemanları Animasyonu */
+        .form-group, .action-area {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            will-change: transform, opacity;
+            margin-bottom: 20px;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .action-area { animation-delay: 0.3s; }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Input Stilleri */
+        .input-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Input Font Size iOS zoom bug'ını engellemek için 16px yapıldı */
+        .input-group input {
+            font-size: 16px !important; 
+        }
+
+        /* Eşit ve Modern Butonlar */
+        .action-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px; 
+        }
+
+        .pickbtn, .linkbtn.full {
+            width: 100% !important;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 50px;
+            margin: 0;
+            font-size: 1rem;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            touch-action: manipulation; /* Mobildeki tıklama gecikmesini kaldırır */
+        }
+
+        .pickbtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
+        }
+        
+        .pickbtn:active {
+            transform: translateY(0); /* Tıklanma hissini artırmak için */
+        }
+
+        .linkbtn.full:hover {
+            transform: translateY(-2px);
+            background: var(--line);
+        }
+
+        /* Göz İkonu Tıklanma Alanı Genişletildi */
+        .passrow .tiny {
+            padding: 0 15px; 
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Tema Butonları */
+        .theme-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        @media (max-width: 768px) {
+            .auth-box { 
+                flex-direction: column; 
+                min-height: auto; 
+            }
+            .auth-visual { display: none; }
+            .auth-form-side { 
+                padding: 40px 25px; 
+            }
+            .theme-buttons { 
+                top: 10px; 
+                right: 10px; 
+            }
+            /* Mobilde orbların blur'unu biraz düşürerek kasma riskini tamamen yok ediyoruz */
+            .ambient-orb {
+                filter: blur(60px); 
+            }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="authwrap">
-            <div class="panel">
-                <h1><i class="fa-solid fa-user-plus"></i> {{ t.register }}</h1>
-                {% if error %}<div class="error">{{ error }}</div>{% endif %}
-                <form class="form" method="POST" action="/register">
-                    <div class="input-group">
-                        <i class="fa-solid fa-user"></i>
-                        <input type="text" name="username" placeholder="{{ t.username }}" required>
-                    </div>
-                    <div class="passrow">
+    <main class="wrap auth-modern-wrap">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+
+        <div class="theme-buttons">
+            <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+            <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
+        </div>
+
+        <div class="auth-box">
+            <div class="auth-visual">
+                <div class="star-container">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <h2>Euphorium</h2>
+                <p>{{ t.get("join_desc", "Create your account today and start your journey with us.") }}</p>
+            </div>
+
+            <div class="auth-form-side">
+                <h1>{{ t.get("register", "Create Account") }}</h1>
+                <p class="subtitle">{{ t.get("register_subtitle", "Fast, secure and free to join.") }}</p>
+                
+                {% if error %}
+                <div class="error" style="margin-bottom: 20px; font-size: 0.9rem; padding: 10px; border-radius: 8px;">
+                    <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="post" class="form" data-nav="soft">
+                    <div class="form-group">
+                        <label class="input-label">{{ t.get('username', 'Username') }}</label>
                         <div class="input-group">
-                            <i class="fa-solid fa-key"></i>
-                            <input type="password" name="password" id="password" placeholder="{{ t.password }}" required>
+                            <i class="fa-solid fa-user"></i>
+                            <input name="username" type="text" required placeholder="{{ t.get('username', 'Username') }}" autocomplete="off">
                         </div>
-                        <button type="button" class="tiny" onclick="window.togglepass(this)"><i class="fa-solid fa-eye"></i></button>
                     </div>
-                    <button class="pickbtn">{{ t.register }}</button>
-                    <a href="/login" class="linkbtn">{{ t.login }}</a>
+
+                    <div class="form-group">
+                        <label class="input-label">{{ t.get('password', 'Password') }}</label>
+                        <div class="passrow">
+                            <div class="input-group">
+                                <i class="fa-solid fa-lock"></i>
+                                <input id="password" name="password" type="password" required placeholder="{{ t.get('password', 'Password') }}">
+                            </div>
+                            <button type="button" class="tiny" onclick="window.togglepass(this)"><i class="fa-solid fa-eye-slash"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="action-area">
+                        <button type="submit" class="pickbtn">{{ t.get("register", "Register") }}</button>
+                        <a href="/login" data-nav="soft" class="linkbtn full">{{ t.get("login", "Already have an account?") }}</a>
+                    </div>
                 </form>
             </div>
         </div>

@@ -1,6 +1,6 @@
 ﻿(function () {
   window.initBlackjackPage = async function initBlackjackPage() {
-    const root = document.querySelector('.table');
+    const root = document.querySelector('.table-wrap');
     if (!root) return;
     if (root.dataset.bjInit === '1') return;
     root.dataset.bjInit = '1';
@@ -23,24 +23,67 @@
 
     let limits = { min_bet: 100, max_bet: 500 };
     let reqSeq = 0;
+    
+    // SPA Bug Fix: Kapalı veya asılı kalan buton durumu sıfırlanıyor
     let pending = false;
 
     function suitChar(s) { if (s === 'H') return '♥'; if (s === 'D') return '♦'; if (s === 'C') return '♣'; return '♠'; }
-    function cardHtml(c) {
-      if (c.hidden) return '<div class="card back"><i class="fa-solid fa-diamond"></i></div>';
+    
+    function cardHtml(c, forcedRot) {
+      const rot = forcedRot !== undefined ? forcedRot : (Math.random() * 6 - 3).toFixed(1);
+      const rotDeg = rot + 'deg';
+      if (c.hidden) return '<div class="card back" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><i class="fa-brands fa-monero"></i></div>';
       const red = c.suit === 'H' || c.suit === 'D';
-      return '<div class="card ' + (red ? 'red' : 'black') + '"><div class="rank">' + c.rank + '</div><div class="suit">' + suitChar(c.suit) + '</div></div>';
+      const char = suitChar(c.suit);
+      return '<div class="card ' + (red ? 'red' : 'black') + '" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><div class="rank">' + c.rank + '</div><div class="suit">' + char + '</div><div class="suit-small">' + char + '</div></div>';
     }
-    function animateCards(container) {
-      const cards = container.querySelectorAll('.card');
-      cards.forEach(function (card, idx) { setTimeout(function () { card.classList.add('in'); }, idx * 80); });
+
+    function animateAllCards() {
+      const cards = document.querySelectorAll('.card:not(.in)');
+      cards.forEach(function (card, idx) {
+        setTimeout(function () {
+          card.classList.add('in');
+        }, idx * 150 + 50);
+      });
+    }
+
+    function updateHand(container, hand) {
+      if (!hand || hand.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      if (hand.length < container.children.length) {
+        container.innerHTML = '';
+      }
+
+      hand.forEach(function(card, i) {
+        const existing = container.children[i];
+        if (existing) {
+          const isBack = existing.classList.contains('back');
+          if (isBack && !card.hidden) {
+            const oldRot = existing.getAttribute('data-rot');
+            const temp = document.createElement('div');
+            temp.innerHTML = cardHtml(card, oldRot);
+            const newCard = temp.firstChild;
+            newCard.classList.add('in');
+            newCard.classList.add('flip');
+            container.replaceChild(newCard, existing);
+          }
+        } else {
+          const temp = document.createElement('div');
+          temp.innerHTML = cardHtml(card);
+          container.appendChild(temp.firstChild);
+        }
+      });
     }
 
     function setControlState() {
-      const turn = phaseEl.textContent === 'player_turn';
+      const phase = String(phaseEl.textContent || 'idle');
+      const turn = phase === 'player_turn';
+      const activeRound = phase === 'player_turn' || phase === 'dealer_turn';
       hitBtn.disabled = !turn || pending;
       standBtn.disabled = !turn || pending;
-      newBtn.disabled = pending;
+      newBtn.disabled = pending || activeRound;
       betInput.disabled = turn || pending;
       if (betMinBtn) betMinBtn.disabled = turn || pending;
       if (betMaxBtn) betMaxBtn.disabled = turn || pending;
@@ -54,11 +97,19 @@
       playerTotalEl.textContent = String(state.player_total ?? 0);
       playerTotalBottom.textContent = String(state.player_total ?? 0);
       dealerTotalEl.textContent = String(state.dealer_visible_total ?? '?');
-      resultEl.textContent = String(state.result || '-');
-      dealerWrap.innerHTML = (state.dealer_hand || []).map(cardHtml).join('');
-      playerWrap.innerHTML = (state.player_hand || []).map(cardHtml).join('');
-      animateCards(dealerWrap);
-      animateCards(playerWrap);
+      const res = String(state.result || '-');
+      resultEl.textContent = res;
+      resultEl.className = '';
+      if (res === 'win' || res === 'blackjack') resultEl.classList.add('result-win');
+      else if (res === 'lose') resultEl.classList.add('result-lose');
+      else if (res === 'push') resultEl.classList.add('result-push');
+
+      updateHand(dealerWrap, state.dealer_hand);
+      updateHand(playerWrap, state.player_hand);
+      
+      requestAnimationFrame(function() {
+          animateAllCards();
+      });
       setControlState();
     }
 
@@ -96,7 +147,8 @@
         if (!data.ok) {
           console.log('blackjack error', data);
           if (data.error === 'invalid_bet' || data.error === 'invalid_bet_min') msgEl.textContent = 'Minimum bahis 100';
-          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti asildi';
+          if (data.error === 'invalid_bet_max') msgEl.textContent = 'Maksimum bahis limiti aşıldı';
+          if (data.error === 'round_in_progress') msgEl.textContent = 'Aktif tur bitmeden tekrar dağıtamazsın';
           return null;
         }
         return data.state;
@@ -111,14 +163,23 @@
       }
     }
 
-    newBtn.onclick = async function () { const raw = parseInt(betInput.value || '0', 10); const bet = Math.max(Number(limits.min_bet || 100), Math.min(Number(limits.max_bet || 100), Number(raw || 0))); betInput.value = String(bet); const s = await req('/api/casino/blackjack/new', 'POST', { bet: bet }); if (s) renderState(s); };
-    hitBtn.onclick = async function () { const s = await req('/api/casino/blackjack/hit', 'POST'); if (s) renderState(s); };
-    standBtn.onclick = async function () { const s = await req('/api/casino/blackjack/stand', 'POST'); if (s) renderState(s); };
+    newBtn.onclick = async function () {
+      msgEl.textContent = 'Kartlar dağıtılıyor...';
+      const raw = parseInt(betInput.value || '0', 10);
+      const bet = Math.max(Number(limits.min_bet || 100), Math.min(Number(limits.max_bet || 100), Number(raw || 0)));
+      betInput.value = String(bet);
+      dealerWrap.innerHTML = '';
+      playerWrap.innerHTML = '';
+      const state = await req('/api/casino/blackjack/new', 'POST', { bet: bet });
+      if (state) renderState(state);
+    };
+    hitBtn.onclick = async function () { const state = await req('/api/casino/blackjack/hit', 'POST'); if (state) renderState(state); };
+    standBtn.onclick = async function () { const state = await req('/api/casino/blackjack/stand', 'POST'); if (state) renderState(state); };
     if (betMinBtn) betMinBtn.onclick = function () { betInput.value = String(limits.min_bet || 100); };
     if (betMaxBtn) betMaxBtn.onclick = function () { betInput.value = String(limits.max_bet || 100); };
 
-    const s = await req('/api/casino/blackjack/state', 'GET');
-    if (s) renderState(s);
+    const state = await req('/api/casino/blackjack/state', 'GET');
+    if (state) renderState(state);
   };
 
   if (document.readyState === 'loading') {
@@ -127,3 +188,6 @@
     window.initBlackjackPage();
   }
 })();
+
+
+

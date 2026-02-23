@@ -116,7 +116,11 @@
     }
 
     function buildChips() {
-      const arr = getSafeConstants().chips;
+      const cfg = getSafeConstants();
+      const minBet = Number(cfg.min_bet || 100);
+      const maxBet = Number(cfg.max_bet || 0);
+      let arr = (cfg.chips || []).filter(function(v) { return Number(v) >= minBet && Number(v) <= maxBet; });
+      if (!arr.length && maxBet >= minBet) arr = [minBet];
       chipBar.innerHTML = '';
       arr.forEach(v => {
         const b = document.createElement('button');
@@ -125,6 +129,7 @@
         b.onclick = function () { selectedChip = Number(v); updateChips(); };
         chipBar.appendChild(b);
       });
+      if (Number(selectedChip) < minBet || Number(selectedChip) > maxBet) selectedChip = Number(arr[0] || minBet);
     }
 
     function updateChips() {
@@ -150,6 +155,7 @@
     function placeBallOnPocket(pocket) {
       const arr = getSafeConstants().wheel;
       if (!ball || !arr) return;
+      if (ball.getAnimations) ball.getAnimations().forEach(function(a) { a.cancel(); });
       const idx = arr.indexOf(String(pocket));
       if (idx < 0) return;
       const angle = (360 / arr.length) * idx;
@@ -159,8 +165,22 @@
 
     function resetBallPosition() {
       if (!ball) return;
+      if (ball.getAnimations) ball.getAnimations().forEach(function(a) { a.cancel(); });
       ball.style.animation = 'none';
       ball.style.transform = 'translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg)';
+    }
+
+    function animateBallToPocket(targetAngle, durationMs) {
+      if (!ball) return;
+      if (ball.getAnimations) ball.getAnimations().forEach(function(a) { a.cancel(); });
+      const endRot = -2160 + targetAngle;
+      ball.animate(
+        [
+          { transform: 'translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg)' },
+          { transform: `translate(-50%, -50%) rotate(${endRot}deg) translateX(${ballRadiusPx}px) rotate(${-endRot}deg)` }
+        ],
+        { duration: durationMs, easing: 'cubic-bezier(0.1, 0.7, 0.1, 1)', fill: 'forwards' }
+      );
     }
 
     function render() {
@@ -203,10 +223,11 @@
       state = spun.state;
       
       const arr = getSafeConstants().wheel;
+      let targetAngle = 0;
       if (state.result_pocket && arr) {
           const targetIdx = arr.indexOf(String(state.result_pocket));
           if (targetIdx >= 0 && ball) {
-              const targetAngle = (360 / arr.length) * targetIdx;
+              targetAngle = (360 / arr.length) * targetIdx;
               ball.style.setProperty('--end-rot', (-2160 + targetAngle) + 'deg');
           }
       }
@@ -217,6 +238,7 @@
           void wheel.offsetWidth;
           wheel.classList.add('spinfx');
       }
+      animateBallToPocket(targetAngle, 5000);
       render();
       
       setTimeout(async function () {

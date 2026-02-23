@@ -1,28 +1,225 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.joinserver }} - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem("theme");
+                var l = t === "light";
+                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
+                document.documentElement.style.colorScheme = l ? "light" : "dark";
+            } catch(e) {
+                document.documentElement.style.backgroundColor = "#1a202c";
+            }
+        })();
+    </script>
+    <style>html{background:#1a202c}</style>
+    <title>Davet Onayı - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Asil ve Modern Davet Onay Ekranı === */
+        
+        body { 
+            margin: 0; 
+            min-height: 100dvh; /* Mobilde tarayıcı barı sorunu için dvh */
+            background-color: var(--bg);
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Arka Plan Dokusu ve Yavaş Işıklar */
+        .bg-texture { 
+            position: fixed; 
+            inset: 0; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"); 
+            pointer-events: none; 
+            z-index: -1; 
+        }
+
+        .ambient-orb { 
+            position: fixed; 
+            border-radius: 50%; 
+            filter: blur(120px); 
+            z-index: -2; 
+            opacity: 0.25; 
+            will-change: transform; 
+            transform: translateZ(0); /* Donanım Hızlandırması - Kasmayı önler */
+        }
+
+        .orb-1 { 
+            width: 45vw; height: 45vw; 
+            max-width: 600px; max-height: 600px;
+            background: var(--primary); 
+            top: -15%; left: -10%; 
+            animation: driftPrimary 30s ease-in-out infinite alternate; 
+        }
+
+        .orb-2 { 
+            width: 40vw; height: 40vw; 
+            max-width: 500px; max-height: 500px;
+            background: #22c55e; /* Yeşillik hissiyatı (Davet onayı için) */
+            bottom: -15%; right: -10%; 
+            animation: driftPurple 25s ease-in-out infinite alternate; 
+        }
+
+        @keyframes driftPrimary { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); } 
+        }
+
+        @keyframes driftPurple { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); } 
+        }
+
+        .server-shell { 
+            min-height: 100dvh; 
+            display: grid; 
+            grid-template-columns: 85px 1fr; 
+        }
+
+        .server-main { 
+            display: grid; 
+            place-items: center; 
+            padding: 24px; 
+            box-sizing: border-box;
+        }
+
+        .join-card { 
+            width: min(560px, 100%); 
+            background: rgba(var(--panel-rgb), 0.72); 
+            border: 1px solid rgba(var(--line-rgb), 0.6); 
+            border-radius: 20px; 
+            backdrop-filter: blur(24px); 
+            -webkit-backdrop-filter: blur(24px);
+            padding: 35px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            box-sizing: border-box;
+        }
+
+        body[data-theme="dark"] .join-card {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .server-head { 
+            display: flex; 
+            align-items: center; 
+            gap: 16px; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.08);
+            padding-bottom: 20px;
+        }
+
+        .server-head img { 
+            width: 72px; 
+            height: 72px; 
+            border-radius: 20px; 
+            object-fit: cover; 
+            border: 2px solid rgba(var(--primary-rgb), 0.35); 
+            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .server-head h1 { 
+            margin: 0; 
+            font-size: 1.4rem; 
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .hint { 
+            color: var(--muted); 
+            margin-top: 5px;
+            font-size: 0.95rem;
+        }
+
+        .invite-code { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px; 
+            background: rgba(var(--bg-rgb), 0.5); 
+            border: 1px dashed rgba(var(--primary-rgb), 0.5); 
+            border-radius: 12px; 
+            padding: 12px 16px; 
+            margin-bottom: 25px; 
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .invite-code i {
+            color: var(--primary);
+        }
+
+        .actions { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+        }
+
+        .actions .pickbtn, .actions .linkbtn { 
+            flex: 1;
+            min-width: 130px; 
+            text-align: center; 
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            touch-action: manipulation; /* Tıklama gecikmesini sıfırlar */
+        }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 768px) {
+            .server-shell { 
+                grid-template-columns: 1fr; /* Mobilde sol boşluğu kapatıp merkeze alıyoruz */
+            }
+            .server-rail {
+                display: none;
+            }
+            .join-card {
+                padding: 25px 20px;
+            }
+            .ambient-orb { filter: blur(60px); }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="wrap">
-            <div class="panel" style="text-align:center;">
-                <h2>{{ t.joinserver }}</h2>
-                <img src="{{ server.avatar }}" class="avatar" style="width:80px; height:80px; margin:15px auto;">
-                <h3>{{ server.name }}</h3>
-                <p>{{ t.invitecode }}: {{ invitecode }}</p>
-                <form method="POST">
-                    <input type="hidden" name="action" value="join">
-                    <button class="pickbtn">{{ t.join }}</button>
-                    <a href="/servers" class="linkbtn" style="margin-top:10px;">{{ t.back }}</a>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <div class="server-shell">
+        <aside class="server-rail"></aside>
+        <main class="server-main">
+            <section class="join-card">
+                <div class="server-head">
+                    <img src="{{ server.avatar }}" alt="server avatar">
+                    <div>
+                        <h1>{{ server.name }}</h1>
+                        <div class="hint">Bu sunucuya katılmak istiyor musun?</div>
+                    </div>
+                </div>
+                <div class="invite-code"><i class="fa-solid fa-link"></i> {{ invitecode }}</div>
+                <form method="post" class="actions" data-nav="soft">
+                    <button type="submit" name="action" value="join" class="pickbtn"><i class="fa-solid fa-check"></i> Katıl</button>
+                    <button type="submit" name="action" value="cancel" class="linkbtn"><i class="fa-solid fa-xmark"></i> İptal</button>
                 </form>
-            </div>
-        </div>
-    </main>
+            </section>
+        </main>
+    </div>
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>

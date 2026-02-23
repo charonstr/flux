@@ -1,96 +1,506 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.dm }} - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <title>{{ t.get("dm", "DM") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Premium DM Arayüzü Tasarımı === */
+        
+        body { 
+            position: relative; 
+            background-color: var(--bg); 
+            overflow: hidden; 
+            min-height: 100dvh; /* Klavye açıldığında UI bozulmaması için dvh kullanıldı */
+            margin: 0;
+        }
+        
+        /* Arka Plan ve Işıklar */
+        .bg-texture { 
+            position: fixed; 
+            inset: 0; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); 
+            pointer-events: none; 
+            z-index: -1; 
+            opacity: 0.5; 
+        }
+
+        .ambient-orb { 
+            position: fixed; 
+            border-radius: 50%; 
+            filter: blur(100px); 
+            z-index: -2; 
+            opacity: 0.3; 
+            will-change: transform; 
+            transform: translateZ(0); /* Donanım hızlandırması ile yağ gibi akar */
+        }
+
+        .orb-1 { 
+            width: 45vw; height: 45vw; 
+            background: var(--primary); 
+            top: -10%; left: -10%; 
+            animation: driftPrimary 30s ease-in-out infinite alternate; 
+        }
+
+        .orb-2 { 
+            width: 40vw; height: 40vw; 
+            background: #818cf8; 
+            bottom: -10%; right: -10%; 
+            animation: driftPurple 25s ease-in-out infinite alternate; 
+        }
+
+        @keyframes driftPrimary { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); } 
+        }
+        @keyframes driftPurple { 
+            0% { transform: translate3d(0, 0, 0) scale(1); } 
+            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); } 
+        }
+
+        /* Topbar */
+        .topbar { 
+            background: rgba(var(--panel-rgb), 0.65) !important; 
+            backdrop-filter: blur(20px) !important; 
+            -webkit-backdrop-filter: blur(20px) !important; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; 
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); 
+            position: fixed; 
+            width: 100%; 
+            top: 0; 
+            z-index: 1000; 
+            box-sizing: border-box;
+        }
+
+        /* Ana Grid Yapısı */
+        .dm-wrap { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 80px 20px 20px 20px; /* Topbar'a göre padding düzenlemesi */
+            height: 100dvh; 
+            display: grid; 
+            grid-template-columns: 340px 1fr; 
+            gap: 20px; 
+            box-sizing: border-box;
+        }
+        
+        .dm-panel { 
+            background: rgba(var(--panel-rgb), 0.6) !important; 
+            backdrop-filter: blur(24px) !important; 
+            -webkit-backdrop-filter: blur(24px) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+            border-radius: 24px !important; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+        
+        body[data-theme="dark"] .dm-panel { 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.03) !important; 
+        }
+
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* --- SOL SÜTUN: Sohbet Listesi --- */
+        .sidebar-header {
+            padding: 25px 20px 15px 20px;
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header h2 i { color: var(--primary); }
+
+        .conversations-list { 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            flex-grow: 1;
+        }
+        
+        .conversations-list::-webkit-scrollbar { width: 6px; } 
+        .conversations-list::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 10px; }
+        
+        .conversation-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 12px 15px; 
+            border-radius: 16px; 
+            text-decoration: none; 
+            color: var(--text); 
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+            position: relative;
+            background: transparent;
+            touch-action: manipulation;
+        }
+        
+        .conversation-item:hover { 
+            background: rgba(var(--bg-rgb), 0.5); 
+            transform: translateX(4px);
+        }
+        
+        .conversation-item.active { 
+            background: rgba(var(--primary-rgb), 0.15); 
+            box-shadow: inset 4px 0 0 var(--primary);
+        }
+        
+        .conversation-item img { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+        }
+        
+        .conv-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .conv-info strong { 
+            font-size: 1.05rem; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .conv-info p { 
+            margin: 0; 
+            font-size: 0.85rem; 
+            color: var(--muted); 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- SAĞ SÜTUN: Mesajlaşma Alanı --- */
+        .chat-header { 
+            padding: 20px 25px; 
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: rgba(var(--bg-rgb), 0.2); 
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        
+        .chat-header img { width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(var(--primary-rgb), 0.3); }
+        .chat-header-info h2 { margin: 0 0 4px 0; font-size: 1.2rem; }
+        .chat-header-info p { margin: 0; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 6px;}
+        
+        /* Aktiflik Noktası */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; }
+        .status-dot.offline { background: var(--muted); }
+        
+        /* Mesaj Kutusu */
+        .chat-messages { 
+            flex-grow: 1; 
+            padding: 25px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; } 
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
+        
+        /* Modern Balonlar */
+        .msg-bubble { 
+            max-width: 70%; 
+            padding: 14px 18px; 
+            border-radius: 22px; 
+            font-size: 0.95rem; 
+            line-height: 1.5; 
+            position: relative; 
+            word-wrap: break-word;
+        }
+        
+        /* Benim Mesajım */
+        .msg-bubble.mine { 
+            align-self: flex-end; 
+            background: linear-gradient(135deg, var(--primary), #818cf8); 
+            color: #ffffff !important; 
+            border-bottom-right-radius: 6px; 
+            box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.25); 
+        }
+        
+        /* Karşı Tarafın Mesajı */
+        .msg-bubble.other { 
+            align-self: flex-start; 
+            background: rgba(var(--panel-rgb), 0.8); 
+            border: 1px solid rgba(var(--line-rgb), 0.8); 
+            color: #111827; 
+            border-bottom-left-radius: 6px; 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        body[data-theme="dark"] .msg-bubble.other { background: rgba(var(--bg-rgb), 0.6); color: #f8fafc; }
+        .msg-bubble p { color: inherit !important; margin: 0; }
+
+        .msg-bubble img, .msg-bubble video { 
+            max-width: 100%; 
+            border-radius: 14px; 
+            margin-top: 5px; 
+            display: block;
+        }
+        
+        /* --- Yüzen (Floating) Mesaj Girdisi --- */
+        .chat-input-wrapper { 
+            padding: 0 25px 25px 25px; 
+            background: transparent; 
+        }
+
+        .chat-input-form { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            background: rgba(var(--panel-rgb), 0.85); 
+            backdrop-filter: blur(20px);
+            padding: 8px; 
+            border-radius: 30px; 
+            border: 1px solid rgba(var(--line-rgb), 0.8); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s; 
+        }
+        
+        body[data-theme="dark"] .chat-input-form { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+
+        .chat-input-form:focus-within { 
+            border-color: var(--primary); 
+            box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.2); 
+            transform: translateY(-2px);
+        }
+        
+        /* iOS Zoom Engelleyici (16px) */
+        .chat-input-form input[type="text"] { 
+            flex-grow: 1; 
+            background: transparent; 
+            border: none; 
+            box-shadow: none; 
+            padding: 12px 15px; 
+            font-size: 16px !important; 
+            color: var(--text); 
+        }
+        
+        .chat-input-form input[type="text"]:focus { outline: none; box-shadow: none; }
+        
+        /* Butonlar */
+        .action-btn { 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 50%; 
+            display: grid; 
+            place-items: center; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-size: 1.1rem; 
+            flex-shrink: 0;
+            touch-action: manipulation;
+        }
+        
+        .btn-attach { background: transparent; color: var(--muted); } 
+        .btn-attach:hover { color: var(--text); background: rgba(var(--text-rgb), 0.08); }
+        
+        .btn-send { background: var(--primary); color: #fff; } 
+        .btn-send:hover { transform: scale(1.05); background: var(--primary-hover); box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); }
+
+        /* --- Boş Durum (Empty State) --- */
+        .empty-chat { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100%; 
+            color: var(--muted); 
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .empty-icon-wrap {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(var(--primary-rgb), 0.1);
+            display: grid;
+            place-items: center;
+            margin-bottom: 25px;
+            border: 2px dashed rgba(var(--primary-rgb), 0.3);
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        @keyframes floatSlow {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+
+        .empty-chat i { font-size: 3.5rem; color: var(--primary); }
+        .empty-chat h2 { font-size: 1.6rem; margin-bottom: 10px; color: var(--text); }
+        .empty-chat p { font-size: 1.05rem; max-width: 300px; line-height: 1.5; margin: 0 auto;}
+
+        /* Mobil İçin Özel Geri Butonu */
+        .mobile-back-btn { display: none; }
+
+        /* Mobil Uyumluluk */
+        @media(max-width: 900px) { 
+            .dm-wrap { 
+                grid-template-columns: 1fr; 
+                padding: 65px 10px 10px 10px; /* Mobilde topbar yüksekliği ve alt padding ayarı */
+                height: 100dvh;
+            } 
+            .dm-panel { 
+                border-radius: 16px !important; 
+                border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important; 
+            }
+            
+            /* Mobilde eğer mesaj ekranındaysak listeyi gizle, listedeysek mesajı gizle */
+            .sidebar-panel { display: {% if peer %}none{% else %}flex{% endif %}; } 
+            .chat-area { display: {% if peer %}flex{% else %}none{% endif %}; } 
+
+            .chat-header { padding: 15px 20px; }
+            .chat-input-wrapper { padding: 15px; }
+            .mobile-back-btn { display: block !important; margin-right: 15px; touch-action: manipulation; }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="wrap">
-            {% if peer %}
-            <div class="panel" id="dmpage" data-peer="{{ peer.id }}" data-convid="{{ convid }}" data-last="{{ lastid }}">
-                <div class="sidebar">
-                    <a href="/dm" class="navbtn" data-nav="soft"><i class="fa-solid fa-arrow-left"></i></a>
-                    <a href="/profile" class="profilebadge">
-                        <img src="{{ peer.avatar }}" class="avatar sm">
-                        <span>{{ peer.username }}</span>
-                    </a>
-                    <div style="flex:1"></div>
-                </div>
+    <div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>
 
-                <div class="chatbox">
-                    {% for msg in messages %}
-                    <div class="msg" data-mid="{{ msg.id }}">
-                        <div style="font-weight:600; font-size:0.85rem; color:var(--primary);">{{ msg.author }}</div>
-                        {% if msg.type == 'text' %}{{ msg.content }}{% endif %}
-                        {% if msg.type == 'image' %}<img src="/media/{{ msg.file }}" class="chatimg" loading="lazy">{% endif %}
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="profile-btn" id="profileBtn" style="touch-action: manipulation;">
+                <img src="{{ avatar }}" class="avatar" alt="avatar">
+                <span>{{ username or t.get("profile", "Profile") }}</span>
+            </button>
+        </div>
+        <nav class="topbar-right">
+            <a href="/" data-nav="soft" class="navbtn" title="{{ t.get('home', 'Home') }}" style="touch-action: manipulation;"><i class="fa-solid fa-house"></i></a>
+            <a href="/dm" data-nav="soft" class="navbtn active" title="{{ t.get('dm', 'DM') }}" style="touch-action: manipulation;"><i class="fa-solid fa-paper-plane"></i></a>
+            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}" style="touch-action: manipulation;"><i class="fa-solid fa-server"></i></a>
+        </nav>
+    </header>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+             <div class="lang-switcher">
+                <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+            </div>
+            <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span></a>
+            <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
+        </div>
+    </div>
+
+    <main class="wrap dm-wrap" id="dmpage" data-peer="{{ peer.id if peer else '' }}" data-convid="{{ convid if convid else '' }}" data-last="{{ lastid if lastid else 0 }}">
+        
+        <aside class="dm-panel sidebar-panel">
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-message"></i> {{ t.get("messages", "Messages") }}</h2>
+            </div>
+            
+            <div class="conversations-list">
+                {% for p in peers %}
+                <a href="/dm/{{ p.id }}" data-nav="soft" class="conversation-item {% if peer and p.id == peer.id %}active{% endif %}">
+                    <img src="{{ p.avatar }}" alt="{{ p.username }}'s avatar">
+                    <div class="conv-info">
+                        <strong>{{ p.username }}</strong>
+                        <p>{{ p.status if p.status != 'active' else t.get('active','Active') }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <section class="dm-panel chat-area">
+            {% if peer %}
+            
+            <div class="chat-header">
+                <button class="navbtn mobile-back-btn" onclick="window.goback()"><i class="fa-solid fa-arrow-left"></i></button>
+                <img src="{{ peer.avatar }}" alt="avatar">
+                <div class="chat-header-info">
+                    <h2>{{ peer.username }}</h2>
+                    <p>
+                        <span class="status-dot {% if peer.status != 'active' %}offline{% endif %}"></span>
+                        {{ peer.status if peer.status != 'active' else t.get('active','Active') }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="chat-messages">
+                <div style="display: flex; flex-direction: column; gap: 12px;"> 
+                    {% for m in messages %}
+                    <div class="msg-bubble {% if m.sender == myid %}mine{% else %}other{% endif %}" data-mid="{{ m.id }}">
+                        {% if m.kind == 'text' %}
+                            <p style="margin:0;">{{ m.body }}</p>
+                        {% elif m.kind == 'image' %}
+                            <img src="/media/{{ m.path }}" alt="image">
+                        {% elif m.kind == 'video' %}
+                            <video controls src="/media/{{ m.path }}"></video>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
-
-                <form class="form" method="POST" enctype="multipart/form-data" style="margin-top:10px;">
-                    <div class="input-group">
-                        <i class="fa-solid fa-comment"></i>
-                        <input type="text" name="text" placeholder="{{ t.message }}..." autocomplete="off">
-                    </div>
-                    <div class="acts">
-                        <label class="linkbtn" style="flex:1;">
-                            <i class="fa-solid fa-paperclip"></i>
-                            <input type="file" name="file" style="display:none;">
-                        </label>
-                        <button class="pickbtn" style="flex:1;"><i class="fa-solid fa-paper-plane"></i></button>
-                    </div>
+            </div>
+            
+            <div class="chat-input-wrapper">
+                <form id="dmform" class="chat-input-form" method="post" enctype="multipart/form-data" data-nav="soft">
+                    
+                    <button type="button" class="action-btn btn-attach" title="Dosya Ekle" onclick="document.getElementById('file-input').click()">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </button>
+                    <input name="file" id="file-input" type="file" accept=".zip,.rar,.7z,.tar,.gz,.bz2,.xz,image/*,video/*" style="display:none;">
+                    
+                    <input name="text" type="text" placeholder="{{ t.get('message', 'Type a message...') }}" autocomplete="off" autofocus>
+                    
+                    <button id="voicerecord" type="button" class="action-btn btn-attach" title="Ses Kaydet" data-start="{{ t.get('recordvoice','Record') }}" data-stop="{{ t.get('stoprecord','Stop') }}">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    
+                    <div id="voicewave" class="voicewave" style="display:none;"></div>
+                    
+                    <button class="action-btn btn-send" type="submit" title="Gönder">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
                 </form>
             </div>
-            {% else %}
-            <div class="panel">
-                <div class="sidebar">
-                    <h2>{{ t.dmbox }}</h2>
-                    <div class="topnav">
-                        <form action="/dm/start" method="POST" style="display:flex; gap:5px; width:100%;">
-                            <input type="text" name="username" placeholder="{{ t.startbyname }}" style="padding:8px 12px; font-size:0.9rem;">
-                            <button class="pickbtn" style="padding:8px 12px;"><i class="fa-solid fa-plus"></i></button>
-                        </form>
-                    </div>
-                </div>
-                
-                {% if error %}<div class="error">{{ error }}</div>{% endif %}
-                
-                <div style="margin-top: 10px;">
-                    <h4 style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem; text-transform: uppercase;">{{ t.active_chats }}</h4>
-                    {% for p in peers %}
-                    <a href="/dm/{{ p.id }}" class="cardrow modal-link" data-nav="soft">
-                        <img src="{{ p.avatar }}" class="avatar">
-                        <div style="flex:1;">
-                            <div style="font-weight:600;">{{ p.username }}</div>
-                            <div style="font-size:0.85rem; color:var(--muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ p.status }}</div>
-                        </div>
-                        {% if p.unread > 0 %}<span style="background:var(--primary); color:#fff; padding:2px 8px; border-radius:10px; font-size:0.8rem;">{{ p.unread }}</span>{% endif %}
-                    </a>
-                    {% endfor %}
-                </div>
 
-                <div style="margin-top: 20px;">
-                    <h4 style="margin-bottom: 8px; color: var(--muted); font-size: 0.8rem; text-transform: uppercase;">{{ t.friends }}</h4>
-                    {% for f in friends %}
-                    <a href="/dm/{{ f.id }}" class="cardrow modal-link" data-nav="soft">
-                        <img src="{{ f.avatar }}" class="avatar">
-                        <div style="flex:1;">
-                            <div style="font-weight:600;">{{ f.username }}</div>
-                            <div style="font-size:0.85rem; color:var(--primary);">{{ t.click_to_chat }}</div>
-                        </div>
-                        <i class="fa-solid fa-message" style="color: var(--muted);"></i>
-                    </a>
-                    {% else %}
-                    <p class="hint" style="text-align:center; padding: 10px;">{{ t.nofriends }}</p>
-                    {% endfor %}
+            {% else %}
+            <div class="empty-chat">
+                <div class="empty-icon-wrap">
+                    <i class="fa-solid fa-paper-plane"></i>
                 </div>
+                <h2>{{ t.get("selectdm", "Your Messages") }}</h2>
+                <p>{{ t.get("dm-welcome", "Select a conversation from the left menu to start chatting with your friends.") }}</p>
             </div>
             {% endif %}
-        </div>
+        </section>
+        
     </main>
     <script src="/mobile/js/app.js"></script>
 </body>

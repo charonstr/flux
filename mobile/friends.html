@@ -1,25 +1,355 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ t.friends }} - Euphorium</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem("theme");
+                var l = t === "light";
+                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
+                document.documentElement.style.colorScheme = l ? "light" : "dark";
+            } catch(e) {
+                document.documentElement.style.backgroundColor = "#1a202c";
+            }
+        })();
+    </script>
+    <style>html{background:#1a202c}</style>
+    <title>{{ t.get("friends", "Friends") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === Minimal ve Asil Arkadaşlar Listesi Tasarımı === */
+
+        body {
+            position: relative;
+            background-color: var(--bg);
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100dvh; /* Mobilde tarayıcı barı sorunu için dvh */
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Arka Plan Dokusu ve Yavaş Işıklar */
+        .bg-texture {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -2;
+            opacity: 0.3;
+            will-change: transform;
+            transform: translateZ(0); /* Donanım hızlandırması - Kasmayı önler */
+        }
+
+        .orb-1 {
+            width: 45vw; height: 45vw;
+            max-width: 600px; max-height: 600px;
+            background: var(--primary);
+            top: -10%; left: -10%;
+            animation: driftPrimary 30s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 40vw; height: 40vw;
+            max-width: 500px; max-height: 500px;
+            background: #818cf8;
+            bottom: -10%; right: -10%;
+            animation: driftPurple 25s ease-in-out infinite alternate;
+        }
+
+        @keyframes driftPrimary {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); }
+        }
+
+        @keyframes driftPurple {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); }
+        }
+
+        /* Topbar */
+        .topbar {
+            background: rgba(var(--panel-rgb), 0.65) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 25px;
+            box-sizing: border-box;
+        }
+
+        /* --- TEKİL KOMPAKT KART --- */
+        .friends-container {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 90px 20px 60px 20px;
+            box-sizing: border-box;
+        }
+
+        .friends-card {
+            background: rgba(var(--panel-rgb), 0.8) !important;
+            backdrop-filter: blur(24px) !important;
+            -webkit-backdrop-filter: blur(24px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            padding: 35px !important;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        body[data-theme="dark"] .friends-card {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.04) !important;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ana Başlık */
+        .friends-header {
+            margin-bottom: 30px;
+            text-align: left;
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
+            padding-bottom: 20px;
+        }
+
+        .friends-header h1 {
+            font-size: 1.8rem;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .friends-header h1 i {
+            color: var(--primary);
+        }
+
+        /* --- Modern Kullanıcı Kartları --- */
+        .friends-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modern-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(var(--bg-rgb), 0.4);
+            border: 1px solid rgba(var(--line-rgb), 0.5);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-3px);
+            background: rgba(var(--bg-rgb), 0.8);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary);
+        }
+
+        .modern-card .who {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .modern-card .who img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .modern-card:hover .who img {
+            border-color: var(--primary);
+        }
+
+        /* Aksiyon Butonları */
+        .modern-card .acts {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modern-card .pickbtn, .modern-card .linkbtn {
+            padding: 8px 14px !important;
+            font-size: 0.95rem !important;
+            border-radius: 10px !important;
+            height: auto !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        /* Boş Durum (Empty State) */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 20px;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(var(--bg-rgb), 0.2);
+            border-radius: 16px;
+            border: 2px dashed rgba(var(--line-rgb), 0.5);
+            margin-top: 10px;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+            color: var(--primary);
+        }
+
+        .empty-state span {
+            font-size: 1.05rem;
+            font-weight: 500;
+            line-height: 1.5;
+            max-width: 300px;
+        }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 600px) {
+            .friends-card {
+                padding: 25px 20px !important;
+            }
+            .modern-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .modern-card .acts {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .modern-card .acts form {
+                flex: 1;
+            }
+            .modern-card .acts button {
+                width: 100%;
+            }
+            .ambient-orb { filter: blur(60px); }
+        }
+    </style>
 </head>
 <body>
-    <main>
-        <div class="wrap">
-            <div class="panel">
-                <h2>{{ t.friends }}</h2>
+    <div class="bg-texture"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <header class="topbar">
+        <div class="topbar-left">
+            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}" style="touch-action: manipulation;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <span style="font-weight: 600; margin-left: 10px; color: var(--text);">{{ t.get("friends", "Friends") }}</span>
+        </div>
+        <nav class="topbar-right">
+            <a href="/" data-nav="soft" class="navbtn" title="{{ t.get('home', 'Home') }}" style="touch-action: manipulation;"><i class="fa-solid fa-house"></i></a>
+            <button class="profile-btn" id="profileBtn" style="touch-action: manipulation;">
+                <img src="{{ avatar }}" class="avatar" alt="avatar">
+            </button>
+        </nav>
+    </header>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+             <div class="lang-switcher">
+                <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+            </div>
+            <a href="/profile" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-user"></i>
+                <span>{{ t.get("profile", "Profile") }}</span>
+            </a>
+            <a href="/settings" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-cog"></i>
+                <span>{{ t.get("settings", "Settings") }}</span>
+            </a>
+            <a href="/logout" data-nav="soft" class="modal-link">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>{{ t.get("logout", "Logout") }}</span>
+            </a>
+        </div>
+    </div>
+
+    <main class="wrap friends-container">
+        
+        <section class="friends-card">
+            
+            <div class="friends-header">
+                <h1><i class="fa-solid fa-user-group"></i> {{ t.get("friends", "Friends") }} ({{ friends|length }})</h1>
+            </div>
+            
+            <div class="friends-list">
                 {% for f in friends %}
-                <div class="cardrow">
-                    <div class="who"><img src="{{ f.avatar }}" class="avatar"><span>{{ f.username }}</span></div>
-                    <div class="acts"><form action="/social/remove/{{ f.id }}" method="POST" onsubmit="return confirm('Remove?')"><button class="linkbtn" style="color:#ef4444;"><i class="fa-solid fa-user-minus"></i></button></form></div>
+                <div class="modern-card">
+                    <div class="who">
+                        <img src="{{ f.avatar }}" alt="avatar"> 
+                        {{ f.username }}
+                    </div>
+                    <div class="acts">
+                        <form method="post" action="/dm/start" data-nav="soft">
+                            <input type="hidden" name="peerid" value="{{ f.id }}">
+                            <button class="pickbtn" title="Mesaj Gönder"><i class="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                        <form method="post" action="/social/remove/{{ f.id }}" data-nav="soft">
+                            <button class="linkbtn" title="Arkadaşlıktan Çıkar"><i class="fa-solid fa-user-minus"></i></button>
+                        </form>
+                        <form method="post" action="/social/block/{{ f.id }}" data-nav="soft">
+                            <button class="linkbtn" style="color:#ef4444; border-color:rgba(239,68,68,0.3);" title="Kullanıcıyı Engelle"><i class="fa-solid fa-ban"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-user-ninja"></i>
+                    <span>Henüz hiç arkadaşın yok. Ana sayfadan yeni insanları keşfet!</span>
                 </div>
                 {% endfor %}
             </div>
-        </div>
+
+        </section>
+
     </main>
     <script src="/mobile/js/app.js"></script>
 </body>
