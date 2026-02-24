@@ -1,563 +1,1191 @@
-﻿<!doctype html>
-<html lang="{{ current }}">
+﻿<!DOCTYPE html>
+<html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <script>
-        (function(){
-            try {
-                var t = localStorage.getItem("theme");
-                var l = t === "light";
-                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
-                document.documentElement.style.colorScheme = l ? "light" : "dark";
-            } catch(e) {
-                document.documentElement.style.backgroundColor = "#1a202c";
-            }
-        })();
-    </script>
-    <style>html{background:#1a202c}</style>
-    <title>{{ t.get("welcome", "Welcome") }}</title>
-    <link rel="stylesheet" href="/mobile/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Euphorium - Ana Sayfa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/mobile/css/style.css">
     <style>
-        /* === Zenginleştirilmiş Bento Box Dashboard === */
-
-        body { 
-            position: relative; 
-            background-color: var(--bg); 
-            overflow-x: hidden; 
-            overflow-y: auto;
-            min-height: 100dvh; /* Mobilde tarayıcı barı sorunu için dvh */
-            margin: 0; 
-            padding: 0; 
+        :root {
+            --cx-header-height: 70px;
+            --cx-mobile-header-height: 60px;
+            --cx-sidebar-width: 220px;
+            --cx-bottom-nav-height: 65px;
+            --cx-safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        .bg-texture { 
-            position: fixed; 
-            inset: 0; 
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); 
-            pointer-events: none; 
-            z-index: -1; 
-            opacity: 0.5; 
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100dvh !important;
+            overflow: hidden !important;
+            background: var(--bg) !important;
+            color: var(--text) !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            -webkit-text-size-adjust: 100% !important;
         }
 
-        .ambient-orb { 
-            position: fixed; 
-            border-radius: 50%; 
-            filter: blur(120px); 
-            z-index: -2; 
-            opacity: 0.25; 
-            will-change: transform; 
-            transform: translateZ(0); /* Donanım Hızlandırması - Kasmayı önler */
-        }
-        
-        .orb-1 { 
-            width: 45vw; height: 45vw; 
-            background: var(--primary); 
-            top: -15%; left: -10%; 
-            animation: driftPrimary 30s ease-in-out infinite alternate; 
-        }
-        
-        .orb-2 { 
-            width: 40vw; height: 40vw; 
-            background: #818cf8; 
-            bottom: -15%; right: -10%; 
-            animation: driftPurple 25s ease-in-out infinite alternate; 
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+            min-width: 0 !important;
         }
 
-        @keyframes driftPrimary { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); } }
-        @keyframes driftPurple { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); } }
-
-        .server-shell { 
-            position: relative; 
-            min-height: 100dvh; 
-            display: grid; 
-            grid-template-columns: 85px 1fr; 
-            grid-template-rows: 1fr; 
+        a {
+            color: inherit !important;
+            text-decoration: none !important;
         }
 
-        /* Sol Menü (Rail) */
-        .server-rail { 
-            grid-row: 1; 
-            grid-column: 1; 
-            padding: 20px 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 15px; 
-            background: rgba(var(--panel-rgb), 0.4); 
-            backdrop-filter: blur(18px); 
-            border-right: 1px solid rgba(var(--line-rgb), 0.5); 
-            overflow-y: auto;
-            z-index: 100;
-        }
-        
-        .server-rail::-webkit-scrollbar { display: none; }
-
-        .rail-btn-wrapper { 
-            position: relative; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
+        img, video, iframe {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block !important;
         }
 
-        .rail-btn, .rail-avatar { 
-            width: 54px; 
-            height: 54px; 
-            border-radius: 50%; 
-            display: grid; 
-            place-items: center; 
-            color: var(--text); 
-            background: rgba(var(--panel-rgb), 0.8); 
-            border: 1px solid rgba(var(--line-rgb), 0.8);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
-            text-decoration: none; 
-            font-size: 1.2rem;
-            object-fit: cover;
-            cursor: pointer;
-            touch-action: manipulation;
+        .cx-bg-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
         }
 
-        .rail-btn-wrapper:hover .rail-btn, 
-        .rail-btn-wrapper:hover .rail-avatar { 
-            border-radius: 16px; 
-            background: var(--primary); 
-            color: #fff; 
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
-        }
-
-        .rail-btn-wrapper::before {
-            content: '';
+        .cx-noise {
             position: absolute;
-            left: 0;
-            width: 4px;
-            height: 0px;
-            background: var(--text);
-            border-radius: 0 4px 4px 0;
-            transition: height 0.3s ease;
-        }
-        
-        .rail-btn-wrapper:hover::before { height: 24px; }
-        
-        .rail-divider { 
-            width: 40px; 
-            height: 2px; 
-            background: rgba(var(--text-rgb), 0.1); 
-            border-radius: 2px; 
-            margin: 5px 0; 
+            inset: 0;
+            opacity: 0.06;
+            background-image: radial-gradient(circle at 20% 20%, rgba(var(--text-rgb), 0.35) 0 1px, transparent 1px),
+                              radial-gradient(circle at 70% 60%, rgba(var(--text-rgb), 0.25) 0 1px, transparent 1px);
+            background-size: 24px 24px, 28px 28px;
         }
 
-        .server-main { 
-            grid-row: 1; 
-            grid-column: 2; 
-            padding: 40px 50px 80px 50px; 
-            overflow-y: auto; 
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
+        .cx-orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(80px);
+            opacity: 0.25;
+            will-change: transform;
+            animation: cx-float 18s ease-in-out infinite alternate;
         }
-        
-        .server-main::-webkit-scrollbar { width: 8px; }
-        .server-main::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
 
-        /* Karşılama Alanı */
-        .welcome-hero {
+        .cx-orb.one {
+            width: 240px;
+            height: 240px;
+            top: -40px;
+            left: -20px;
+            background: rgba(var(--primary-rgb), 0.65);
+        }
+
+        .cx-orb.two {
+            width: 280px;
+            height: 280px;
+            right: -60px;
+            bottom: 80px;
+            background: rgba(129, 140, 248, 0.55);
+            animation-duration: 22s;
+        }
+
+        @keyframes cx-float {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(12px, 18px, 0) scale(1.06); }
+        }
+
+        .cx-shell {
+            position: relative;
+            z-index: 1;
+            display: grid !important;
+            grid-template-columns: var(--cx-sidebar-width) 1fr !important;
+            grid-template-rows: var(--cx-header-height) 1fr !important;
+            height: 100dvh !important;
+            width: 100% !important;
+            overflow: hidden !important;
+            background: transparent !important;
+        }
+
+        .cx-header {
+            grid-column: 1 / -1 !important;
+            grid-row: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            padding: 0 18px !important;
+            background: rgba(var(--panel-rgb), 0.68) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.7) !important;
+            z-index: 40 !important;
+        }
+
+        .cx-brand {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 9px !important;
+            font-weight: 800 !important;
+            font-size: 1.15rem !important;
+            color: var(--text) !important;
+            letter-spacing: 0.2px !important;
+            white-space: nowrap !important;
+        }
+
+        .cx-brand-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.22), rgba(129, 140, 248, 0.35));
+            color: var(--primary);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+            flex-shrink: 0;
+        }
+
+        .cx-header-right {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 40px;
-            padding: 30px 40px;
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--bg-rgb), 0.5));
-            border: 1px solid rgba(var(--primary-rgb), 0.3);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .cx-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(var(--bg-rgb), 0.42);
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.84rem;
         }
 
-        .hero-text h1 {
-            font-size: 2.2rem;
-            margin: 0 0 10px 0;
-            font-weight: 800;
-            letter-spacing: -0.5px;
+        .cx-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            flex-shrink: 0;
+        }
+
+        .cx-profile-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            height: 38px !important;
+            padding: 0 12px !important;
+            border-radius: 999px !important;
+            background: rgba(var(--bg-rgb), 0.42) !important;
+            border: 1px solid rgba(var(--line-rgb), 0.8) !important;
+            color: var(--text) !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            white-space: nowrap !important;
+        }
+
+        .cx-profile-btn:hover {
+            background: rgba(var(--primary-rgb), 0.14) !important;
+            border-color: rgba(var(--primary-rgb), 0.35) !important;
+            color: var(--primary) !important;
+        }
+
+        .cx-sidebar {
+            grid-column: 1 !important;
+            grid-row: 2 !important;
+            padding: 14px 10px !important;
+            border-right: 1px solid rgba(var(--line-rgb), 0.6) !important;
+            background: rgba(var(--panel-rgb), 0.35) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            overflow-y: auto !important;
+        }
+
+        .cx-sidebar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .cx-sidebar-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .cx-sidebar-link {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 11px 12px !important;
+            border-radius: 12px !important;
+            color: var(--muted) !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            border: 1px solid transparent !important;
+        }
+
+        .cx-sidebar-link i {
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .cx-sidebar-link:hover {
+            color: var(--text) !important;
+            background: rgba(var(--bg-rgb), 0.35) !important;
+            border-color: rgba(var(--line-rgb), 0.5) !important;
+        }
+
+        .cx-sidebar-link.active {
+            color: var(--primary) !important;
+            background: rgba(var(--primary-rgb), 0.12) !important;
+            border-color: rgba(var(--primary-rgb), 0.28) !important;
+            box-shadow: inset 3px 0 0 var(--primary) !important;
+        }
+
+        .cx-content {
+            grid-column: 2 !important;
+            grid-row: 2 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            min-height: 0 !important;
+            padding: 16px !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        .cx-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            gap: 14px;
+        }
+
+        .cx-hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            background: linear-gradient(135deg, rgba(var(--panel-rgb), 0.9), rgba(var(--bg-rgb), 0.92));
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 14px;
+        }
+
+        .cx-hero::after {
+            content: "";
+            position: absolute;
+            right: -30px;
+            top: -30px;
+            width: 140px;
+            height: 140px;
+            border-radius: 999px;
+            background: rgba(var(--primary-rgb), 0.15);
+            filter: blur(8px);
+        }
+
+        .cx-hero-left {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cx-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+
+        .cx-title {
+            margin: 10px 0 6px;
+            font-size: 1.35rem;
+            line-height: 1.2;
             color: var(--text);
         }
 
-        .hero-text p {
+        .cx-subtitle {
             margin: 0;
             color: var(--muted);
-            font-size: 1.1rem;
-            line-height: 1.5;
-            max-width: 500px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            max-width: 520px;
         }
 
-        .hero-date {
-            background: rgba(var(--panel-rgb), 0.8);
-            padding: 15px 25px;
-            border-radius: 16px;
-            border: 1px solid rgba(var(--line-rgb), 0.5);
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        }
-
-        .hero-date .day { display: block; font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
-        .hero-date .month { display: block; font-size: 0.95rem; font-weight: 600; color: var(--muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Bento Grid Sistemi */
-        .bento-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 24px;
-            animation: fadeIn 0.8s ease forwards;
-            animation-delay: 0.2s;
-            opacity: 0;
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        /* Bento Kutuları Genel Stil */
-        .bento-box {
-            background: rgba(var(--panel-rgb), 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(var(--line-rgb), 0.5);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        .cx-hero-actions {
+            margin-top: 14px;
             display: flex;
-            flex-direction: column;
-            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        .bento-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border-color: rgba(var(--primary-rgb), 0.3);
-        }
-
-        .bento-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
-            padding-bottom: 15px;
-        }
-
-        .bento-header i {
-            font-size: 1.4rem;
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
-            padding: 10px;
-            border-radius: 12px;
-        }
-
-        .bento-header h2 {
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        /* Özel Grid Konumlandırmaları */
-        .box-explore { grid-column: span 8; }
-        .box-stats { grid-column: span 4; background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.8), #818cf8); color: #fff; border: none; }
-        .box-requests { grid-column: span 6; }
-        .box-suggestions { grid-column: span 6; }
-
-        /* Stats Kutusu İçeriği */
-        .box-stats .bento-header { border-bottom-color: rgba(255,255,255,0.2); }
-        .box-stats .bento-header i { background: rgba(255,255,255,0.2); color: #fff; }
-        .box-stats .bento-header h2 { color: #fff; }
-        
-        .stat-list { display: flex; flex-direction: column; gap: 15px; flex-grow: 1; justify-content: center; }
-        .stat-item { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; font-weight: 500; background: rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 16px; }
-        .stat-item span:last-child { font-weight: 800; font-size: 1.3rem; }
-
-        /* Listeler (İstekler ve Öneriler) */
-        .user-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 300px; padding-right: 5px; }
-        .user-list::-webkit-scrollbar { width: 4px; }
-        .user-list::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 4px; }
-        
-        .user-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(var(--bg-rgb), 0.5);
-            border: 1px solid rgba(var(--line-rgb), 0.5);
-            padding: 12px 16px;
-            border-radius: 16px;
-            transition: background 0.2s;
-        }
-
-        .user-card:hover { background: rgba(var(--bg-rgb), 0.8); }
-
-        .user-card .who {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            font-size: 1.05rem;
-            color: var(--text);
-        }
-
-        .user-card .who img {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(var(--primary-rgb), 0.2);
-        }
-
-        .user-card .acts { display: flex; gap: 8px; }
-        .user-card .acts button { padding: 8px 12px; border-radius: 10px; font-size: 0.9rem; touch-action: manipulation; }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
+        .cx-btn {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
-            color: var(--muted);
-            text-align: center;
-            background: rgba(var(--bg-rgb), 0.3);
-            border-radius: 16px;
-            border: 2px dashed rgba(var(--line-rgb), 0.5);
-            height: 100%;
+            gap: 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            padding: 10px 12px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(var(--bg-rgb), 0.4);
+            color: var(--text);
         }
 
-        .empty-state i { font-size: 2.5rem; color: rgba(var(--primary-rgb), 0.5); margin-bottom: 15px; }
+        .cx-btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(var(--primary-rgb), 0.35);
+        }
 
-        /* Mobil Uyumluluk */
-        @media(max-width: 1000px) {
-            body { overflow: auto; }
-            .server-shell { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; min-height: 100dvh;}
-            
-            /* Sol menüyü mobilde tamamen gizlemek yerine, yatay menü yapıyoruz (Kullanılabilirlik için) */
-            .server-rail { 
-                grid-column: 1; 
-                grid-row: 1; 
-                flex-direction: row; 
-                justify-content: flex-start; 
-                padding: 15px 20px; 
-                overflow-x: auto; 
-                border-right: none; 
-                border-bottom: 1px solid rgba(var(--line-rgb), 0.5); 
+        .cx-btn.primary {
+            background: rgba(var(--primary-rgb), 0.15);
+            border-color: rgba(var(--primary-rgb), 0.35);
+            color: var(--primary);
+        }
+
+        .cx-btn.primary:hover {
+            background: rgba(var(--primary-rgb), 0.22);
+        }
+
+        .cx-hero-stats {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 8px;
+            align-content: start;
+        }
+
+        .cx-stat-card {
+            border-radius: 14px;
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            background: rgba(var(--panel-rgb), 0.55);
+            padding: 12px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cx-stat-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(var(--primary-rgb), 0.14);
+            color: var(--primary);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            flex-shrink: 0;
+        }
+
+        .cx-stat-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cx-stat-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        .cx-stat-value {
+            color: var(--text);
+            font-weight: 800;
+            font-size: 0.96rem;
+        }
+
+        .cx-stat-badge {
+            color: var(--muted);
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .cx-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .cx-panel {
+            border-radius: 16px;
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            background: rgba(var(--panel-rgb), 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            overflow: hidden;
+        }
+
+        .cx-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 14px 14px 10px;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.45);
+        }
+
+        .cx-panel-title {
+            margin: 0;
+            font-size: 0.96rem;
+            font-weight: 800;
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cx-panel-title i {
+            color: var(--primary);
+        }
+
+        .cx-panel-action {
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .cx-panel-body {
+            padding: 12px;
+        }
+
+        .cx-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .cx-quick-card {
+            border-radius: 12px;
+            border: 1px solid rgba(var(--line-rgb), 0.65);
+            background: rgba(var(--bg-rgb), 0.33);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .cx-quick-card:hover {
+            border-color: rgba(var(--primary-rgb), 0.3);
+            transform: translateY(-1px);
+        }
+
+        .cx-quick-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(var(--primary-rgb), 0.12);
+            color: var(--primary);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+        }
+
+        .cx-quick-title {
+            margin: 0;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .cx-quick-desc {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.35;
+        }
+
+        .cx-activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cx-empty {
+            border: 1px dashed rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.22);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .cx-empty i {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .cx-right-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .cx-mini-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cx-mini-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.55);
+            background: rgba(var(--bg-rgb), 0.28);
+            border-radius: 11px;
+            padding: 10px;
+        }
+
+        .cx-mini-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .cx-mini-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .cx-mini-meta {
+            min-width: 0;
+        }
+
+        .cx-mini-name {
+            color: var(--text);
+            font-size: 0.84rem;
+            font-weight: 700;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cx-mini-sub {
+            color: var(--muted);
+            font-size: 0.74rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cx-mini-chip {
+            border-radius: 999px;
+            padding: 5px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            color: var(--muted);
+            background: rgba(var(--panel-rgb), 0.5);
+            white-space: nowrap;
+        }
+
+        .cx-mini-chip.ok {
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.32);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .cx-bottom-nav {
+            display: none !important;
+        }
+
+        @media (max-width: 992px) {
+            .cx-shell {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: var(--cx-mobile-header-height) 1fr !important;
             }
-            .rail-divider { width: 2px; height: 30px; margin: 0 5px; }
-            .rail-btn-wrapper::before { top: 0; left: 50%; width: 0; height: 4px; border-radius: 0 0 4px 4px; transform: translateX(-50%); transition: width 0.3s ease; }
-            .rail-btn-wrapper:hover::before { width: 24px; height: 4px; }
-            
-            .server-main { 
-                grid-column: 1; 
-                grid-row: 2; 
-                padding: 25px 20px 60px 20px; 
+
+            .cx-header {
+                grid-column: 1 !important;
+                grid-row: 1 !important;
+                height: var(--cx-mobile-header-height) !important;
+                padding: 0 10px !important;
             }
-            
-            .bento-grid { display: flex; flex-direction: column; }
-            .welcome-hero { flex-direction: column; text-align: center; gap: 20px; }
-            .hero-date { display: none; /* Mobilde yer kazanmak için tarihi gizliyoruz */ }
-            .ambient-orb { filter: blur(80px); }
+
+            .cx-brand {
+                font-size: 0.98rem !important;
+                gap: 7px !important;
+            }
+
+            .cx-brand-badge {
+                width: 28px;
+                height: 28px;
+                border-radius: 9px;
+            }
+
+            .cx-status-pill {
+                height: 34px;
+                padding: 0 9px;
+                font-size: 0.78rem;
+            }
+
+            .cx-profile-btn {
+                width: 34px !important;
+                height: 34px !important;
+                padding: 0 !important;
+                border-radius: 999px !important;
+            }
+
+            .cx-profile-btn span {
+                display: none !important;
+            }
+
+            .cx-sidebar {
+                display: none !important;
+            }
+
+            .cx-content {
+                grid-column: 1 !important;
+                grid-row: 2 !important;
+                padding: 10px !important;
+                padding-bottom: calc(var(--cx-bottom-nav-height) + var(--cx-safe-bottom) + 10px) !important;
+            }
+
+            .cx-page {
+                gap: 10px;
+            }
+
+            .cx-hero {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 12px;
+                border-radius: 14px;
+            }
+
+            .cx-title {
+                font-size: 1.08rem;
+                margin-top: 8px;
+            }
+
+            .cx-subtitle {
+                font-size: 0.82rem;
+            }
+
+            .cx-hero-actions {
+                margin-top: 10px;
+            }
+
+            .cx-btn {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 0;
+                padding: 9px 10px;
+                font-size: 0.82rem;
+            }
+
+            .cx-stat-card {
+                padding: 10px;
+                grid-template-columns: auto 1fr;
+            }
+
+            .cx-stat-badge {
+                grid-column: 2;
+                justify-self: start;
+                margin-top: 2px;
+            }
+
+            .cx-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .cx-panel {
+                border-radius: 14px;
+            }
+
+            .cx-panel-head {
+                padding: 12px 12px 8px;
+            }
+
+            .cx-panel-body {
+                padding: 10px;
+            }
+
+            .cx-quick-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .cx-quick-card {
+                padding: 10px;
+            }
+
+            .cx-quick-title {
+                font-size: 0.82rem;
+            }
+
+            .cx-quick-desc {
+                font-size: 0.72rem;
+            }
+
+            .cx-mini-item {
+                padding: 9px;
+            }
+
+            .cx-bottom-nav {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                display: flex !important;
+                justify-content: space-around !important;
+                align-items: center !important;
+                min-height: var(--cx-bottom-nav-height) !important;
+                background: rgba(var(--panel-rgb), 0.92) !important;
+                backdrop-filter: blur(16px) !important;
+                -webkit-backdrop-filter: blur(16px) !important;
+                border-top: 1px solid rgba(var(--line-rgb), 0.75) !important;
+                z-index: 80 !important;
+                padding-bottom: var(--cx-safe-bottom) !important;
+            }
+
+            .cx-nav-item {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 4px !important;
+                min-height: var(--cx-bottom-nav-height) !important;
+                flex: 1 !important;
+                color: var(--muted) !important;
+                font-size: 0.7rem !important;
+                font-weight: 600 !important;
+                text-align: center !important;
+                padding: 8px 4px !important;
+                transition: color 0.2s ease !important;
+            }
+
+            .cx-nav-item i {
+                font-size: 1.1rem !important;
+                line-height: 1 !important;
+            }
+
+            .cx-nav-item.active,
+            .cx-nav-item:hover {
+                color: var(--primary) !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .cx-status-pill span {
+                display: none;
+            }
+
+            .cx-status-pill {
+                width: 34px;
+                justify-content: center;
+                padding: 0;
+                border-radius: 999px;
+            }
+
+            .cx-quick-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
+
+    <style id="cx-mobile-hardening">
+      :root{
+        --cx-safe-top: env(safe-area-inset-top, 0px);
+        --cx-safe-right: env(safe-area-inset-right, 0px);
+        --cx-safe-bottom: env(safe-area-inset-bottom, 0px);
+        --cx-safe-left: env(safe-area-inset-left, 0px);
+        --cx-app-height: 100dvh;
+        --cx-vv-height: 100dvh;
+      }
+
+      html{
+        height:100%;
+        width:100%;
+        overflow-x:hidden !important;
+        background: var(--bg, #0f172a);
+        -webkit-text-size-adjust:100%;
+      }
+      body{
+        min-height: var(--cx-app-height) !important;
+        width:100%;
+        max-width:100vw;
+        overflow-x:hidden !important;
+        overscroll-behavior-x:none;
+        overscroll-behavior-y:none;
+        padding-left:max(0px,var(--cx-safe-left));
+        padding-right:max(0px,var(--cx-safe-right));
+      }
+      *, *::before, *::after{
+        box-sizing:border-box;
+      }
+      img, video, canvas, svg, iframe{
+        max-width:100%;
+      }
+
+      /* Common app containers */
+      .app-shell, .cx-shell, .server-shell, .voice-shell, .settings-shell, .page-shell {
+        width:100%;
+        min-height: var(--cx-app-height);
+        max-width:100vw;
+      }
+
+      /* Fixed bars hardening */
+      .topbar, .cx-header, .mobile-header, .header, .navbar {
+        padding-top: max(0px, calc(var(--cx-safe-top) * 0.35));
+        left:0; right:0;
+        max-width:100vw;
+      }
+      .bottombar, .bottom-nav, .mobile-bottom-nav, .cx-bottom-nav {
+        padding-bottom: max(6px, calc(var(--cx-safe-bottom) + 6px)) !important;
+        left:0; right:0;
+        max-width:100vw;
+      }
+
+      /* Scroll containers */
+      .content, .main-content, .page-content, .chat-list, .dm-list, .server-content, .server-sidebar,
+      .sidebar-content, .settings-content, .panel-body, .scroll-area, .messages-wrap {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      /* Modals / sheets */
+      .modal, .modal-overlay, .sheet, .dialog {
+        max-width:100vw;
+      }
+      .modal-content, .sheet-content, .dialog-content {
+        max-width:min(680px, calc(100vw - 20px)) !important;
+        max-height: min(88dvh, calc(var(--cx-vv-height) - 16px)) !important;
+        margin-bottom: max(0px, var(--cx-safe-bottom));
+      }
+
+      input, select, textarea {
+        font-size: 16px !important; /* prevent iOS zoom */
+        max-width:100%;
+      }
+
+      /* Mobile polish */
+      @media (max-width: 768px) {
+        html, body{
+          min-height: var(--cx-app-height) !important;
+        }
+
+        .ambient-orb, .cx-orb {
+          filter: blur(56px) !important;
+          opacity: .2 !important;
+        }
+
+        .topbar, .cx-header {
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+        }
+
+        .modal-content {
+          border-radius: 16px !important;
+        }
+
+        /* Better spacing for common fixed topbar layouts */
+        body.has-topbar main,
+        body.has-topbar .main-content,
+        body.has-topbar .page-content {
+          padding-top: calc(60px + var(--cx-safe-top)) !important;
+        }
+
+        /* Avoid horizontal clipping caused by transforms */
+        [style*="translate"], .animated, .card, .panel, .server-card, .dm-card {
+          max-width: 100%;
+        }
+      }
+
+      /* Keyboard-aware tweaks */
+      body.cx-keyboard-open .bottombar,
+      body.cx-keyboard-open .bottom-nav,
+      body.cx-keyboard-open .mobile-bottom-nav,
+      body.cx-keyboard-open .cx-bottom-nav {
+        transform: translateY(100%);
+        pointer-events:none;
+      }
+      body.cx-keyboard-open .modal-content{
+        max-height: min(80dvh, calc(var(--cx-vv-height) - 8px)) !important;
+      }
+    </style>
+
+
+    <script id="cx-mobile-hardening-js">
+    (function(){
+      var d = document, de = d.documentElement, b;
+      function setVars(){
+        var vh = window.innerHeight || de.clientHeight || 0;
+        de.style.setProperty('--cx-app-height', vh + 'px');
+        if (window.visualViewport) {
+          de.style.setProperty('--cx-vv-height', Math.round(window.visualViewport.height) + 'px');
+        } else {
+          de.style.setProperty('--cx-vv-height', vh + 'px');
+        }
+      }
+      function markTopbar(){
+        b = d.body || b;
+        if(!b) return;
+        var hasTopbar = d.querySelector('.topbar, .cx-header, .mobile-header');
+        b.classList.toggle('has-topbar', !!hasTopbar);
+      }
+      function keyboardState(){
+        b = d.body || b;
+        if(!b || !window.visualViewport) return;
+        var delta = (window.innerHeight || de.clientHeight) - window.visualViewport.height;
+        b.classList.toggle('cx-keyboard-open', delta > 140);
+      }
+      function hardenOverflow(){
+        b = d.body || b;
+        if(!b) return;
+        de.style.overflowX = 'hidden';
+        b.style.overflowX = 'hidden';
+      }
+      var raf;
+      function onResize(){
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function(){
+          setVars(); markTopbar(); keyboardState(); hardenOverflow();
+        });
+      }
+      d.addEventListener('DOMContentLoaded', function(){ onResize(); setTimeout(onResize, 60); setTimeout(onResize, 350); });
+      window.addEventListener('load', onResize, {passive:true});
+      window.addEventListener('resize', onResize, {passive:true});
+      window.addEventListener('orientationchange', onResize, {passive:true});
+      window.addEventListener('pageshow', onResize, {passive:true});
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', onResize, {passive:true});
+        window.visualViewport.addEventListener('scroll', onResize, {passive:true});
+      }
+    })();
+    </script>
+
 </head>
-<body>
-    <div class="bg-texture"></div>
-    <div class="ambient-orb orb-1"></div>
-    <div class="ambient-orb orb-2"></div>
+<body class="">
+    <div class="cx-bg-layer">
+        <div class="cx-noise"></div>
+        <div class="cx-orb one"></div>
+        <div class="cx-orb two"></div>
+    </div>
 
-    <div class="server-shell">
-        <div class="modal-overlay" id="modalOverlay"></div>
-        <div class="modal" id="profileModal">
-            <div class="modal-content">
-                 <div class="lang-switcher">
-                    <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
-                    <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+    <div class="cx-shell">
+        <header class="cx-header">
+            <a href="/home" class="cx-brand">
+                <span class="cx-brand-badge"><i class="fa-solid fa-infinity"></i></span>
+                <span>Euphorium</span>
+            </a>
+
+            <div class="cx-header-right">
+                <div class="cx-status-pill" title="Hesap durumu">
+                    <span class="cx-status-dot"></span>
+                    <span>Aktif</span>
                 </div>
-                <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span></a>
-                <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
-            </div>
-        </div>
-
-        <aside class="server-rail">
-            <div class="rail-btn-wrapper">
-                <a class="rail-btn" href="/" data-nav="soft" title="{{ t.get('home','Home') }}" style="color: var(--primary); background: rgba(var(--primary-rgb), 0.1); border-color: var(--primary);"><i class="fa-solid fa-house"></i></a>
-            </div>
-            <div class="rail-btn-wrapper">
-                <a class="rail-btn" href="/dm" data-nav="soft" title="{{ t.get('dm','DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
-            </div>
-            
-            <div class="rail-divider"></div>
-
-            {% for s in mine %}
-            <div class="rail-btn-wrapper">
-                <a href="/servers/{{ s[0] }}" data-nav="soft" title="{{ s[1] }}">
-                    <img src="{{ '/media/' + s[2] if s[2] else '/mobile/avatar.svg' }}" class="rail-avatar" alt="">
+                <a href="/profile" class="cx-profile-btn" title="Profil">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profil</span>
                 </a>
             </div>
-            {% endfor %}
-            
-            <div class="rail-btn-wrapper">
-                <a class="rail-btn" href="/servers" data-nav="soft" title="{{ t.get('explore','Explore') }}" style="color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1);"><i class="fa-solid fa-compass"></i></a>
+        </header>
+
+        <aside class="cx-sidebar">
+            <div class="cx-sidebar-group">
+                <div class="cx-sidebar-label">Menü</div>
+                <a href="/home" class="cx-sidebar-link active">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Ana Sayfa</span>
+                </a>
+                <a href="/dm" class="cx-sidebar-link">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>DM</span>
+                </a>
+                <a href="/friends" class="cx-sidebar-link">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>Arkadaşlar</span>
+                </a>
+                <a href="/servers" class="cx-sidebar-link">
+                    <i class="fa-solid fa-server"></i>
+                    <span>Sunucular</span>
+                </a>
+                <a href="/settings" class="cx-sidebar-link">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Ayarlar</span>
+                </a>
             </div>
-            <div style="flex:1;"></div>
-            <div class="rail-btn-wrapper">
-                <button class="profile-btn rail-btn" id="profileBtn" style="padding:0; touch-action: manipulation;">
-                    <img src="{{ session.get('avatar', '/mobile/avatar.svg') }}" class="rail-avatar" alt="avatar">
-                </button>
+
+            <div class="cx-sidebar-group">
+                <div class="cx-sidebar-label">Kısayollar</div>
+                <a href="/profile" class="cx-sidebar-link">
+                    <i class="fa-solid fa-id-badge"></i>
+                    <span>Profil</span>
+                </a>
+                <a href="/security" class="cx-sidebar-link">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Güvenlik</span>
+                </a>
+                <a href="/language" class="cx-sidebar-link">
+                    <i class="fa-solid fa-language"></i>
+                    <span>Dil</span>
+                </a>
             </div>
         </aside>
 
-        <main class="server-main">
-            
-            <div class="welcome-hero">
-                <div class="hero-text">
-                    <h1>{{ t.get("welcome", "Welcome") }}, {{ session.get('username', 'User') }} <i class="fa-solid fa-hand-sparkles" style="color: #fbbf24;"></i></h1>
-                    <p>Euphorium ağına hoş geldin. Burası arkadaşlarınla takılabileceğin ve yeni topluluklar keşfedebileceğin kişisel alanın.</p>
-                </div>
-                <div class="hero-date">
-                    <span class="day" id="currentDay">--</span>
-                    <span class="month" id="currentMonth">---</span>
-                </div>
-            </div>
+        <main class="cx-content">
+            <div class="cx-page">
 
-            <script>
-                const d = new Date();
-                document.getElementById('currentDay').innerText = d.getDate();
-                document.getElementById('currentMonth').innerText = d.toLocaleString('tr-TR', { month: 'short' });
-            </script>
+                <section class="cx-hero">
+                    <div class="cx-hero-left">
+                        <div class="cx-eyebrow">
+                            <i class="fa-solid fa-sparkles"></i>
+                            Ana Panel
+                        </div>
 
-            <div class="bento-grid">
+                        <h1 class="cx-title">Hoş geldin, ana sayfan hazır</h1>
+                        <p class="cx-subtitle">
+                            Ana sayfa sadece genel gezinme ve gerçek durum özetleri için düzenlendi.
+                            Casino bilgileri buradan kaldırıldı. Verisi olmayan alanlar “boş durum” olarak gösteriliyor.
+                        </p>
+
+                        <div class="cx-hero-actions">
+                            <a href="/dm" class="cx-btn primary">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                DM'e Git
+                            </a>
+                            <a href="/friends" class="cx-btn">
+                                <i class="fa-solid fa-user-group"></i>
+                                Arkadaşlar
+                            </a>
+                            <a href="/servers" class="cx-btn">
+                                <i class="fa-solid fa-server"></i>
+                                Sunucular
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="cx-hero-stats">
+                        <div class="cx-stat-card">
+                            <div class="cx-stat-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                            <div class="cx-stat-text">
+                                <span class="cx-stat-label">Okunmamış DM</span>
+                                <span class="cx-stat-value">0</span>
+                            </div>
+                            <span class="cx-stat-badge">Mesaj yok</span>
+                        </div>
+
+                        <div class="cx-stat-card">
+                            <div class="cx-stat-icon"><i class="fa-solid fa-user-group"></i></div>
+                            <div class="cx-stat-text">
+                                <span class="cx-stat-label">Arkadaş Durumu</span>
+                                <span class="cx-stat-value">Veri bekleniyor</span>
+                            </div>
+                            <span class="cx-stat-badge">Backend gerekli</span>
+                        </div>
+
+                        <div class="cx-stat-card">
+                            <div class="cx-stat-icon"><i class="fa-solid fa-server"></i></div>
+                            <div class="cx-stat-text">
+                                <span class="cx-stat-label">Sunucu Durumu</span>
+                                <span class="cx-stat-value">Hazır</span>
+                            </div>
+                            <span class="cx-stat-badge">Bağlanabilir</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="cx-grid">
+                    <div class="cx-panel">
+                        <div class="cx-panel-head">
+                            <h2 class="cx-panel-title">
+                                <i class="fa-solid fa-bolt"></i>
+                                Hızlı Erişim
+                            </h2>
+                            <span class="cx-panel-action">Kısayollar</span>
+                        </div>
+                        <div class="cx-panel-body">
+                            <div class="cx-quick-grid">
+                                <a href="/dm" class="cx-quick-card">
+                                    <span class="cx-quick-icon"><i class="fa-solid fa-paper-plane"></i></span>
+                                    <p class="cx-quick-title">DM</p>
+                                    <p class="cx-quick-desc">Mesaj kutusuna git</p>
+                                </a>
+
+                                <a href="/friends" class="cx-quick-card">
+                                    <span class="cx-quick-icon"><i class="fa-solid fa-user-group"></i></span>
+                                    <p class="cx-quick-title">Arkadaşlar</p>
+                                    <p class="cx-quick-desc">Arkadaş listesini aç</p>
+                                </a>
+
+                                <a href="/servers" class="cx-quick-card">
+                                    <span class="cx-quick-icon"><i class="fa-solid fa-server"></i></span>
+                                    <p class="cx-quick-title">Sunucular</p>
+                                    <p class="cx-quick-desc">Sunuculara göz at</p>
+                                </a>
+
+                                <a href="/settings" class="cx-quick-card">
+                                    <span class="cx-quick-icon"><i class="fa-solid fa-gear"></i></span>
+                                    <p class="cx-quick-title">Ayarlar</p>
+                                    <p class="cx-quick-desc">Tema ve hesap ayarları</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                </section>
+
                 
-                <section class="bento-box box-explore">
-                    <div class="bento-header">
-                        <i class="fa-solid fa-satellite-dish"></i>
-                        <h2>Hızlı Gezinme</h2>
-                    </div>
-                    <p style="color: var(--muted); margin-bottom: 25px;">Platformun öne çıkan bölümlerine hızlıca göz atın.</p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        
-                        <a href="/servers" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.5); padding: 20px; border-radius: 16px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 10px; transition: 0.2s;">
-                            <i class="fa-solid fa-compass" style="font-size: 2rem; color: var(--primary);"></i>
-                            <span style="font-weight: 700; font-size: 1.1rem;">Sunucuları Keşfet</span>
-                            <span style="font-size: 0.85rem; color: var(--muted);">Herkese açık topluluklara katıl.</span>
-                        </a>
 
-                        <a href="/friends" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.5); padding: 20px; border-radius: 16px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 10px; transition: 0.2s;">
-                            <i class="fa-solid fa-user-group" style="font-size: 2rem; color: #10b981;"></i>
-                            <span style="font-weight: 700; font-size: 1.1rem;">Arkadaşlık</span>
-                            <span style="font-size: 0.85rem; color: var(--muted);">Arkadaş listeni görüntüle.</span>
-                        </a>
-
-                    </div>
-                </section>
-
-                <section class="bento-box box-stats">
-                    <div class="bento-header">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        <h2>İstatistikler</h2>
-                    </div>
-                    <div class="stat-list">
-                        <div class="stat-item">
-                            <span>Katılınan Sunucu</span>
-                            <span>{{ mine|length }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <span>Toplam Arkadaş</span>
-                            <span>{{ (requests | selectattr('status', 'equalto', 'accepted') | list | length) }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="bento-box box-requests">
-                    <div class="bento-header">
-                        <i class="fa-solid fa-bell"></i>
-                        <h2>{{ t.get("friendreqs", "Friend requests") }}</h2>
-                    </div>
-                    
-                    <div class="user-list">
-                        {% set has_reqs = false %}
-                        {% for r in requests %}
-                            {% if r.status == 'incoming' %}
-                                {% set has_reqs = true %}
-                                <div class="user-card">
-                                    <div class="who">
-                                        <img src="{{ r.avatar }}" alt="avatar">
-                                        {{ r.username }}
-                                    </div>
-                                    <div class="acts">
-                                        <form method="post" action="/social/accept/{{ r.id }}" data-nav="soft">
-                                            <button class="pickbtn" style="touch-action: manipulation;"><i class="fa-solid fa-check"></i> Kabul Et</button>
-                                        </form>
-                                        <form method="post" action="/social/reject/{{ r.id }}" data-nav="soft">
-                                            <button class="linkbtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); touch-action: manipulation;">Reddet</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if not has_reqs %}
-                        <div class="empty-state">
-                            <i class="fa-solid fa-envelope-open"></i>
-                            <span>Şu an bekleyen bir arkadaşlık isteği yok.</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </section>
-
-                {% if suggestions %}
-                <section class="bento-box box-suggestions">
-                    <div class="bento-header">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <h2>Öneriler</h2>
-                    </div>
-                    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:15px;">Tanıyabileceğin kişiler</p>
-                    
-                    <div class="user-list">
-                        {% for s in suggestions %}
-                        <div class="user-card">
-                            <div class="who">
-                                <img src="{{ s.avatar }}" alt="a"> 
-                                {{ s.username }}
-                            </div>
-                            <div class="acts">
-                                {% if s.status == 'outgoing' %}
-                                <button class="linkbtn" disabled style="opacity: 0.7;"><i class="fa-solid fa-paper-plane"></i> Gönderildi</button>
-                                {% elif s.status == 'incoming' %}
-                                <button class="linkbtn" disabled style="opacity: 0.7;"><i class="fa-solid fa-clock-rotate-left"></i> Gelen İstek</button>
-                                {% else %}
-                                <form method="post" action="/social/request/{{ s.id }}" data-nav="soft">
-                                    <button class="pickbtn" style="touch-action: manipulation;"><i class="fa-solid fa-user-plus"></i> Ekle</button>
-                                </form>
-                                {% endif %}
-                                <form method="post" action="/social/block/{{ s.id }}" data-nav="soft">
-                                    <button class="linkbtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3); touch-action: manipulation;" title="Engelle"><i class="fa-solid fa-ban"></i></button>
-                                </form>
-                            </div>
-                        </div>
-                        {% else %}
-                         <div class="empty-state">
-                            <i class="fa-solid fa-users-slash"></i>
-                            <span>Şu an için yeni bir öneri bulunmuyor.</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </section>
-                {% endif %}
             </div>
         </main>
+
+        <nav class="cx-bottom-nav">
+            <a href="/home" class="cx-nav-item active">
+                <i class="fa-solid fa-house"></i>
+                <span>Ana Sayfa</span>
+            </a>
+            <a href="/dm" class="cx-nav-item">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>DM</span>
+            </a>
+            <a href="/servers" class="cx-nav-item">
+                <i class="fa-solid fa-server"></i>
+                <span>Sunucular</span>
+            </a>
+            <a href="/friends" class="cx-nav-item">
+                <i class="fa-solid fa-user-group"></i>
+                <span>Arkadaşlar</span>
+            </a>
+            <a href="/settings" class="cx-nav-item">
+                <i class="fa-solid fa-gear"></i>
+                <span>Ayarlar</span>
+            </a>
+        </nav>
     </div>
+
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <script>
         (function(){
             try {
@@ -195,6 +195,98 @@
             .ambient-orb { filter: blur(60px); }
         }
     </style>
+
+<!-- Mobile hardening patch -->
+<style id="mobile-hardening-patch">
+  :root{
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --app-vh: 100dvh;
+  }
+
+  html{
+    width:100%;
+    max-width:100%;
+    overflow-x: clip;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    background: var(--bg, #0b0b0b);
+  }
+
+  body{
+    width:100%;
+    max-width:100%;
+    min-height:100vh;
+    min-height:100svh;
+    min-height:100dvh;
+    min-height:var(--app-vh);
+    overflow-x: clip !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-left:max(0px, var(--safe-left));
+    padding-right:max(0px, var(--safe-right));
+  }
+
+  *, *::before, *::after{
+    box-sizing:border-box;
+    min-width:0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  img, video, canvas, svg, iframe{
+    max-width:100%;
+  }
+
+  input, textarea, select, button{
+    font: inherit;
+  }
+
+  textarea{
+    max-width:100%;
+  }
+
+  /* Common mobile app-shell helpers (safe, generic) */
+  .topbar, .header, .app-header, nav.top, [data-fixed="top"]{
+    padding-top: max(0px, var(--safe-top));
+  }
+
+  .bottombar, .bottom-nav, .tabbar, .app-bottom, [data-fixed="bottom"]{
+    padding-bottom: max(0px, var(--safe-bottom));
+  }
+
+  /* Modals / drawers / popups often overflow on mobile */
+  .modal, .popup, .sheet, .drawer, dialog, [role="dialog"]{
+    max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
+    max-width: min(100%, calc(100vw - 12px));
+  }
+
+  /* Prevent fixed/sticky elements from creating horizontal overflow */
+  [style*="position: fixed"], [style*="position:fixed"],
+  [style*="position: sticky"], [style*="position:sticky"]{
+    max-width:100vw;
+  }
+
+  /* Keyboard open state: reduce jank on mobile */
+  html.keyboard-open,
+  html.keyboard-open body{
+    overscroll-behavior-y: none;
+  }
+
+  @media (max-width: 768px){
+    html, body{
+      overflow-x: clip !important;
+    }
+    /* Blur effects can stutter on some devices */
+    .glass, .blur, .frosted,
+    [class*="glass"], [class*="blur"]{
+      backdrop-filter: saturate(120%) blur(10px);
+      -webkit-backdrop-filter: saturate(120%) blur(10px);
+    }
+  }
+</style>
+
 </head>
 <body>
     <div class="bg-texture"></div>
@@ -221,5 +313,81 @@
         </main>
     </div>
     <script src="/mobile/js/app.js"></script>
+
+<!-- Mobile hardening patch -->
+<script id="mobile-hardening-script">
+(function () {
+  const docEl = document.documentElement;
+  let baseVVH = 0;
+  let rafId = 0;
+
+  function getViewportHeight() {
+    if (window.visualViewport && window.visualViewport.height) {
+      return window.visualViewport.height;
+    }
+    return window.innerHeight || docEl.clientHeight || 0;
+  }
+
+  function applyViewportVars() {
+    const vh = Math.round(getViewportHeight());
+    if (!baseVVH || vh > baseVVH) baseVVH = vh;
+    docEl.style.setProperty('--app-vh', vh + 'px');
+    const keyboardOpen = baseVVH - vh > 120;
+    docEl.classList.toggle('keyboard-open', keyboardOpen);
+  }
+
+  function scheduleApply() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(applyViewportVars);
+  }
+
+  // Clamp accidental horizontal overflow caused by oversized elements
+  function clampWideElements() {
+    const viewportW = Math.max(docEl.clientWidth, window.innerWidth || 0);
+    const nodes = document.body ? document.body.querySelectorAll('*') : [];
+    for (const el of nodes) {
+      if (!el || !el.getBoundingClientRect) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width > viewportW + 2) {
+        if (!el.dataset._mobileClamp) {
+          el.style.maxWidth = '100%';
+          el.style.overflowWrap = el.style.overflowWrap || 'anywhere';
+          el.dataset._mobileClamp = '1';
+        }
+      }
+    }
+  }
+
+  function scheduleClamp() {
+    requestAnimationFrame(() => {
+      try { clampWideElements(); } catch (e) {}
+    });
+  }
+
+  window.addEventListener('resize', scheduleApply, { passive: true });
+  window.addEventListener('orientationchange', scheduleApply, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleApply, { passive: true });
+    window.visualViewport.addEventListener('scroll', scheduleApply, { passive: true });
+  }
+
+  document.addEventListener('focusin', scheduleApply, true);
+  document.addEventListener('focusout', scheduleApply, true);
+  window.addEventListener('load', () => { scheduleApply(); scheduleClamp(); }, { once: true });
+
+  // Observe dynamic UI changes (messages, modals, etc.)
+  const mo = new MutationObserver(() => {
+    scheduleApply();
+    scheduleClamp();
+  });
+  if (document.documentElement) {
+    mo.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
+  }
+
+  applyViewportVars();
+  setTimeout(scheduleClamp, 120);
+})();
+</script>
+
 </body>
 </html>

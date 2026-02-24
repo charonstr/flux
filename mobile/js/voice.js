@@ -20,6 +20,23 @@
     };
 
     // DOM Elementleri
+    function drawRoundedRectCompat(ctx, x, y, w, h, r) {
+        if (!ctx) return;
+        if (typeof ctx.roundRect === 'function') {
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, r);
+            return;
+        }
+        const rr = Math.max(0, Math.min(r || 0, Math.min(w, h) / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+    }
+
     const elements = {
         muteBtn: document.getElementById('muteBtn'),
         deafenBtn: document.getElementById('deafenBtn'),
@@ -45,9 +62,17 @@
         }
 
         const canvas = elements.visualizer;
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width && rect.height) {
+            canvas.width = Math.round(rect.width * dpr);
+            canvas.height = Math.round(rect.height * dpr);
+        }
         const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
+        if (!ctx) return;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const width = rect.width || canvas.width;
+        const height = rect.height || canvas.height;
 
         function draw() {
             VoiceState.animationId = requestAnimationFrame(draw);
@@ -72,8 +97,7 @@
                 const radius = barWidth / 2;
                 const y = (height - barHeight) / 2;
                 
-                ctx.beginPath();
-                ctx.roundRect(x, y, barWidth - 2, barHeight, 5);
+                drawRoundedRectCompat(ctx, x, y, barWidth - 2, barHeight, 5);
                 ctx.fill();
 
                 x += barWidth + 1;
@@ -188,9 +212,15 @@
         }
     }
 
+    function resumeAudioContext() {
+        if (VoiceState.audioCtx && VoiceState.audioCtx.state === 'suspended') {
+            VoiceState.audioCtx.resume().catch(() => {});
+        }
+    }
+
     // Event Listeners
-    if (elements.muteBtn) elements.muteBtn.addEventListener('click', toggleMute);
-    if (elements.deafenBtn) elements.deafenBtn.addEventListener('click', toggleDeafen);
+    if (elements.muteBtn) elements.muteBtn.addEventListener('click', function(){ resumeAudioContext(); toggleMute(); });
+    if (elements.deafenBtn) elements.deafenBtn.addEventListener('click', function(){ resumeAudioContext(); toggleDeafen(); });
     if (elements.disconnectBtn) elements.disconnectBtn.addEventListener('click', disconnect);
 
     // Başlat
