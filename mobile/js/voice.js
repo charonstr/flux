@@ -113,7 +113,7 @@
 
     function startSignalStream() {
       if (source) source.close();
-      source = new EventSource(`/voice/stream/${serverId}/${channelId}last=${lastSignal}`);
+      source = new EventSource(`/voice/stream/${serverId}/${channelId}?last=${lastSignal}`);
       source.onmessage = async (evt) => {
         try {
           const data = JSON.parse(evt.data || "{}");
@@ -186,7 +186,7 @@
       muteBtn.disabled = true;
     }
 
-    joinBtn.addEventListener("click", () => {
+    joinBtn?.addEventListener("click", () => {
       if (joined) {
         leaveVoice();
         return;
@@ -195,12 +195,12 @@
         alert("Mikrofon erisimi veya ses baglantisi baslatilamadi.");
       });
     });
-    muteBtn.addEventListener("click", () => {
+    muteBtn?.addEventListener("click", () => {
       if (!stream) return;
       muted = !muted;
       stream.getAudioTracks().forEach((t) => (t.enabled = !muted));
       muteBtn.innerHTML = muted
-         '<i class="fa-solid fa-microphone"></i> Sesi Ac'
+        ? '<i class="fa-solid fa-microphone"></i> Sesi Ac'
         : '<i class="fa-solid fa-microphone-slash"></i> Sustur';
     });
     if (muteBtn) muteBtn.disabled = true;

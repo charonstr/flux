@@ -2,7 +2,7 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("profile", "Profile") }}</title>
     <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -408,7 +408,7 @@
                         <input id="cropval" name="crop" type="hidden" value="0">
                         
                         <div id="croppanel" class="cropbox" style="display:none;">
-                            <p><i class="fa-solid fa-crop-simple"></i> {{ t.get("cropauto", "Apply square crop or continue original") }}</p>
+                            <p><i class="fa-solid fa-crop-simple"></i> {{ t.get("cropauto", "Apply square crop or continue original?") }}</p>
                             <div class="crop-actions">
                                 <button type="button" class="pickbtn" onclick="setcrop(1)">{{ t.get("cropapply", "Crop") }}</button>
                                 <button type="button" class="linkbtn" onclick="setcrop(0)">{{ t.get("cropkeep", "Keep") }}</button>

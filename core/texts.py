@@ -18,4 +18,3 @@ def texts(code: str) -> dict:
         return {}
     with file.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
-

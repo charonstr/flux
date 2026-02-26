@@ -192,10 +192,10 @@
                 if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
                 wrap.innerHTML = rows.map(g => {
                     const d = Number(g.delta_amount || 0);
-                    const cls = d >= 0  "win" : "lose";
-                    const sign = d >= 0  "+" : "";
+                    const cls = d >= 0 ? "win" : "lose";
+                    const sign = d >= 0 ? "+" : "";
                     const low = String(g.game_name || "").toLowerCase();
-                    const icon = low.includes("blackjack")  "fa-clover" : (low.includes("multiplier") || low.includes("carpan")  "fa-chart-line" : (low.includes("case")  "fa-box-open" : "fa-bullseye"));
+                    const icon = low.includes("blackjack") ? "fa-clover" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : (low.includes("case") ? "fa-box-open" : "fa-bullseye"));
                     return '<div class="row"><div class="name"><i class="fa-solid ' + icon + '"></i> ' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
                 }).join("");
             }
@@ -205,20 +205,20 @@
                     const res = await fetch("/api/casino/profile", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
                     if (!data || !data.ok) return;
-                    if(document.getElementById("profileName")) document.getElementById("profileName").textContent = data.profile.username || "";
-                    if(document.getElementById("profileAvatar")) document.getElementById("profileAvatar").src = data.profile.avatar || "";
-                    if(document.getElementById("profileLevel")) document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level.level || 1);
-                    if(document.getElementById("profileBalance")) document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile.balance || 0);
+                    if(document.getElementById("profileName")) document.getElementById("profileName").textContent = data.profile?.username || "";
+                    if(document.getElementById("profileAvatar")) document.getElementById("profileAvatar").src = data.profile?.avatar || "";
+                    if(document.getElementById("profileLevel")) document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level?.level || 1);
+                    if(document.getElementById("profileBalance")) document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile?.balance || 0);
                     if(document.getElementById("sumWin")) document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
                     if(document.getElementById("sumLose")) document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
                     if(document.getElementById("sumRatio")) document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
                     
                     if(document.getElementById("xpFill") && document.getElementById("xpText")) {
-                        const xp = Number(data.level.xp || 0);
-                        const next = Number(data.level.next_level_xp || 0);
-                        const pct = next > 0  Math.min(100, Math.floor((xp * 100) / next)) : 100;
+                        const xp = Number(data.level?.xp || 0);
+                        const next = Number(data.level?.next_level_xp || 0);
+                        const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
                         document.getElementById("xpFill").style.width = pct + "%";
-                        document.getElementById("xpText").textContent = next > 0  (xp + " / " + next + " XP") : "MAKSİMUM SEVİYE";
+                        document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAKSİMUM SEVİYE";
                     }
 
                     leaders = { daily_top5: data.daily_top5 || [], weekly_top5: data.weekly_top5 || [], monthly_top5: data.monthly_top5 || [] };
@@ -239,7 +239,7 @@
                     btn.disabled = true; msg.textContent = "Veri yok"; return;
                 }
                 wrap.innerHTML = state.days.map(d => {
-                    const cls = [d.state === "today"  "today" : "", d.claimed  "claimed" : ""].join(" ").trim();
+                    const cls = [d.state === "today" ? "today" : "", d.claimed ? "claimed" : ""].join(" ").trim();
                     let icon = '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-top:4px;"></i>';
                     if(!d.claimed && d.state !== "today") icon = '<i class="fa-solid fa-lock" style="color:var(--muted); margin-top:4px; font-size:0.8rem;"></i>';
                     if(d.state === "today" && !d.claimed) icon = '<i class="fa-solid fa-gift" style="color:#10b981; margin-top:4px;"></i>';
@@ -247,7 +247,7 @@
                 }).join("");
                 if (state.days[6] && wrap.children[6]) wrap.children[6].innerHTML += '<div class="day" style="color:#f59e0b; margin-top:4px;">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
                 btn.disabled = !state.can_claim_today;
-                msg.textContent = state.can_claim_today  "Bugünün ödülü hazır" : "Bugünün ödülü zaten alındı";
+                msg.textContent = state.can_claim_today ? "Bugünün ödülü hazır" : "Bugünün ödülü zaten alındı";
             }
 
             async function loadReward() {

@@ -1,0 +1,173 @@
+{
+  "used_key_count": 155,
+  "hardcoded_file_count": 29,
+  "hardcoded": {
+    "pc\\changepassword.html": [
+      "i ezmemesi için yerel olarak eklendi) */\n        window.togglepasslocal = function(button) {\n            const container = button.closest("
+    ],
+    "pc\\channel.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "pc\\dm.html": [
+      "Gönder"
+    ],
+    "pc\\fearofabyss.html": [
+      "<button class=\"foa-primary-btn\" data-finish-now=\"${esc(selectedCardId)}\" ${canFinish ? '' : 'disabled'} style=\"width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;\"><i class=\"fa-solid fa-bolt\"></i> ${I18N.finishNow} (${instant} Altın)</button>",
+      "<button class=\"foa-primary-btn\" data-revive-hero=\"${esc(h.hero_id)}\" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'} style=\"background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;\"><i class=\"fa-solid fa-gem\"></i> Canlandır</button>\n                        <button class=\"foa-primary-btn\" data-delete-hero=\"${esc(h.hero_id)}\" style=\"background:rgba(220, 38, 38, 0.2); color:#fca5a5;\"><i class=\"fa-solid fa-trash\"></i></button>",
+      "<div style=\"background:rgba(16, 185, 129, 0.1); border:1px solid rgba(52, 211, 153, 0.3); padding:16px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;\">\n                        <div>\n                            <div style=\"font-family:var(--font-title); font-weight:bold; color:#34d399; margin-bottom:4px;\">${I18N.summonTitle}</div>\n                            <div style=\"font-size:0.9rem; opacity:0.8;\">Maliyet: ${I18N.summonSingle} ${Number(t.summon.single_cost || 500)} <i class=\"fa-solid fa-coins\"></i> | ${I18N.summonTen} ${Number(t.summon.ten_cost || 5000)} <i class=\"fa-solid fa-coins\"></i></div>\n                        </div>\n                        <div style=\"display:flex; gap:8px;\">\n                            <button class=\"foa-primary-btn\" id=\"foaSummonOneBtn\" style=\"background:linear-gradient(180deg, #059669 0%, #064e3b 100%);\"><i class=\"fa-solid fa-user-plus\" style=\"margin-right:6px;\"></i> 1 ${I18N.summonSingle}</button>\n                            <button class=\"foa-primary-btn\" id=\"foaSummonTenBtn\" style=\"background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;\"><i class=\"fa-solid fa-users-rays\" style=\"margin-right:6px;\"></i> 10 Çağrı</button>\n                        </div>\n                    </div>",
+      "<div style=\"margin-top:24px;padding:20px;background:rgba(15,23,42,0.8);border:1px solid rgba(148,163,184,0.3);border-radius:12px;animation:foaLoot .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);\">\n                        <div class=\"section-title\" style=\"margin-top:0;\">${esc(lastChestTier).toUpperCase()} ${I18N.chestOpen}</div>\n                        <div style=\"display:flex; gap:10px;\">\n                            <button class=\"foa-primary-btn\" data-open-amount=\"1\">1 Aç</button>\n                            <button class=\"foa-primary-btn\" data-open-amount=\"2\">2 Aç</button>\n                            <button class=\"foa-primary-btn\" data-open-amount=\"3\">3 Aç</button>\n                            <button class=\"foa-primary-btn\" data-open-amount=\"5\">5 Aç</button>\n                            <button class=\"foa-primary-btn\" data-open-amount=\"all\" style=\"border-color:#fbbf24; color:#fbbf24;\">${I18N.all}</button>\n                        </div>\n                    </div>",
+      "İnşa Lv.${Number(st.upgrading_to || 1)}"
+    ],
+    "pc\\friends.html": [
+      "Arkadaşlıktan Çıkar",
+      "Kullanıcıyı Engelle",
+      "Mesaj Gönder"
+    ],
+    "pc\\security.html": [
+      "i ezmemesi için local) */\n        window.togglepass = function(button) {\n            const container = button.closest("
+    ],
+    "pc\\serverdetail.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "pc\\servers.html": [
+      "Örn: Oyun Odası, Çalışma Grubu..."
+    ],
+    "pc\\voice.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "pc\\casino\\case_open.html": [
+      "<div style=\"padding:10px; color:var(--muted);\">Geçmiş yok</div>",
+      "Altın)",
+      "x Aç ("
+    ],
+    "pc\\casino\\cs2case.html": [
+      "<div class=\"mx-row mx-hdr\"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>",
+      "<div class=\"mx-row\"><div class=\"mx-hdr\" style=\"grid-column:1/-1\">Oyun geçmişi yok</div></div>",
+      "<i class=\"fa-solid fa-key\"></i> KASA AÇ (${constants.case_price} Altın)",
+      "Ağ hatası oluştu.",
+      "Kasa açılamadı:",
+      "Oyun geçmişi yok"
+    ],
+    "pc\\casino\\home.html": [
+      ">Gün ' + d.day + '</div><div class="
+    ],
+    "pc\\js\\app.js": [
+      "<div class=\"ctx-item\" onclick=\"window.openCreateCat()\"><i class=\"fa-solid fa-folder-plus\"></i> Kategori Oluştur</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openCreateChan('${el.dataset.id}')\"><i class=\"fa-solid fa-hashtag\"></i> Kanal Oluştur</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openEditCat('${el.dataset.id}')\"><i class=\"fa-solid fa-pen\"></i> Kategoriyi Düzenle</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openEditChan('${el.dataset.id}')\"><i class=\"fa-solid fa-pen\"></i> Kanalı Düzenle</div>",
+      "<div class=\"ctx-item\" style=\"color:#ef4444;\" onclick=\"window.deleteChan('${el.dataset.id}', '${sId}')\"><i class=\"fa-solid fa-trash\" style=\"color:#ef4444;\"></i> Kanalı Sil</div>",
+      "<div class=\"rail-btn-wrapper\">\n                  <a class=\"rail-btn\" href=\"/servers\" data-nav=\"soft\" title=\"Sunucu Keşfet / Oluştur\" style=\"color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1);\"><i class=\"fa-solid fa-plus\"></i></a>\n              </div>\n              <div style=\"flex:1;\"></div>\n              <div class=\"rail-btn-wrapper\">\n                  <button class=\"profile-btn rail-btn\" id=\"profileBtn\" style=\"padding:0; overflow:hidden;\">\n                      <img src=\"${data.avatar}\" class=\"rail-avatar\" alt=\"avatar\" style=\"width:100%; height:100%; border-radius:inherit; object-fit:cover;\">\n                  </button>\n              </div>",
+      "<i class=\"fa-solid fa-check\"></i> Kopyalandı",
+      "Kanalı silmek istediğinize emin misiniz?",
+      "Kategoriyi silmek istediğinize emin misiniz? İçindeki kanallar kategorisiz kalacaktır.",
+      "Kopyalama başarısız oldu:",
+      "body.shell-active { position: relative; overflow: hidden; min-height: 100vh; margin: 0; padding: 0 !important; }\n          .server-shell { position: relative; height: 100vh; display: grid; grid-template-columns: 85px 1fr; grid-template-rows: 1fr; }\n          .server-rail { grid-row: 1; grid-column: 1; padding: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 15px; background: rgba(var(--panel-rgb), 0.4); backdrop-filter: blur(18px); border-right: 1px solid rgba(var(--line-rgb), 0.5); overflow-y: auto; z-index: 100; }\n          .server-rail::-webkit-scrollbar { display: none; }\n          .rail-btn-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }\n          .rail-btn, .rail-avatar { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: var(--text); background: rgba(var(--panel-rgb), 0.8); border: 1px solid rgba(var(--line-rgb), 0.8); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); text-decoration: none; font-size: 1.2rem; object-fit: cover; cursor: pointer; }\n          .rail-btn-wrapper:hover .rail-btn, .rail-btn-wrapper:hover .rail-avatar, .rail-btn.active { border-radius: 16px; background: var(--primary); color: #fff; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3); }\n          .rail-btn-wrapper::before { content: ''; position: absolute; left: 0; width: 4px; height: 0px; background: var(--text); border-radius: 0 4px 4px 0; transition: height 0.3s ease; }\n          .rail-btn-wrapper:hover::before { height: 24px; }\n          .rail-divider { width: 40px; height: 2px; background: rgba(var(--text-rgb), 0.1); border-radius: 2px; margin: 5px 0; }\n          .server-main { grid-row: 1; grid-column: 2; padding: 30px 40px 80px 40px; overflow-y: auto; max-width: 1400px; margin: 0 auto; width: 100%; }\n          .server-main::-webkit-scrollbar { width: 8px; }\n          .server-main::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }\n          .bg-texture { position: fixed; inset: 0; background-image: url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E\"); pointer-events: none; z-index: -1; opacity: 0.5; }\n          .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.25; will-change: transform; }\n          .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -15%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }\n          .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }\n          \n          /* KUSURSUZ MOBİL UYUM (Alt menü barı) */\n          @media(max-width: 900px) {\n              body.shell-active { overflow: auto; padding-bottom: 75px !important; }\n              .server-shell { display: block; height: auto; min-height: 100vh;}\n              .server-rail { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; flex-direction: row; justify-content: space-evenly; align-items: center; padding: 0 10px; overflow-x: auto; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(var(--line-rgb), 0.5); border-right: none; border-bottom: none; z-index: 9999; }\n              .rail-divider { width: 2px; height: 30px; margin: 0 2px; }\n              .rail-btn-wrapper::before { top: 0; left: 50%; width: 0; height: 4px; border-radius: 0 0 4px 4px; transform: translateX(-50%); transition: width 0.3s ease; }\n              .rail-btn-wrapper:hover::before, .rail-btn-wrapper.active::before { width: 24px; height: 4px; }\n              .server-main { padding: 15px 15px 20px 15px; }\n              .rail-btn, .rail-avatar { width: 46px; height: 46px; font-size: 1.1rem; }\n          }"
+    ],
+    "pc\\js\\casino\\blackjack.js": [
+      "Aktif tur bitmeden tekrar dağıtamazsın",
+      "Kartlar dağıtılıyor...",
+      "Maksimum bahis limiti aşıldı"
+    ],
+    "pc\\js\\casino\\roulette.js": [
+      "BAHİSLER AÇIK",
+      "BAHİSLER KAPALI",
+      "BAŞLIYOR",
+      "BEKLENİYOR",
+      "SONUÇLANDI",
+      "SİYAH",
+      "YENİ TUR BAŞLIYOR...",
+      "YENİ TUR BEKLENİYOR...",
+      "YEŞİL",
+      "ÇEVRİLİYOR",
+      "ÇİFT"
+    ],
+    "mobile\\changepassword.html": [
+      "i ezmemesi için yerel olarak eklendi) */\n        window.togglepasslocal = function(button) {\n            const container = button.closest("
+    ],
+    "mobile\\channel.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "mobile\\dm.html": [
+      "Gönder"
+    ],
+    "mobile\\fearofabyss.html": [
+      "<button class=\"foa-building-btn\" data-build-key=\"${esc(d.key)}\" ${disabled ? 'disabled' : ''}>\n                            <b>${esc(d.name)}</b>\n                            <small style=\"margin-bottom:8px;\">${esc(d.desc)}</small>\n                            <div style=\"margin-top:auto; font-weight:600; font-size:0.9rem; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};\"> ${alreadyBuilt ? '<i class=\"fa-solid fa-check\"></i> İnşa Edildi' :",
+      "<button class=\"foa-primary-btn\" style=\"flex:1; padding:10px 6px; font-size:0.85rem; background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;\" data-revive-hero=\"${esc(h.hero_id)}\" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'}><i class=\"fa-solid fa-gem\"></i> Canlandır</button>\n                             <button class=\"foa-primary-btn\" style=\"flex:0 0 40px; background:rgba(220, 38, 38, 0.2); color:#fca5a5; padding:10px 6px;\" data-delete-hero=\"${esc(h.hero_id)}\"><i class=\"fa-solid fa-trash\"></i></button>",
+      "<div style=\"display:flex; justify-content:space-between; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px; border-left:3px solid ${isDead ? '#ef4444' : '#22c55e'}; font-size:0.9rem;\">\n                        <span>${esc(p.hero_name)} ${isDead ? '<span style=\"color:#ef4444;font-size:0.8em;\">(ÖLÜ)</span>' : ''}</span>\n                        <span><i class=\"fa-solid fa-heart\" style=\"color:#ef4444; font-size:0.85em;\"></i> ${Number(p.hp || 0)}/${Number(p.max_hp || 0)}</span>\n                    </div>",
+      "Bina İnşası",
+      "İnşa Lv.${Number(st.upgrading_to || 1)}"
+    ],
+    "mobile\\friends.html": [
+      "Arkadaşlıktan Çıkar",
+      "Kullanıcıyı Engelle",
+      "Mesaj Gönder"
+    ],
+    "mobile\\security.html": [
+      "i ezmemesi için local) */\n        window.togglepass = function(button) {\n            const container = button.closest("
+    ],
+    "mobile\\serverdetail.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "mobile\\servers.html": [
+      "Örn: Oyun Odası, Çalışma Grubu..."
+    ],
+    "mobile\\voice.html": [
+      "Rol adı",
+      "return confirm('Ayrılmak istediğinize emin misiniz?');"
+    ],
+    "mobile\\casino\\case_open.html": [
+      "<div style=\"padding:10px; color:var(--muted);\">Geçmiş yok</div>",
+      "Altın)",
+      "x Aç ("
+    ],
+    "mobile\\casino\\cs2case.html": [
+      "<div class=\"mx-row mx-hdr\"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>",
+      "<div class=\"mx-row\"><div class=\"mx-hdr\" style=\"grid-column:1/-1\">Oyun geçmişi yok</div></div>",
+      "<i class=\"fa-solid fa-key\"></i> KASA AÇ (${constants.case_price} Altın)",
+      "Ağ hatası oluştu.",
+      "Kasa açılamadı:",
+      "Oyun geçmişi yok"
+    ],
+    "mobile\\js\\app.js": [
+      "<div class=\"ctx-item\" onclick=\"window.openCreateCat()\"><i class=\"fa-solid fa-folder-plus\"></i> Kategori Oluştur</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openCreateChan('${el.dataset.id}')\"><i class=\"fa-solid fa-hashtag\"></i> Kanal Oluştur</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openEditCat('${el.dataset.id}')\"><i class=\"fa-solid fa-pen\"></i> Kategoriyi Düzenle</div>",
+      "<div class=\"ctx-item\" onclick=\"window.openEditChan('${el.dataset.id}')\"><i class=\"fa-solid fa-pen\"></i> Kanalı Düzenle</div>",
+      "<div class=\"ctx-item\" style=\"color:#ef4444;\" onclick=\"window.deleteChan('${el.dataset.id}', '${sId}')\"><i class=\"fa-solid fa-trash\" style=\"color:#ef4444;\"></i> Kanalı Sil</div>",
+      "<i class=\"fa-solid fa-check\"></i> Kopyalandı",
+      "Kanalı silmek istediğinize emin misiniz?",
+      "Kategoriyi silmek istediğinize emin misiniz? İçindeki kanallar kategorisiz kalacaktır.",
+      "Kopyalama başarısız oldu:",
+      "Çıkış Yap"
+    ],
+    "mobile\\js\\casino\\blackjack.js": [
+      "Aktif tur bitmeden tekrar dağıtamazsın",
+      "Kartlar dağıtılıyor...",
+      "Maksimum bahis limiti aşıldı"
+    ],
+    "core\\fearofabyss_backend.py": [
+      "Büyü Kulesi",
+      "Eğitim Arenası",
+      "Her saat rastgele 4 eşya satar. Seviye arttıkça eşya kalitesi artar.",
+      "Kahraman çağırımı için kullanılır. Seviye ile güçlü kahraman şansı artar.",
+      "Satıcı",
+      "Seçilen kahramanları süreli eğitip XP kazandırır. Kapasite ve XP seviye ile artar.",
+      "Silah üretimi/satın alımı için kullanılır. Seviye eşya kalitesini artırır.",
+      "Tüm eşyalar burada depolanır. Seviye depolama kapasitesini artırır.",
+      "Yaralı kahramanlar daha hızlı iyileşir. Seviye arttıkça etki artar.",
+      "Zırh üretimi/satın alımı için kullanılır. Seviye ile yeni eşyalar açılır.",
+      "Zırhçı"
+    ]
+  },
+  "missing_keys": {
+    "tr": [],
+    "en": [],
+    "es": []
+  }
+}

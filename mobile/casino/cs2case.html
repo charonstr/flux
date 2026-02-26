@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{{ t.get("cs2_case", "CS2 Case") }} - Euphorium</title>
+  <title>CS2 Kasa Açılışı - Euphorium</title>
   <link rel="stylesheet" href="/mobile/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -64,7 +64,7 @@
 <body>
   <main class="mx-wrap">
     <div class="mx-top">
-      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> MenÃ¼</a>
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menü</a>
       <h1 class="mx-title"><i class="fa-solid fa-box-open"></i> CS2 Kasa</h1>
       <div class="mx-badge"><i class="fa-solid fa-coins"></i> <span id="csBalance">0</span></div>
     </div>
@@ -77,7 +77,7 @@
       </div>
       
       <button class="btn-open" id="btnOpen">
-        <i class="fa-solid fa-key"></i> KASA AÃ‡ (250 AltÄ±n)
+        <i class="fa-solid fa-key"></i> KASA AÇ (250 Altın)
       </button>
 
       <div class="win-popup" id="winPopup">
@@ -90,12 +90,12 @@
 
     <div class="info-grid">
       <div class="info-card">
-        <h4>Kasa Ä°Ã§eriÄŸi ve Oranlar</h4>
+        <h4>Kasa İçeriği ve Oranlar</h4>
         <div class="odds-list" id="oddsList">
           </div>
       </div>
       <div class="info-card">
-        <h4>Son Ã‡Ä±kanlar</h4>
+        <h4>Son Çıkanlar</h4>
         <div class="mx-history" id="historyWrap">
           </div>
       </div>
@@ -151,10 +151,10 @@
 
       function renderHistory(rows) {
         if (!rows || !rows.length) {
-            historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr" style="grid-column:1/-1">Oyun geÃ§miÅŸi yok</div></div>';
+            historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr" style="grid-column:1/-1">Oyun geçmişi yok</div></div>';
             return;
         }
-        let html = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>';
+        let html = '<div class="mx-row mx-hdr"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>';
         rows.forEach(r => {
             html += `<div class="mx-row">
                 <div><img src="${r.item.img}" alt="img"></div>
@@ -174,7 +174,7 @@
                 const rand = constants.items[Math.floor(Math.random() * constants.items.length)];
                 html += renderItem(rand);
             } else {
-                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name"></div></div>`;
+                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name">?</div></div>`;
             }
         }
         caseTrack.innerHTML = html;
@@ -205,7 +205,7 @@
             if(data.balance !== undefined) updateBalance(data.balance);
 
             if (!res.ok || !data.ok) {
-                alert("Kasa aÃ§Ä±lamadÄ±: " + (data.error || "Bilinmeyen hata"));
+                alert("Kasa açılamadı: " + (data.error || "Bilinmeyen hata"));
                 isOpening = false;
                 btnOpen.disabled = false;
                 return;
@@ -261,8 +261,8 @@
                     <div style="color:${state.item.color}; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${state.item.name}</div>
                     <div style="color:#10b981; font-weight:800;">+${state.payout}</div>
                 </div>`;
-                if(currentHtml.includes("Oyun geÃ§miÅŸi yok")) {
-                    historyWrap.innerHTML = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>' + newRow;
+                if(currentHtml.includes("Oyun geçmişi yok")) {
+                    historyWrap.innerHTML = '<div class="mx-row mx-hdr"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>' + newRow;
                 } else {
                     const parts = currentHtml.split('</div></div>');
                     // insert right after header
@@ -274,7 +274,7 @@
             }, 6100);
 
         } catch (err) {
-            alert("AÄŸ hatasÄ± oluÅŸtu.");
+            alert("Ağ hatası oluştu.");
             isOpening = false;
             btnOpen.disabled = false;
         }
@@ -298,7 +298,7 @@
             }
             if (data.balance !== undefined) updateBalance(data.balance);
             if (Array.isArray(data.history)) renderHistory(data.history);
-            btnOpen.innerHTML = `<i class="fa-solid fa-key"></i> KASA AÃ‡ (${constants.case_price} AltÄ±n)`;
+            btnOpen.innerHTML = `<i class="fa-solid fa-key"></i> KASA AÇ (${constants.case_price} Altın)`;
           } catch(e){
             console.log("cs2 state load error", e);
           }
@@ -308,7 +308,6 @@
   </script>
 </body>
 </html>
-
 
 
 

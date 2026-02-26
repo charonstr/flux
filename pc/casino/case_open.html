@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{{ t.get("case_open", "Case Opening") }} - Euphorium</title>
+  <title>Kasa Açılımı - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -34,7 +34,7 @@
     .stat-lose { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     .stat-net { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 
-    /* YENÄ° EKRANA SIÄAN GRID/FLEX TASARIMI (2x2 + 1 Ortada) */
+    /* YENİ EKRANA SIĞAN GRID/FLEX TASARIMI (2x2 + 1 Ortada) */
     .lane-stack {
         --lane-cols: 1;
         --lane-h: 176px;
@@ -94,7 +94,7 @@
     .history-row-name { font-weight: 700; font-size: 0.95rem; }
     .history-row-price { font-weight: 800; color: #10b981; }
 
-    /* Mobilde alt alta olmasÄ± iÃ§in kurallar */
+    /* Mobilde alt alta olması için kurallar */
     @media (max-width: 860px) {
         .grid-panels { grid-template-columns: 1fr; }
         .actions-row { flex-direction: column; width: 100%; align-items: stretch; }
@@ -125,7 +125,7 @@
     <div class="case-header">
       <div class="header-left">
         <a href="/casino/case" data-nav="soft" class="navbtn"><i class="fa-solid fa-arrow-left"></i></a>
-        <h1 id="title">Kasa YÃ¼kleniyor...</h1>
+        <h1 id="title">Kasa Yükleniyor...</h1>
       </div>
       <div class="balance-badge"><i class="fa-solid fa-coins"></i> <span id="balance">0</span></div>
     </div>
@@ -139,11 +139,11 @@
           <button type="button" data-q="4">4</button>
           <button type="button" data-q="5">5</button>
         </div>
-        <button id="openBtn" class="open-btn" type="button"><i class="fa-solid fa-unlock-keyhole" style="margin-right:8px;"></i> AÃ§</button>
+        <button id="openBtn" class="open-btn" type="button"><i class="fa-solid fa-unlock-keyhole" style="margin-right:8px;"></i> Aç</button>
       </div>
       
       <div class="stats-row">
-        <div class="stat-badge stat-win">Toplam KazanÃ§: <span id="sumWin">0</span></div>
+        <div class="stat-badge stat-win">Toplam Kazanç: <span id="sumWin">0</span></div>
         <div class="stat-badge stat-lose">Toplam Zarar: <span id="sumLose">0</span></div>
         <div class="stat-badge stat-net">Net: <span id="sumNet">0</span></div>
       </div>
@@ -157,7 +157,7 @@
         <div id="odds"></div>
       </section>
       <section class="panel-box">
-        <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Son Ã‡Ä±kanlar</h3>
+        <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Son Çıkanlar</h3>
         <div id="history"></div>
       </section>
     </div>
@@ -188,8 +188,8 @@
       function idem(){ return 'case_' + Date.now() + '_' + Math.random().toString(16).slice(2,10); }
       function rItem(item){ return '<div class="item" style="border-color:' + item.color + '"><img src="' + item.img + '" alt=""><div class="n" style="color:' + item.color + '">' + item.name + '</div></div>'; }
       function syncButton(){
-        const total = Number(constants.case.price || 0) * quantity;
-        openBtn.innerHTML = '<i class="fa-solid fa-unlock-keyhole" style="margin-right:8px;"></i> ' + quantity + 'x AÃ§ (' + total + ' AltÄ±n)';
+        const total = Number(constants.case?.price || 0) * quantity;
+        openBtn.innerHTML = '<i class="fa-solid fa-unlock-keyhole" style="margin-right:8px;"></i> ' + quantity + 'x Aç (' + total + ' Altın)';
         openBtn.disabled = busy || balance < total;
       }
       function renderTotals(){
@@ -224,7 +224,7 @@
           for(let i=0;i<45;i++){
             const items = constants.items || [];
             if(items.length){ const x = items[Math.floor(Math.random()*items.length)]; html += rItem(x); }
-            else { html += '<div class="item" style="border-color:#4b69ff"><div class="n"></div></div>'; }
+            else { html += '<div class="item" style="border-color:#4b69ff"><div class="n">?</div></div>'; }
           }
           t.innerHTML = html;
           t.style.transition='none';
@@ -239,7 +239,7 @@
       }
 
       function renderHistory(rows){
-        if(!rows || !rows.length){ historyEl.innerHTML = '<div style="padding:10px; color:var(--muted);">GeÃ§miÅŸ yok</div>'; return; }
+        if(!rows || !rows.length){ historyEl.innerHTML = '<div style="padding:10px; color:var(--muted);">Geçmiş yok</div>'; return; }
         historyEl.innerHTML = rows.slice(0, 3).map(function(r){ return '<div class="history-row"><div><img src="'+r.item.img+'" alt=""></div><div class="history-row-name" style="color:'+r.item.color+'">'+r.item.name+'</div><div class="history-row-price">+' + Number(r.payout||0) + '</div></div>'; }).join('');
       }
 
@@ -261,13 +261,13 @@
       }
 
       async function loadState(){
-        const res = await fetch('/api/casino/case/statecase=' + encodeURIComponent(caseId), { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
+        const res = await fetch('/api/casino/case/state?case=' + encodeURIComponent(caseId), { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
         const data = await res.json();
         if(!res.ok || !data.ok) return;
         constants = data.constants || constants;
         balance = Number(data.balance || 0);
         balanceEl.textContent = String(balance);
-        titleEl.textContent = String(constants.case.name || 'Kasa');
+        titleEl.textContent = String(constants.case?.name || 'Kasa');
         renderOdds();
         renderHistory(data.history || []);
         buildLanes(quantity);
@@ -293,13 +293,13 @@
         track.style.transform = 'translateX(0px)';
         void track.offsetWidth;
 
-        /* JS HESAPLAMASININ CSS Ä°LE SENKRONÄ°ZE EDÄ°LMESÄ° (180px) */
+        /* JS HESAPLAMASININ CSS İLE SENKRONİZE EDİLMESİ (180px) */
         const firstItem = track.querySelector('.item');
-        const itemWidth = firstItem  firstItem.getBoundingClientRect().width : 180;
-        const seqLen = Array.isArray(state.sequence)  state.sequence.length : 0;
-        const winnerIndex = seqLen > 0  Math.min(35, seqLen - 1) : 35;
+        const itemWidth = firstItem ? firstItem.getBoundingClientRect().width : 180;
+        const seqLen = Array.isArray(state.sequence) ? state.sequence.length : 0;
+        const winnerIndex = seqLen > 0 ? Math.min(35, seqLen - 1) : 35;
         const lane = track.parentElement;
-        const containerWidth = lane  lane.offsetWidth : 1000;
+        const containerWidth = lane ? lane.offsetWidth : 1000;
         const jitter = Math.max(8, Math.round(itemWidth * 0.45));
         const targetX = -(winnerIndex * itemWidth) + (containerWidth / 2) - (itemWidth / 2) + (Math.floor(Math.random() * ((jitter * 2) + 1)) - jitter);
 
@@ -311,7 +311,7 @@
 
       async function openCases(){
         if(busy) return;
-        const casePrice = Number(constants.case.price || 0);
+        const casePrice = Number(constants.case?.price || 0);
         const total = casePrice * quantity;
         if(balance < total) return;
 
@@ -372,5 +372,4 @@
   </script>
 </body>
 </html>
-
 

@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
@@ -139,7 +139,7 @@
 
         @keyframes foaLoot { from { opacity: 0; transform: scale(.9) translateY(10px);} to {opacity:1; transform:scale(1) translateY(0);} }
 
-        /* Ãœst Rozetler (Badges) */
+        /* Üst Rozetler (Badges) */
         .balance-badge, .foa-floor-badge, .foa-depot-badge {
             font-family: var(--font-title);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1);
@@ -271,7 +271,7 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* Ã–zel Scrollbar */
+        /* Özel Scrollbar */
         .foa-card-menu::-webkit-scrollbar { width: 8px; }
         .foa-card-menu::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
         .foa-card-menu::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 10px; border: 1px solid rgba(15,23,42,1); }
@@ -471,7 +471,48 @@
             close: `{{ t.get("close", "Close") }}`,
             emptyDepot: `{{ t.get("foa_depot_empty", "Depot is empty.") }}`,
             chestOpen: `{{ t.get("foa_chest_open", "Chest Opening") }}`,
-            all: `{{ t.get("all", "All") }}`
+            all: `{{ t.get("all", "All") }}`,
+            nextEnemy: `{{ t.get("foa_next_enemy", "Next Enemy") }}`,
+            infinityStone: `{{ t.get("foa_infinity_stone", "Infinity Stone") }}`,
+            activeBattle: `{{ t.get("foa_active_battle", "Active Battle") }}`,
+            enemy: `{{ t.get("foa_enemy", "Enemy") }}`,
+            remainingTime: `{{ t.get("foa_remaining_time", "Remaining Time") }}`,
+            partyPower: `{{ t.get("foa_party_power", "Party Power") }}`,
+            enemyPower: `{{ t.get("foa_enemy_power", "Enemy Power") }}`,
+            partyStatus: `{{ t.get("foa_party_status", "Party Status") }}`,
+            deadShort: `{{ t.get("foa_dead_short", "DEAD") }}`,
+            startBattle: `{{ t.get("foa_start_battle", "Start Battle") }}`,
+            battleLogs: `{{ t.get("foa_battle_logs", "Battle Logs") }}`,
+            summonTitle: `{{ t.get("foa_summon_title", "Hero Summon") }}`,
+            summonSingle: `{{ t.get("foa_summon_single", "Single") }}`,
+            summonTen: `{{ t.get("foa_summon_ten", "Ten") }}`,
+            summonTowerRequired: `{{ t.get("foa_summon_tower_required", "Mage Tower must be active to summon heroes.") }}`,
+            alive: `{{ t.get("foa_alive", "ALIVE") }}`,
+            waiting: `{{ t.get("foa_waiting", "Waiting") }}`,
+            removeFromParty: `{{ t.get("foa_remove_from_party", "Remove from Party") }}`,
+            addToParty: `{{ t.get("foa_add_to_party", "Add to Party") }}`,
+            bestEquipment: `{{ t.get("foa_best_equipment", "Best Equipment") }}`,
+            train20m: `{{ t.get("foa_train_20m", "Train (20m)") }}`,
+            revive: `{{ t.get("foa_revive", "Revive") }}`,
+            trainingNow: `{{ t.get("foa_training_now", "Training") }}`,
+            reward: `{{ t.get("foa_reward", "Reward") }}`,
+            buildingConstruction: `{{ t.get("foa_building_construction", "Building Construction") }}`,
+            built: `{{ t.get("foa_built", "Built") }}`,
+            cost100: `{{ t.get("foa_cost_100", "Cost: 100") }}`,
+            upgradeStatus: `{{ t.get("foa_upgrade_status", "Upgrade Status") }}`,
+            upgrading: `{{ t.get("foa_upgrading", "Upgrading") }}`,
+            finishNow: `{{ t.get("foa_finish_now", "Finish Now") }}`,
+            upgrade: `{{ t.get("foa_upgrade", "Upgrade") }}`,
+            maxLevel: `{{ t.get("foa_max_level", "Maximum Level") }}`,
+            recipesAndCraft: `{{ t.get("foa_recipes_and_craft", "Recipes and Crafting") }}`,
+            unlockAt: `{{ t.get("foa_unlock_at", "Unlock at") }}`,
+            buyRecipe: `{{ t.get("foa_buy_recipe", "Buy Recipe") }}`,
+            craft: `{{ t.get("foa_craft", "Craft") }}`,
+            vendorStock: `{{ t.get("foa_vendor_stock", "Vendor Stock") }}`,
+            noStock: `{{ t.get("foa_no_stock", "No stock available.") }}`,
+            equipmentUpgrade: `{{ t.get("foa_equipment_upgrade", "Equipment Upgrade") }}`,
+            noUpgradeableEquipped: `{{ t.get("foa_no_upgradeable_equipped", "No equipped item available for upgrade.") }}`,
+            items: `{{ t.get("foa_items", "Items") }}`
         };
 
         const frozenDefaults = [
@@ -599,6 +640,10 @@ Math.round(Number(b.progress || 0) * 1000),
 .sort()
 .join('||');
 }
+function hasActiveUpgrade(state) {
+const buildings = Array.isArray(state?.buildings) ? state.buildings : [];
+return buildings.some((b) => Boolean(b && b.is_upgrading));
+}
 function recipesForBuilding(buildingKey) {
 const rows = Array.isArray(foaState.recipes) ? foaState.recipes : [];
 return rows.filter((r) => String(r.building_key) === String(buildingKey));
@@ -628,7 +673,7 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
             
             const standardItems = items.filter((x) => !String(x.item_key || '').startsWith('chest_'));
             if(standardItems.length) {
-                html += `<div class="section-title">EÅŸyalar</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">`;
+                html += `<div class="section-title">${I18N.items}</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">`;
                 standardItems.forEach((it) => {
                     html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
                         <span>${esc(it.item_name)}</span>
@@ -695,38 +740,38 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
                 </div>
                 
                 <div style="display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">
-                    <div>SÄ±radaki DÃ¼ÅŸman: <b style="color:#ef4444;">${esc(t.enemy.enemy_name || '-')}</b> <span style="opacity:0.7">x${Number(t.enemy.enemy_count || 0)}</span></div>
-                    <div>Sonsuzluk TaÅŸÄ±: <b style="color:#c084fc;"><i class="fa-solid fa-gem"></i> ${Number(t.infinity_stones || 0)}</b></div>
+                    <div>${I18N.nextEnemy}: <b style="color:#ef4444;">${esc(t.enemy.enemy_name || '-')}</b> <span style="opacity:0.7">x${Number(t.enemy.enemy_count || 0)}</span></div>
+                    <div>${I18N.infinityStone}: <b style="color:#c084fc;"><i class="fa-solid fa-gem"></i> ${Number(t.infinity_stones || 0)}</b></div>
                 </div>
             `;
             if (active) {
                 html += `
-                    <div class="section-title" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-khanda"></i> Aktif SavaÅŸ</div>
+                    <div class="section-title" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-khanda"></i> ${I18N.activeBattle}</div>
                     <div class="foa-list-item">
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-                            <div>DÃ¼ÅŸman: <b>${esc(active.enemy_name)}</b></div>
-                            <div style="text-align:right;">Kalan Süre: <b style="color:#fbbf24;">${formatRemaining(Number(active.remaining_sec || 0) * 1000)}</b></div>
-                            <div>Parti Gücü: <b style="color:#38bdf8;">${Number(active.party_power || 0)}</b></div>
-                            <div style="text-align:right;">DÃ¼ÅŸman GÃ¼cÃ¼: <b style="color:#ef4444;">${Number(active.enemy_power || 0)}</b></div>
+                            <div>${I18N.enemy}: <b>${esc(active.enemy_name)}</b></div>
+                            <div style="text-align:right;">${I18N.remainingTime}: <b style="color:#fbbf24;">${formatRemaining(Number(active.remaining_sec || 0) * 1000)}</b></div>
+                            <div>${I18N.partyPower}: <b style="color:#38bdf8;">${Number(active.party_power || 0)}</b></div>
+                            <div style="text-align:right;">${I18N.enemyPower}: <b style="color:#ef4444;">${Number(active.enemy_power || 0)}</b></div>
                         </div>
                         <div style="background:rgba(0,0,0,0.4); height:8px; border-radius:4px; overflow:hidden; margin-bottom:16px;">
                             <div style="width:${Math.round(Number(active.progress || 0) * 100)}%; height:100%; background:linear-gradient(90deg, #ef4444, #f97316);"></div>
                         </div>
-                        <div style="font-weight:700; margin-bottom:8px; opacity:0.8;">Parti Durumu</div>
+                        <div style="font-weight:700; margin-bottom:8px; opacity:0.8;">${I18N.partyStatus}</div>
                 `;
                 (active.party || []).forEach((p) => {
                     const isDead = p.is_dead;
                     html += `<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px; border-left:3px solid ${isDead ? '#ef4444' : '#22c55e'};">
-                        <span>${esc(p.hero_name)} ${isDead ? '<span style="color:#ef4444;font-size:0.8em;">(Ã–LÃœ)</span>' : ''}</span>
+                        <span>${esc(p.hero_name)} ${isDead ? '<span style="color:#ef4444;font-size:0.8em;">(${I18N.deadShort})</span>' : ''}</span>
                         <span style="font-family:var(--font-main);"><i class="fa-solid fa-heart" style="color:#ef4444; font-size:0.9em;"></i> ${Number(p.hp || 0)}/${Number(p.max_hp || 0)}</span>
                     </div>`;
                 });
                 html += `</div>`;
             } else {
-                html += `<button class="foa-primary-btn" id="foaStartBattleBtn" style="width:100%; padding:16px; font-size:1.1rem; background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;"><i class="fa-solid fa-khanda" style="margin-right:8px;"></i> SavaÅŸÄ± BaÅŸlat</button>`;
+                html += `<button class="foa-primary-btn" id="foaStartBattleBtn" style="width:100%; padding:16px; font-size:1.1rem; background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;"><i class="fa-solid fa-khanda" style="margin-right:8px;"></i> ${I18N.startBattle}</button>`;
             }
             
-            html += `<div class="section-title"><i class="fa-solid fa-scroll"></i> Son SavaÅŸ KayÄ±tlarÄ±</div>`;
+            html += `<div class="section-title"><i class="fa-solid fa-scroll"></i> ${I18N.battleLogs}</div>`;
             (t.battle_logs || []).forEach((l) => {
                 const isWin = l.result.toLowerCase().includes('win') || l.result.toLowerCase().includes('kazan');
                 html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px;">
@@ -766,17 +811,17 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
                 html += `
                     <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(52, 211, 153, 0.3); padding:16px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <div style="font-family:var(--font-title); font-weight:bold; color:#34d399; margin-bottom:4px;">Kahraman Ã‡aÄŸÄ±rma</div>
-                            <div style="font-size:0.9rem; opacity:0.8;">Maliyet: Tekli ${Number(t.summon.single_cost || 500)} <i class="fa-solid fa-coins"></i> | 10'lu ${Number(t.summon.ten_cost || 5000)} <i class="fa-solid fa-coins"></i></div>
+                            <div style="font-family:var(--font-title); font-weight:bold; color:#34d399; margin-bottom:4px;">${I18N.summonTitle}</div>
+                            <div style="font-size:0.9rem; opacity:0.8;">Maliyet: ${I18N.summonSingle} ${Number(t.summon.single_cost || 500)} <i class="fa-solid fa-coins"></i> | ${I18N.summonTen} ${Number(t.summon.ten_cost || 5000)} <i class="fa-solid fa-coins"></i></div>
                         </div>
                         <div style="display:flex; gap:8px;">
-                            <button class="foa-primary-btn" id="foaSummonOneBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%);"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i> 1 Ã‡aÄŸrÄ±</button>
-                            <button class="foa-primary-btn" id="foaSummonTenBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;"><i class="fa-solid fa-users-rays" style="margin-right:6px;"></i> 10 Ã‡aÄŸrÄ±</button>
+                            <button class="foa-primary-btn" id="foaSummonOneBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%);"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i> 1 ${I18N.summonSingle}</button>
+                            <button class="foa-primary-btn" id="foaSummonTenBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;"><i class="fa-solid fa-users-rays" style="margin-right:6px;"></i> 10 Çağrı</button>
                         </div>
                     </div>
                 `;
             } else {
-                html += `<div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:20px; text-align:center; opacity:.7;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> Kahraman Ã§aÄŸÄ±rmak iÃ§in BÃ¼yÃ¼cÃ¼ Kulesi aktif olmalÄ±.</div>`;
+                html += `<div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:20px; text-align:center; opacity:.7;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${I18N.summonTowerRequired}</div>`;
             }
 
             html += `<div style="display:grid; grid-template-columns:1fr; gap:16px;">`;
@@ -792,10 +837,10 @@ const rarityColor = h.rarity === 'legendary' ? '#f59e0b' : h.rarity === 'epic' ?
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
                         <div>
                             <div style="font-family:var(--font-title); font-size:1.2rem; font-weight:bold; color:#fff;">${esc(h.hero_name)} <span style="font-size:0.7em; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); color:${rarityColor}; vertical-align:middle; text-transform:uppercase;">${esc(h.rarity || 'common')}</span></div>
-                            <div style="font-size:0.9rem; margin-top:4px; color:#cbd5e1;">Seviye ${Number(h.level || 1)} â€¢ XP: ${Number(h.xp || 0)}/${Number(h.next_level_xp || 100)}</div>
+                            <div style="font-size:0.9rem; margin-top:4px; color:#cbd5e1;">Seviye ${Number(h.level || 1)} • XP: ${Number(h.xp || 0)}/${Number(h.next_level_xp || 100)}</div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="font-weight:bold; color:${dead ? '#ef4444' : '#22c55e'};">${dead ? '<i class="fa-solid fa-skull"></i> Ã–LÃœ' : 'CANLI'} ${block ? '<span style="color:#fbbf24;font-size:0.8em;">(Beklemede)</span>' : ''}</div>
+                            <div style="font-weight:bold; color:${dead ? '#ef4444' : '#22c55e'};">${dead ? `<i class="fa-solid fa-skull"></i> ${I18N.deadShort}` : I18N.alive} ${block ? `<span style="color:#fbbf24;font-size:0.8em;">(${I18N.waiting})</span>` : ''}</div>
                         </div>
                     </div>
                     
@@ -806,10 +851,10 @@ const rarityColor = h.rarity === 'legendary' ? '#f59e0b' : h.rarity === 'epic' ?
                     </div>
                     
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
-<button class="foa-primary-btn" data-toggle-party="${esc(h.hero_id)}" ${dead ? 'disabled' : ''} style="${h.in_party ? 'background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;' : ''}"> ${h.in_party ? '<i class="fa-solid fa-minus"></i> Partiden Ã‡Ä±kar' : '<i class="fa-solid fa-plus"></i> Partiye Ekle'}
+<button class="foa-primary-btn" data-toggle-party="${esc(h.hero_id)}" ${dead ? 'disabled' : ''} style="${h.in_party ? 'background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;' : ''}"> ${h.in_party ? `<i class="fa-solid fa-minus"></i> ${I18N.removeFromParty}` : `<i class="fa-solid fa-plus"></i> ${I18N.addToParty}`}
 </button>
-<button class="foa-primary-btn" data-equip-best="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}><i class="fa-solid fa-shirt"></i> En İyi Ekipman</button>
-<button class="foa-primary-btn" data-train-hero="${esc(h.hero_id)}" ${dead || block ? 'disabled' : ''}><i class="fa-solid fa-dumbbell"></i> EÄŸit (20dk)</button>`;
+<button class="foa-primary-btn" data-equip-best="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}><i class="fa-solid fa-shirt"></i> ${I18N.bestEquipment}</button>
+<button class="foa-primary-btn" data-train-hero="${esc(h.hero_id)}" ${dead || block ? 'disabled' : ''}><i class="fa-solid fa-dumbbell"></i> ${I18N.train20m}</button>`;
 if (dead) {
 html += `<button class="foa-primary-btn" data-revive-hero="${esc(h.hero_id)}" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'} style="background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;"><i class="fa-solid fa-gem"></i> Canlandır</button>
                         <button class="foa-primary-btn" data-delete-hero="${esc(h.hero_id)}" style="background:rgba(220, 38, 38, 0.2); color:#fca5a5;"><i class="fa-solid fa-trash"></i></button>
@@ -818,7 +863,7 @@ html += `<button class="foa-primary-btn" data-revive-hero="${esc(h.hero_id)}" ${
                 html += `</div>`;
                 if (h.training) {
                     html += `<div style="margin-top:12px; padding:8px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:6px; color:#fbbf24; text-align:center; font-size:0.9rem;">
-                        <i class="fa-solid fa-person-running"></i> EÄŸitimde: <b>${formatRemaining(msRemaining(h.training.ends_at))}</b> | Ã–dÃ¼l: XP +${Number(h.training.xp_gain || 0)}
+                        <i class="fa-solid fa-person-running"></i> ${I18N.trainingNow}: <b>${formatRemaining(msRemaining(h.training.ends_at))}</b> | ${I18N.reward}: XP +${Number(h.training.xp_gain || 0)}
                     </div>`;
                 }
                 html += `</div>`;
@@ -908,7 +953,7 @@ const defs = Array.isArray(foaState.building_defs) ? foaState.building_defs : []
 const balance = Number(foaState.balance || 0);
 const builtKeys = new Set((foaState.buildings || []).map((b) => String(b.building_key || '')));
 const titleIcon = current ? (current.visual.icon || 'fa-solid fa-building') : 'fa-solid fa-hammer';
-            const titleText = current ? `${esc(current.building_name)} <span style="font-size:0.7em; opacity:0.8; vertical-align:middle;">(Lv.${Number(current.level || 1)})</span>` : 'Bina Ä°nÅŸasÄ±';
+            const titleText = current ? `${esc(current.building_name)} <span style="font-size:0.7em; opacity:0.8; vertical-align:middle;">(Lv.${Number(current.level || 1)})</span>` : I18N.buildingConstruction;
             
             let content = `
                 <div class="foa-menu-head">
@@ -926,7 +971,7 @@ const disabled = alreadyBuilt || !enough;
 content += `<button class="foa-building-btn" data-build-key="${esc(d.key)}" ${disabled ? 'disabled' : ''}>
                             <b>${esc(d.name)}</b>
                             <small style="margin-bottom:8px;">${esc(d.desc)}</small>
-                            <div style="margin-top:auto; font-weight:600; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};"> ${alreadyBuilt ? '<i class="fa-solid fa-check"></i> Ä°nÅŸa Edildi' : `<i class="fa-solid fa-coins"></i> Maliyet: 100`}
+                            <div style="margin-top:auto; font-weight:600; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};"> ${alreadyBuilt ? '<i class="fa-solid fa-check"></i> ${I18N.built}' : `<i class="fa-solid fa-coins"></i> ${I18N.cost100}`}
                             </div>
 </button>`;
 });
@@ -939,59 +984,59 @@ const rem = upgrading ? msRemaining(current.upgrade_ends_at) : 0;
                 content += `<div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">`;
                 content += `<div style="margin-bottom:12px; font-size:1.05rem; line-height:1.5;">${esc((defs.find(d => d.key === current.building_key) || {}).desc || '')}</div>`;
                 content += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <span>GeliÅŸim Durumu</span>
+                                <span>${I18N.upgradeStatus}</span>
                                 <b style="font-size:1.2rem; color:#38bdf8;">Lv. ${Number(current.level || 1)} <span style="opacity:0.5;font-size:0.8em;">/ ${Number(current.max_level || 10)}</span></b>
                             </div>`;
                             
                 if (upgrading) {
                     content += `<div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); padding:12px; border-radius:8px; margin-bottom:16px; color:#fbbf24; display:flex; justify-content:space-between; align-items:center;">
-<span><i class="fa-solid fa-hammer"></i> Yükseltiliyor (Lv.${Number(current.upgrading_to || 0)})</span>
+<span><i class="fa-solid fa-hammer"></i> ${I18N.upgrading} (Lv.${Number(current.upgrading_to || 0)})</span>
 <b>${formatRemaining(rem)}</b>
 </div>`;
 const instant = Number(current.quick_finish_cost || 0);
 const canFinish = balance >= instant;
-content += `<button class="foa-primary-btn" data-finish-now="${esc(selectedCardId)}" ${canFinish ? '' : 'disabled'} style="width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;"><i class="fa-solid fa-bolt"></i> Anında Bitir (${instant} Altın)</button>`;
+content += `<button class="foa-primary-btn" data-finish-now="${esc(selectedCardId)}" ${canFinish ? '' : 'disabled'} style="width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;"><i class="fa-solid fa-bolt"></i> ${I18N.finishNow} (${instant} Altın)</button>`;
 } else if (!maxed) {
 const price = Number(current.next_upgrade_cost || 0);
 const canBuy = !upgrading && balance >= price;
-content += `<button class="foa-primary-btn" data-upgrade-card="${esc(selectedCardId)}" ${canBuy ? '' : 'disabled'} style="width:100%;"><i class="fa-solid fa-arrow-up-right-dots"></i> Yükselt (<i class="fa-solid fa-coins" style="color:#fbbf24; margin:0 4px;"></i> ${price})</button>`;
+content += `<button class="foa-primary-btn" data-upgrade-card="${esc(selectedCardId)}" ${canBuy ? '' : 'disabled'} style="width:100%;"><i class="fa-solid fa-arrow-up-right-dots"></i> ${I18N.upgrade} (<i class="fa-solid fa-coins" style="color:#fbbf24; margin:0 4px;"></i> ${price})</button>`;
                 } else {
-                    content += `<div style="text-align:center; padding:12px; background:rgba(34, 197, 94, 0.1); color:#4ade80; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.3);"><i class="fa-solid fa-star"></i> Maksimum Seviye</div>`;
+                    content += `<div style="text-align:center; padding:12px; background:rgba(34, 197, 94, 0.1); color:#4ade80; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.3);"><i class="fa-solid fa-star"></i> ${I18N.maxLevel}</div>`;
                 }
                 content += `</div>`;
 
                 const recipeRows = recipesForBuilding(current.building_key);
                 if (recipeRows.length > 0) {
-                    content += `<div class="section-title"><i class="fa-solid fa-book-journal-whills"></i> Tarifler ve Ãœretim</div>`;
+                    content += `<div class="section-title"><i class="fa-solid fa-book-journal-whills"></i> ${I18N.recipesAndCraft}</div>`;
                     content += `<div style="display:grid; gap:10px;">`;
                     recipeRows.forEach((r) => {
                         if (!r.unlocked) {
                             content += `<div class="foa-list-item" style="opacity:0.6; display:flex; justify-content:space-between; margin-bottom:0;">
                                 <span><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${esc(r.name)}</span>
-                                <span>AÃ§Ä±lÄ±ÅŸ: Lv.${Number(r.min_level || 1)}</span>
+                                <span>${I18N.unlockAt}: Lv.${Number(r.min_level || 1)}</span>
 </div>`;
 return;
 }
 if (!r.owned) {
 const canBuyRecipe = balance >= Number(r.recipe_cost || 0);
 content += `<button class="foa-primary-btn" data-buy-recipe="${esc(r.key)}" ${canBuyRecipe ? '' : 'disabled'} style="justify-content:space-between;">
-                                <span><i class="fa-solid fa-scroll"></i> Tarif Al: ${esc(r.name)}</span>
+                                <span><i class="fa-solid fa-scroll"></i> ${I18N.buyRecipe}: ${esc(r.name)}</span>
                                 <span style="color:#fbbf24;">${Number(r.recipe_cost || 0)} <i class="fa-solid fa-coins"></i></span>
 </button>`;
 return;
 }
 const canCraft = balance >= Number(r.craft_cost || 0);
 content += `<button class="foa-primary-btn" data-craft-recipe="${esc(r.key)}" ${canCraft ? '' : 'disabled'} style="justify-content:space-between; background:linear-gradient(180deg, #0284c7 0%, #0369a1 100%); border-color:#38bdf8;">
-                            <span><i class="fa-solid fa-hammer"></i> Ãœret: ${esc(r.name)}</span>
+                            <span><i class="fa-solid fa-hammer"></i> ${I18N.craft}: ${esc(r.name)}</span>
                             <span style="color:#fbbf24;">${Number(r.craft_cost || 0)} <i class="fa-solid fa-coins"></i></span>
 </button>`;
 });
 content += `</div>`;
 }
 if (current.building_key === 'vendor') {
-content += `<div class="section-title"><i class="fa-solid fa-store"></i> SatÄ±cÄ± StoÄŸu</div>`;
+content += `<div class="section-title"><i class="fa-solid fa-store"></i> ${I18N.vendorStock}</div>`;
 const stock = Array.isArray(towerState.vendor_stock) ? towerState.vendor_stock : [];
-                    if (!stock.length) content += `<div style="opacity:0.7; text-align:center; padding:10px;">Stok bulunamadı.</div>`;
+                    if (!stock.length) content += `<div style="opacity:0.7; text-align:center; padding:10px;">${I18N.noStock}</div>`;
                     else {
                         content += `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">`;
 stock.forEach((s) => {
@@ -1007,7 +1052,7 @@ content += `</div>`;
 if (current.building_key === 'blacksmith' || current.building_key === 'armorer') {
 const slot = current.building_key === 'blacksmith' ? 'weapon' : 'armor';
 const icon = current.building_key === 'blacksmith' ? 'fa-khanda' : 'fa-shield-halved';
-                    content += `<div class="section-title"><i class="fa-solid ${icon}"></i> Ekipman Yükseltme (${slot.toUpperCase()})</div>`;
+                    content += `<div class="section-title"><i class="fa-solid ${icon}"></i> ${I18N.equipmentUpgrade} (${slot.toUpperCase()})</div>`;
                     content += `<div style="display:grid; gap:10px;">`;
 let foundAny = false;
 (towerState.heroes || []).forEach((h) => {
@@ -1026,7 +1071,7 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
                             <div style="color:#fbbf24;"><i class="fa-solid fa-arrow-up"></i> ${cost} <i class="fa-solid fa-coins"></i></div>
                         </button>`;
                     });
-                    if(!foundAny) content += `<div style="opacity:0.7; text-align:center; padding:10px;">YÃ¼kseltilecek kuÅŸanÄ±lmÄ±ÅŸ ekipman yok.</div>`;
+                    if(!foundAny) content += `<div style="opacity:0.7; text-align:center; padding:10px;">${I18N.noUpgradeableEquipped}</div>`;
                     content += `</div>`;
                 }
             }
@@ -1124,17 +1169,15 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
             foaState = res;
             updateTopBadges();
             const nextSig = gridSignatureFromState(foaState);
-            if (nextSig !== lastGridSignature) {
+            if (nextSig !== lastGridSignature || hasActiveUpgrade(foaState)) {
                 lastGridSignature = nextSig;
                 render();
             }
             if (cardMenu.style.display === 'block') {
-                const hoveringMenu = cardMenu.matches(':hover');
-                if (!hoveringMenu) {
-                    if (menuMode === 'tower') renderTowerPanel();
-                    else if (menuMode === 'characters') renderCharactersPanel();
-                    else if (menuMode === 'depot') renderDepotPanel();
-                }
+                if (menuMode === 'tower') renderTowerPanel();
+                else if (menuMode === 'characters') renderCharactersPanel();
+                else if (menuMode === 'depot') renderDepotPanel();
+                else renderMenu();
             }
             const tw = await api('/api/fear-of-abyss/tower/state', 'GET');
             if (tw && tw.ok) {
@@ -1177,7 +1220,7 @@ el.style.background = `linear-gradient(135deg, color-mix(in srgb, ${String(visua
 const label = document.createElement('div');
 label.className = 'foa-grid-item-label';
 const icon = String(visual.icon || 'fa-solid fa-building');
-const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä°nÅŸa Lv.${Number(st.upgrading_to || 1)}`;
+const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `İnşa Lv.${Number(st.upgrading_to || 1)}`;
                     label.innerHTML = `<i class="${icon}"></i><span>${esc(st.building_name)} <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">${levelText}</span></span>`;
                     el.appendChild(label);
                     if (st.is_upgrading) {
@@ -1190,7 +1233,7 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
                         el.appendChild(bar);
                     }
                 } else {
-                    // BoÅŸ slotlar iÃ§in (isteÄŸe baÄŸlÄ±) hafif bir Ã§erÃ§eve veya iÅŸaret eklenebilir.
+                    // Boş slotlar için (isteğe bağlı) hafif bir çerçeve veya işaret eklenebilir.
                     el.style.border = "2px dashed rgba(100, 116, 139, 0.2)";
                     el.style.borderRadius = "12px";
                     el.style.background = "rgba(15, 23, 42, 0.2)";
@@ -1271,7 +1314,3 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
     <script src="/pc/js/app.js"></script>
 </body>
 </html>
-
-
-
-

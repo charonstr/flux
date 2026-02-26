@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   let dmSource = null;
   let eventSource = null;
   let presenceTimer = null;
@@ -6,6 +6,9 @@
   let lastEventVersion = 0;
   let globalRefreshing = false;
   let lastRailData = null; 
+  let literalI18nMap = null;
+  let literalI18nObserver = null;
+  let literalI18nFetchStarted = false;
 
   function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -38,6 +41,84 @@
       return;
     }
     applyTheme('dark');
+  }
+
+  function mapLiteralValue(raw, map) {
+    if (!raw) return raw;
+    const value = String(raw);
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+    const mapped = map[trimmed];
+    if (!mapped || mapped === trimmed) return value;
+    const start = value.indexOf(trimmed);
+    if (start < 0) return mapped;
+    const end = start + trimmed.length;
+    return value.slice(0, start) + mapped + value.slice(end);
+  }
+
+  function applyLiteralTranslations(root, map) {
+    if (!root || !map || !Object.keys(map).length) return;
+    const base = root.nodeType === 9 ? (root.body || document.body) : root;
+    if (!base) return;
+
+    const attrTargets = base.matches ? [base] : [];
+    attrTargets.push(...base.querySelectorAll ? Array.from(base.querySelectorAll('[title], [placeholder], [aria-label]')) : []);
+    attrTargets.forEach((el) => {
+      ['title', 'placeholder', 'aria-label'].forEach((attr) => {
+        if (!el.hasAttribute || !el.hasAttribute(attr)) return;
+        const prev = el.getAttribute(attr);
+        const next = mapLiteralValue(prev, map);
+        if (next !== prev) el.setAttribute(attr, next);
+      });
+    });
+
+    const walker = document.createTreeWalker(base, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const parent = node.parentElement;
+      if (parent) {
+        const tag = (parent.tagName || '').toUpperCase();
+        if (tag !== 'SCRIPT' && tag !== 'STYLE') {
+          const prev = node.nodeValue;
+          const next = mapLiteralValue(prev, map);
+          if (next !== prev) node.nodeValue = next;
+        }
+      }
+      node = walker.nextNode();
+    }
+  }
+
+  async function ensureLiteralLocalization(root = document) {
+    const lang = String(document.documentElement.getAttribute('lang') || '').toLowerCase();
+    if (!lang || lang.startsWith('tr')) return;
+
+    if (!literalI18nMap && !literalI18nFetchStarted) {
+      literalI18nFetchStarted = true;
+      try {
+        const res = await fetch('/api/i18n/literals', {
+          headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache, no-store' },
+          cache: 'no-store',
+        });
+        const data = await res.json();
+        literalI18nMap = data && data.ok ? (data.map || {}) : {};
+      } catch (_) {
+        literalI18nMap = {};
+      }
+    }
+
+    if (!literalI18nMap || !Object.keys(literalI18nMap).length) return;
+    applyLiteralTranslations(root, literalI18nMap);
+
+    if (!literalI18nObserver && document.body) {
+      literalI18nObserver = new MutationObserver((mutations) => {
+        mutations.forEach((m) => {
+          m.addedNodes.forEach((n) => {
+            if (n && n.nodeType === 1) applyLiteralTranslations(n, literalI18nMap);
+          });
+        });
+      });
+      literalI18nObserver.observe(document.body, { childList: true, subtree: true });
+    }
   }
 
   function ensureNavMask() {
@@ -234,31 +315,6 @@
       });
   }
 
-  function ensureProfileModal(doc) {
-      let overlay = doc.getElementById('modalOverlay');
-      if (!overlay) {
-          overlay = doc.createElement('div');
-          overlay.id = 'modalOverlay';
-          overlay.className = 'modal-overlay';
-          doc.body.appendChild(overlay);
-      }
-
-      let modal = doc.getElementById('profileModal');
-      if (!modal) {
-          modal = doc.createElement('div');
-          modal.id = 'profileModal';
-          modal.className = 'modal';
-          modal.innerHTML = `
-              <div class="modal-content">
-                  <a href="/profile" data-nav="soft" class="modal-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
-                  <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>Settings</span></a>
-                  <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
-              </div>
-          `;
-          doc.body.appendChild(modal);
-      }
-  }
-
   function injectSPAStyles() {
       if (document.getElementById('spa-styles')) return;
       const style = document.createElement('style');
@@ -331,6 +387,13 @@
       document.body.classList.add('shell-active');
 
       const oldMain = document.querySelector('main');
+      const looseContent = Array.from(document.body.children).filter((node) => {
+          if (!node || !node.tagName) return false;
+          if (node.classList.contains('server-shell')) return false;
+          if (node.classList.contains('bg-texture') || node.classList.contains('ambient-orb')) return false;
+          if (node.id === 'universal-shell-styles' || node.id === 'spa-styles' || node.id === 'page-style') return false;
+          return node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE';
+      });
       const oldTopbar = document.querySelector('.topbar');
       
       let avatarSrc = '/pc/avatar.svg';
@@ -381,8 +444,9 @@
       serverMain.className = 'server-main';
       if (oldMain) {
           oldMain.style.paddingTop = '0';
-          // DOM KOPMA HATASI ÇÖZÜMÜ: cloneNode(true) İPTAL EDİLDİ
           serverMain.appendChild(oldMain);
+      } else {
+          looseContent.forEach((node) => serverMain.appendChild(node));
       }
 
       shell.appendChild(rail);
@@ -885,6 +949,15 @@
         }
     }
 
+    if (!isSubmit && !replaceOnly) {
+        if (scrollTargetSelector) {
+            const newMain = document.querySelector(scrollTargetSelector);
+            if (newMain) newMain.scrollTop = 0;
+        } else {
+            window.scrollTo(0, 0);
+        }
+    }
+
     const newChatContainer = document.querySelector('.chat-messages, .chatbox');
     if (newChatContainer) {
         if (isSubmit || isChatAtBottom || (!isSubmit && !replaceOnly)) {
@@ -960,8 +1033,8 @@
 
   function bind() {
     ensureServerShell();
-    ensureProfileModal(document);
     ensureProfileLink(document); 
+    ensureLiteralLocalization(document);
     window.initDraggableModals(); 
     
     document.querySelectorAll('.invite-link-span').forEach(span => {
@@ -1112,7 +1185,6 @@
   
   document.addEventListener('DOMContentLoaded', () => {
       initTheme();
-      ensureProfileModal(document);
       ensureProfileLink(document);
       updateDynamicRail();
       document.querySelectorAll('.chat-messages, .chatbox').forEach(b => b.scrollTop = b.scrollHeight);
@@ -1120,3 +1192,4 @@
   
   bind();
 })();
+

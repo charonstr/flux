@@ -46,7 +46,7 @@
     }
 
     function getBallRadii() {
-      const size = Number(wheel.getBoundingClientRect().width || 320);
+      const size = Number(wheel?.getBoundingClientRect().width || 320);
       const end = Math.max(58, Math.round(size * 0.3125));
       const start = Math.max(end + 16, Math.round(size * 0.40625));
       return { start, end };
@@ -73,13 +73,13 @@
     function colorClass(num) {
       if (String(num) === '0' || String(num) === '00') return 'green';
       const redNums = ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"];
-      return redNums.includes(String(num))  'red' : 'black';
+      return redNums.includes(String(num)) ? 'red' : 'black';
     }
 
     function getSpotSum(type, sel) {
       const key = type + ':' + sel.join(',');
       let sum = 0;
-      (state.bets || []).forEach(b => { if (b.bet_type + ':' + (b.selection || []).join(',') === key) sum += Number(b.amount || 0); });
+      (state?.bets || []).forEach(b => { if (b.bet_type + ':' + (b.selection || []).join(',') === key) sum += Number(b.amount || 0); });
       return sum;
     }
 
@@ -130,7 +130,7 @@
       chipBar.innerHTML = '';
       arr.forEach(v => {
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'chip-btn' + (Number(v) === Number(selectedChip)  ' active' : '');
+        b.type = 'button'; b.className = 'chip-btn' + (Number(v) === Number(selectedChip) ? ' active' : '');
         b.textContent = String(v); b.setAttribute('data-val', String(v));
         b.onclick = function () { selectedChip = Number(v); updateChips(); };
         chipBar.appendChild(b);
@@ -153,7 +153,7 @@
         const seg = document.createElement('div');
         seg.className = 'pocket'; seg.setAttribute('data-num', String(n));
         seg.style.transform = `rotate(${(360 / total) * idx}deg)`;
-        seg.style.background = colorClass(n) === 'red'  '#dc2626' : (colorClass(n) === 'green'  '#059669' : '#111827');
+        seg.style.background = colorClass(n) === 'red' ? '#dc2626' : (colorClass(n) === 'green' ? '#059669' : '#111827');
         wheelTrack.appendChild(seg);
       });
     }
@@ -206,8 +206,8 @@
       if (stateText && !stateText.textContent.includes("BASLIYOR") && !stateText.textContent.includes("BEKLENIYOR")) stateText.textContent = stMap[state.state] || state.state;
       if(timerText) timerText.textContent = String(phaseTimer);
       
-      let resColorTr = state.result_color === 'red'  'KIRMIZI' : (state.result_color === 'black'  'SIYAH' : (state.result_color === 'green'  'YESIL' : ''));
-      if(resultText) resultText.textContent = state.result_pocket  (String(state.result_pocket) + ' ' + resColorTr) : '-';
+      let resColorTr = state.result_color === 'red' ? 'KIRMIZI' : (state.result_color === 'black' ? 'SIYAH' : (state.result_color === 'green' ? 'YESIL' : ''));
+      if(resultText) resultText.textContent = state.result_pocket ? (String(state.result_pocket) + ' ' + resColorTr) : '-';
       if(totalBetText) totalBetText.textContent = String(Number(state.total_bet || 0));
       
       if (!isInitialized) { buildChips(); buildTable(); buildWheel(); isInitialized = true; }
@@ -336,7 +336,7 @@
     api('/api/casino/roulette/state', 'GET').then(res => {
         if (res) {
             state = res.state;
-            phaseTimer = state.state === 'betting_open'  Math.max(0, Number(state.remaining_seconds || getSafeConstants().betting_timer_seconds)) : 0;
+            phaseTimer = state.state === 'betting_open' ? Math.max(0, Number(state.remaining_seconds || getSafeConstants().betting_timer_seconds)) : 0;
             render(); 
         }
     });

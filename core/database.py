@@ -30,10 +30,7 @@ def path(name: str) -> Path:
 
 
 def connect(name: str) -> sqlite3.Connection:
-    db = sqlite3.connect(path(name), timeout=20)
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute("PRAGMA busy_timeout = 20000")
-    return db
+    return sqlite3.connect(path(name))
 
 
 def hascolumn(db: sqlite3.Connection, table: str, col: str) -> bool:
@@ -460,6 +457,7 @@ def setup() -> None:
         if not hascolumn(db, "servers", "shareperms"):
             db.execute("ALTER TABLE servers ADD COLUMN shareperms TEXT NOT NULL DEFAULT ''")
 
+
 def savevisitor(token: str, language: str, useragent: str, ip: str) -> None:
     with connect("visitors") as db:
         db.execute(
@@ -473,14 +471,6 @@ def savevisitor(token: str, language: str, useragent: str, ip: str) -> None:
             """,
             (token, language, useragent, ip),
         )
-
-
-def visitorlanguage(token: str) -> str | None:
-    if not token:
-        return None
-    with connect("visitors") as db:
-        row = db.execute("SELECT language FROM visitors WHERE token = ?", (str(token),)).fetchone()
-    return str(row[0]) if row and row[0] else None
 
 
 def createaccount(username: str, passwordhash: str) -> bool:
@@ -889,12 +879,8 @@ def updatepassword(accountid: int, passwordhash: str) -> None:
 
 
 def heartbeat(accountid: int, when: str) -> None:
-    try:
-        with connect("accounts") as db:
-            db.execute("UPDATE accounts SET lastseen = ? WHERE id = ?", (when, accountid))
-    except sqlite3.OperationalError:
-        # Presence update is best-effort; do not fail request flow on transient locks.
-        return
+    with connect("accounts") as db:
+        db.execute("UPDATE accounts SET lastseen = ? WHERE id = ?", (when, accountid))
 
 
 def arefriends(a: int, b: int) -> bool:

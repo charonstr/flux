@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ t.get("roulette", "Roulette") }} - Euphorium</title>
+  <title>Roulette - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -93,7 +93,7 @@
   <main class="roulette-root">
     <div class="roulette-top">
       <div class="top-links">
-          <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> MenÃ¼</a>
+          <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menü</a>
       </div>
       <div class="balance-badge"><i class="fa-solid fa-coins"></i><span id="balanceText">0</span></div>
     </div>
@@ -112,15 +112,15 @@
       <div class="controls-panel">
           <div class="chips" id="chipBar"></div>
           <div class="actions">
-            <button id="minBtn" class="btn-sys" type="button">MÄ°N</button>
+            <button id="minBtn" class="btn-sys" type="button">MİN</button>
             <button id="maxBtn" class="btn-sys" type="button">MAKS</button>
-            <button id="undoBtn" class="btn-sys" type="button">GERÄ° AL</button>
-            <button id="clearBtn" class="btn-sys" type="button">TEMÄ°ZLE</button>
+            <button id="undoBtn" class="btn-sys" type="button">GERİ AL</button>
+            <button id="clearBtn" class="btn-sys" type="button">TEMİZLE</button>
           </div>
           <div class="status-bar">
               <div>Durum: <b id="stateText">-</b></div>
-              <div>SÃ¼re: <b id="timerText" style="color:#fcd34d;">0</b></div>
-              <div>SonuÃ§: <b id="resultText">-</b></div>
+              <div>Süre: <b id="timerText" style="color:#fcd34d;">0</b></div>
+              <div>Sonuç: <b id="resultText">-</b></div>
               <div>Toplam Bahis: <b id="totalBetText" style="color:#34d399;">0</b></div>
           </div>
       </div>
@@ -130,4 +130,3 @@
   <script src="/pc/js/casino/roulette.js"></script>
 </body>
 </html>
-

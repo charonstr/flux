@@ -1,5 +1,4 @@
 import json
-import random
 import sqlite3
 import time
 from collections import defaultdict
@@ -96,17 +95,17 @@ from core.database import (
     updateavatar,
     updatepassword,
     updateusername,
-    visitorlanguage,
 )
 from core.economy import get_balance, initialize_user_economy, spend_gold
+from core.fearofabyss_backend import register_fearofabyss_backend
 from core.leveling import add_xp, get_level
 from core.texts import language, texts
-from core.fearofabyss_backend import register_fearofabyss_backend
 
 
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA = ROOT / "media"
 DMROOT = MEDIA / "dm"
+LITERALS_INDEX = ROOT / "data" / "literals_index.json"
 
 IMAGE_MAX = 200 * 1024 * 1024
 VIDEO_MAX = 300 * 1024 * 1024
@@ -185,15 +184,9 @@ def visitor() -> str:
 
 def userlanguage() -> str | None:
     current = session.get("language")
-    if current:
-        return language(current)
-    # Fallback: recover previously chosen language for this visitor token.
-    saved = visitorlanguage(visitor())
-    if saved:
-        lang = language(saved)
-        session["language"] = lang
-        return lang
-    return None
+    if not current:
+        return None
+    return language(current)
 
 
 def currentaccount():
@@ -281,6 +274,23 @@ def navcontext(content: dict, current: str):
     if account:
         ctx["friendcount"] = friendcount(account[0])
     return ctx
+
+
+def literallookup(content: dict) -> dict[str, str]:
+    if not LITERALS_INDEX.exists():
+        return {}
+    try:
+        raw = json.loads(LITERALS_INDEX.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out: dict[str, str] = {}
+    for key, source in raw.items():
+        source_text = str(source or "").strip()
+        if not source_text:
+            continue
+        target = str(content.get(str(key), source_text))
+        out[source_text] = target
+    return out
 
 
 def saveavatar(file, crop: bool) -> str:
@@ -446,48 +456,6 @@ def candom(meid: int, peer: int) -> bool:
     return peer in ids
 
 
-@app.route("/api/nav")
-def apinav():
-    me = currentaccount()
-    if not me:
-        return {"ok": False}
-    mine, _ = serverlist(me[0])
-    servers = [{"id": s[0], "name": s[1], "avatar": smallavatar(s[2])} for s in mine]
-    return {"ok": True, "servers": servers, "avatar": avatarurl(me)}
-
-
-@app.route("/home")
-def home():
-    current = userlanguage()
-    if not current:
-        return redirect(url_for("choose"))
-        
-    account = currentaccount()
-    if not account:
-        return redirect(url_for("login"))
-        
-    content = texts(current)
-    ctx = navcontext(content, current)
-    mine, _ = serverlist(account[0])
-    ctx["servercount"] = len(mine)
-    
-    s, p = socialcards(account[0])
-    ctx["suggestions"] = s
-    ctx["pending"] = p
-    dmp = []
-    for rid, sid in pendingdmreceived(account[0]):
-        u = accountbyid(sid)
-        if u:
-            dmp.append({"requestid": rid, "id": sid, "username": u[1], "avatar": smallavatar(u[3])})
-    ctx["dmpending"] = dmp
-    
-    return render_template(viewfile("home.html"), **ctx)
-
-
-@app.route("/")
-def root():
-    return redirect(url_for("home"))
-
 register_fearofabyss_backend(
     app,
     request=request,
@@ -506,6 +474,53 @@ register_fearofabyss_backend(
     viewfile=viewfile,
 )
 
+
+@app.route("/api/nav")
+def apinav():
+    me = currentaccount()
+    if not me:
+        return {"ok": False}
+    mine, _ = serverlist(me[0])
+    servers = [{"id": s[0], "name": s[1], "avatar": smallavatar(s[2])} for s in mine]
+    return {"ok": True, "servers": servers, "avatar": avatarurl(me)}
+
+
+@app.route("/api/i18n/literals")
+def i18nliterals():
+    current = userlanguage() or "en"
+    content = texts(current)
+    return {"ok": True, "lang": current, "map": literallookup(content)}
+
+
+@app.route("/home")
+def home():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+        
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+        
+    content = texts(current)
+    ctx = navcontext(content, current)
+    
+    s, p = socialcards(account[0])
+    ctx["suggestions"] = s
+    ctx["pending"] = p
+    dmp = []
+    for rid, sid in pendingdmreceived(account[0]):
+        u = accountbyid(sid)
+        if u:
+            dmp.append({"requestid": rid, "id": sid, "username": u[1], "avatar": smallavatar(u[3])})
+    ctx["dmpending"] = dmp
+    
+    return render_template(viewfile("home.html"), **ctx)
+
+
+@app.route("/")
+def root():
+    return redirect(url_for("home"))
 
 
 @app.route("/casino")
@@ -1202,8 +1217,7 @@ def choose():
             return redirect(url_for("login"))
         return redirect(url_for("home"))
     current = userlanguage() or "en"
-    content = texts(current)
-    return render_template(viewfile("language.html"), **navcontext(content, current))
+    return render_template(viewfile("language.html"), t=texts(current), current=current)
 
 
 @app.route("/set/<code>")
@@ -1559,10 +1573,7 @@ def socialrevoke(target: int):
     if me:
         from core.database import connect
         with connect("social") as db:
-            db.execute(
-                "DELETE FROM requests WHERE sender = ? AND receiver = ? AND status = 'pending'",
-                (me[0], target),
-            )
+            db.execute("DELETE FROM friend_requests WHERE senderid = ? AND receiverid = ?", (me[0], target))
         emit(me[0], target)
     return redirect(url_for("home"))
 
@@ -1666,11 +1677,7 @@ def media(filename: str):
 
 @app.route("/assets/<path:filename>")
 def projectassets(filename: str):
-    response = send_from_directory(ROOT / "assets", filename)
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+    return send_from_directory(ROOT / "assets", filename)
 
 
 @app.route("/<zone>/<path:filename>")

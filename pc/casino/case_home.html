@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ t.get("cases", "Cases") }} - Euphorium</title>
+  <title>Kasalar - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -36,10 +36,10 @@
     (function(){
       const grid = document.getElementById('caseGrid');
       async function init(){
-        const res = await fetch('/api/casino/case/statecase=afet', { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
+        const res = await fetch('/api/casino/case/state?case=afet', { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
         const data = await res.json();
         if (!res.ok || !data.ok) return;
-        const cases = data.constants.cases || [];
+        const cases = data.constants?.cases || [];
         grid.innerHTML = cases.map(function(c){
           return '<a class="card" href="/casino/case/' + c.id + '" data-nav="soft">' +
                  '<div class="cover"><img src="/assets/casino/case/' + c.id + '/' + c.id + 'case.png" alt="' + c.name + '" onerror="if(!this.dataset.fallback){this.dataset.fallback=\'1\';this.src=\'/assets/casino/case/' + c.id + '/felaketcase.png\';return;}this.parentElement.classList.add(\'noimg\');this.remove();"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
@@ -52,4 +52,3 @@
   </script>
 </body>
 </html>
-

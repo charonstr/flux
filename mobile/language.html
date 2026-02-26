@@ -1,5 +1,5 @@
-﻿<!doctype html>
-<html lang="en">
+<!doctype html>
+<html lang="{{ current or 'en' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -107,17 +107,17 @@
         <form method="post" class="lang-grid">
             <button type="submit" name="language" value="tr" class="lang-btn">
                 <span style="font-size: 1.5rem;">🇹🇷</span>
-                <span class="lang-name">{% if t is defined %}{{ t.get("turkish", "Türkçe") }}{% else %}Türkçe{% endif %}</span>
+                <span class="lang-name">Türkçe</span>
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
             <button type="submit" name="language" value="en" class="lang-btn">
-                <span style="font-size: 1.5rem;">🇬🇧</span>
-                <span class="lang-name">{% if t is defined %}{{ t.get("english", "English") }}{% else %}English{% endif %}</span>
+                <span style="font-size: 1.5rem;">🇺🇸</span>
+                <span class="lang-name">English</span>
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
             <button type="submit" name="language" value="es" class="lang-btn">
                 <span style="font-size: 1.5rem;">🇪🇸</span>
-                <span class="lang-name">{% if t is defined %}{{ t.get("spanish", "Español") }}{% else %}Español{% endif %}</span>
+                <span class="lang-name">Español</span>
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
         </form>
@@ -125,3 +125,4 @@
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>
+

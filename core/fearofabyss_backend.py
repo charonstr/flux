@@ -33,31 +33,45 @@ def register_fearofabyss_backend(app, *,
     FOA_BUILDINGS = {
         "hospital": {
             "name": "Hastane",
-            "desc": "Yarali kahramanlar daha hizli iyilesir. Seviye arttikca etki artar.",
+            "name_key": "foa_building_hospital_name",
+            "desc": "Yaralı kahramanlar daha hızlı iyileşir. Seviye arttıkça etki artar.",
+            "desc_key": "foa_building_hospital_desc",
         },
         "training_arena": {
-            "name": "Egitim Arenasi",
-            "desc": "Secilen kahramanlari sureli egitip XP kazandirir. Kapasite ve XP seviye ile artar.",
+            "name": "Eğitim Arenası",
+            "name_key": "foa_building_training_arena_name",
+            "desc": "Seçilen kahramanları süreli eğitip XP kazandırır. Kapasite ve XP seviye ile artar.",
+            "desc_key": "foa_building_training_arena_desc",
         },
         "vendor": {
-            "name": "Satici",
-            "desc": "Her saat rastgele 4 item satar. Seviye arttikca item kalitesi artar.",
+            "name": "Satıcı",
+            "name_key": "foa_building_vendor_name",
+            "desc": "Her saat rastgele 4 eşya satar. Seviye arttıkça eşya kalitesi artar.",
+            "desc_key": "foa_building_vendor_desc",
         },
         "blacksmith": {
             "name": "Demirci",
-            "desc": "Silah uretimi/satin alimi icin kullanilir. Seviye item kalitesini artirir.",
+            "name_key": "foa_building_blacksmith_name",
+            "desc": "Silah üretimi/satın alımı için kullanılır. Seviye eşya kalitesini artırır.",
+            "desc_key": "foa_building_blacksmith_desc",
         },
         "armorer": {
-            "name": "Zirhci",
-            "desc": "Zirh uretimi/satin alimi icin kullanilir. Seviye ile yeni itemler acilir.",
+            "name": "Zırhçı",
+            "name_key": "foa_building_armorer_name",
+            "desc": "Zırh üretimi/satın alımı için kullanılır. Seviye ile yeni eşyalar açılır.",
+            "desc_key": "foa_building_armorer_desc",
         },
         "mage_tower": {
-            "name": "Buyu Kulesi",
-            "desc": "Kahraman cagirimi icin kullanilir. Seviye ile guclu kahraman sansi artar.",
+            "name": "Büyü Kulesi",
+            "name_key": "foa_building_mage_tower_name",
+            "desc": "Kahraman çağırımı için kullanılır. Seviye ile güçlü kahraman şansı artar.",
+            "desc_key": "foa_building_mage_tower_desc",
         },
         "depot": {
             "name": "Depo",
-            "desc": "Tum itemler burada depolanir. Seviye depolama kapasitesini artirir.",
+            "name_key": "foa_building_depot_name",
+            "desc": "Tüm eşyalar burada depolanır. Seviye depolama kapasitesini artırır.",
+            "desc_key": "foa_building_depot_desc",
         },
     }
     FOA_BUILDING_VISUALS = {
@@ -1088,6 +1102,19 @@ def register_fearofabyss_backend(app, *,
         if best_level <= 0:
             return {"built": False, "level": 0, "capacity": 0}
         return {"built": True, "level": best_level, "capacity": best_level * 100}
+
+
+    def _foa_content() -> dict:
+        lang = userlanguage() or "en"
+        return texts(lang)
+
+
+    def _foa_text(content: dict, key: str, fallback: str) -> str:
+        if key:
+            val = content.get(key, fallback)
+            if isinstance(val, str) and val.strip():
+                return val
+        return fallback
     
     
     def _foa_state_payload(user_id: int) -> dict:
@@ -1095,9 +1122,11 @@ def register_fearofabyss_backend(app, *,
         _foa_finish_due_upgrades(user_id)
         _foa_ensure_recipe_tables()
         rows = _foa_rows(user_id)
+        content = _foa_content()
         now_iso = _foa_now().isoformat()
         out = []
         for card_id, building_key, level, base_cost, upgrading_to, upgrade_started_at, upgrade_ends_at in rows:
+            meta = FOA_BUILDINGS.get(str(building_key), {})
             level = int(level)
             base_cost = int(base_cost)
             upgrading_to = int(upgrading_to or 0)
@@ -1109,7 +1138,7 @@ def register_fearofabyss_backend(app, *,
                 {
                     "card_id": str(card_id),
                     "building_key": str(building_key),
-                    "building_name": FOA_BUILDINGS.get(str(building_key), {}).get("name", str(building_key)),
+                    "building_name": _foa_text(content, str(meta.get("name_key", "")), str(meta.get("name", str(building_key)))),
                     "visual": FOA_BUILDING_VISUALS.get(str(building_key), {}),
                     "level": level,
                     "max_level": FOA_MAX_LEVEL,
@@ -1130,7 +1159,12 @@ def register_fearofabyss_backend(app, *,
             "max_level": FOA_MAX_LEVEL,
             "buildings": out,
             "building_defs": [
-                {"key": key, "name": meta["name"], "desc": meta["desc"]} for key, meta in FOA_BUILDINGS.items()
+                {
+                    "key": key,
+                    "name": _foa_text(content, str(meta.get("name_key", "")), str(meta.get("name", key))),
+                    "desc": _foa_text(content, str(meta.get("desc_key", "")), str(meta.get("desc", ""))),
+                }
+                for key, meta in FOA_BUILDINGS.items()
             ],
             "depot": _foa_depot_summary(rows),
             "recipes": recipes,

@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   window.initBlackjackPage = async function initBlackjackPage() {
     const root = document.querySelector('.table-wrap');
     if (!root) return;
@@ -30,12 +30,12 @@
     function suitChar(s) { if (s === 'H') return '♥'; if (s === 'D') return '♦'; if (s === 'C') return '♣'; return '♠'; }
     
     function cardHtml(c, forcedRot) {
-      const rot = forcedRot !== undefined  forcedRot : (Math.random() * 6 - 3).toFixed(1);
+      const rot = forcedRot !== undefined ? forcedRot : (Math.random() * 6 - 3).toFixed(1);
       const rotDeg = rot + 'deg';
       if (c.hidden) return '<div class="card back" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><i class="fa-brands fa-monero"></i></div>';
       const red = c.suit === 'H' || c.suit === 'D';
       const char = suitChar(c.suit);
-      return '<div class="card ' + (red  'red' : 'black') + '" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><div class="rank">' + c.rank + '</div><div class="suit">' + char + '</div><div class="suit-small">' + char + '</div></div>';
+      return '<div class="card ' + (red ? 'red' : 'black') + '" data-rot="' + rot + '" style="--rot-deg:' + rotDeg + '"><div class="rank">' + c.rank + '</div><div class="suit">' + char + '</div><div class="suit-small">' + char + '</div></div>';
     }
 
     function animateAllCards() {
@@ -94,9 +94,9 @@
       const ph = state.phase || 'idle';
       phaseEl.textContent = ph;
       msgEl.textContent = state.message || '';
-      playerTotalEl.textContent = String(state.player_total  0);
-      playerTotalBottom.textContent = String(state.player_total  0);
-      dealerTotalEl.textContent = String(state.dealer_visible_total  '');
+      playerTotalEl.textContent = String(state.player_total ?? 0);
+      playerTotalBottom.textContent = String(state.player_total ?? 0);
+      dealerTotalEl.textContent = String(state.dealer_visible_total ?? '?');
       const res = String(state.result || '-');
       resultEl.textContent = res;
       resultEl.className = '';

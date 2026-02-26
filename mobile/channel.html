@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>{{ t.get("servers", "Servers") }} - Euphorium</title>
+    <title>{{ channel[2] }} - {{ server[2] }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -189,27 +189,27 @@
                 
                 <div id="serverDropdown" class="server-dropdown">
                     <div class="ctx-item" onclick="window.showInvite()" style="color: var(--primary);">
-                        <i class="fa-solid fa-user-plus"></i> Ä°nsanlarÄ± Davet Et
+                        <i class="fa-solid fa-user-plus"></i> İnsanları Davet Et
                     </div>
                     {% if canmanageroles or canmanagechannels or pending %}
                     <div class="ctx-item" onclick="window.openServerSettings()">
-                        <i class="fa-solid fa-gear"></i> Sunucu AyarlarÄ±
+                        <i class="fa-solid fa-gear"></i> Sunucu Ayarları
                     </div>
                     {% endif %}
                     {% if canmanagechannels %}
                     <div class="ctx-item" onclick="window.openCreateCat()">
-                        <i class="fa-solid fa-folder-plus"></i> Kategori OluÅŸtur
+                        <i class="fa-solid fa-folder-plus"></i> Kategori Oluştur
                     </div>
                     <div class="ctx-item" onclick="window.openCreateChan('')">
-                        <i class="fa-solid fa-hashtag"></i> Kanal OluÅŸtur
+                        <i class="fa-solid fa-hashtag"></i> Kanal Oluştur
                     </div>
                     {% endif %}
                     
                     {% if server[1] != myid %}
                     <div style="height: 1px; background: rgba(var(--line-rgb), 0.5); margin: 4px 0;"></div>
                     <form method="post" action="/servers/{{ server[0] }}/leave" data-nav="soft" style="margin:0; padding:0; display:block;">
-                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('AyrÄ±lmak istediÄŸinize emin misiniz');">
-                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan AyrÄ±l
+                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('Ayrılmak istediğinize emin misiniz?');">
+                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan Ayrıl
                         </button>
                     </form>
                     {% endif %}
@@ -252,8 +252,8 @@
                 <div class="chat-messages chatbox">
                     <div class="chat-welcome">
                         <div class="welcome-icon"><i class="fa-solid fa-hashtag"></i></div>
-                        <h2>{{ channel[2] }} kanalÄ±na hoÅŸ geldin!</h2>
-                        <p>BurasÄ± <strong>{{ channel[2] }}</strong> kanalÄ±nÄ±n baÅŸlangÄ±cÄ±.</p>
+                        <h2>{{ channel[2] }} kanalına hoş geldin!</h2>
+                        <p>Burası <strong>{{ channel[2] }}</strong> kanalının başlangıcı.</p>
                     </div>
                     
                     {% for e in entries %}
@@ -268,7 +268,7 @@
                             {% elif e[2]=='image' %}<img src="/media/{{ e[4] }}" class="chatimg" alt="image">
                             {% elif e[2]=='video' %}<video controls class="chatvid" src="/media/{{ e[4] }}"></video>
                             {% elif e[2]=='audio' %}<audio controls src="/media/{{ e[4] }}" style="margin-top:8px;"></audio>
-                            {% else %}<a href="/media/{{ e[4] }}" target="_blank" style="color:var(--primary); font-weight:600; margin-top:8px; display:inline-block;"><i class="fa-solid fa-file"></i> Dosya Ä°ndir</a>
+                            {% else %}<a href="/media/{{ e[4] }}" target="_blank" style="color:var(--primary); font-weight:600; margin-top:8px; display:inline-block;"><i class="fa-solid fa-file"></i> Dosya İndir</a>
                             {% endif %}
                         </div>
                     </div>
@@ -284,14 +284,14 @@
                             <input name="file" type="file">
                         </button>
                         {% endif %}
-                        <input name="text" type="text" placeholder="#{{ channel[2] }} kanalÄ±na mesaj gÃ¶nder" autocomplete="off">
+                        <input name="text" type="text" placeholder="#{{ channel[2] }} kanalına mesaj gönder" autocomplete="off">
                         <button class="btn-send" type="submit"><i class="fa-solid fa-paper-plane"></i></button>
                     </form>
                 </div>
                 {% else %}
                 <div class="chat-input-wrapper">
                     <div class="chat-input-box" style="justify-content:center; opacity:0.7; background: rgba(var(--bg-rgb), 0.4);">
-                        <span style="color:var(--muted); font-weight:500;"><i class="fa-solid fa-lock"></i> Bu kanala mesaj gÃ¶nderme izniniz yok.</span>
+                        <span style="color:var(--muted); font-weight:500;"><i class="fa-solid fa-lock"></i> Bu kanala mesaj gönderme izniniz yok.</span>
                     </div>
                 </div>
                 {% endif %}
@@ -309,18 +309,18 @@
         <div class="modal" id="serverSettingsModal">
             <div class="modal-content" style="max-width: 900px; width: 90%;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu AyarlarÄ±</h2>
+                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu Ayarları</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('serverSettingsModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 
                 <div class="settings-layout">
                     <div class="settings-sidebar">
                         {% if pending %}
-                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> KatÄ±lÄ±m Ä°stekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
+                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> Katılım İstekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
                         {% endif %}
                         {% if canmanageroles %}
-                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol YÃ¶netimi</button>
-                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Ãœyeler</button>
+                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol Yönetimi</button>
+                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Üyeler</button>
                         {% endif %}
                     </div>
                     
@@ -337,31 +337,31 @@
                                 </div>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>Ä°stek bulunmuyor.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>İstek bulunmuyor.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
 
                         {% if canmanageroles %}
                         <div id="tab-roles" class="settings-tab-content {% if not pending %}active{% endif %}">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol OluÅŸtur</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol Oluştur</h3>
                             <form method="post" action="/servers/{{ server[0] }}/roles/create" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.4); padding: 20px; border-radius: 12px; border: 1px dashed rgba(var(--line-rgb), 0.8); margin-bottom: 25px;">
                                 <div class="form-group">
-                                    <input name="name" type="text" placeholder="Rol adÄ±" required>
+                                    <input name="name" type="text" placeholder="Rol adı" required>
                                 </div>
                                 <div class="perm-grid">
-                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluÅŸturma</label>
-                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yÃ¶netimi</label>
-                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> BaÅŸkasÄ±nÄ±n mesajÄ±nÄ± silme</label>
+                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluşturma</label>
+                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yönetimi</label>
+                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> Başkasının mesajını silme</label>
                                     <label><input type="checkbox" name="perm_kick" value="1"> Sunucudan At (Kick)</label>
                                     <label><input type="checkbox" name="perm_ban" value="1"> Yasakla (Ban)</label>
                                     <label><input type="checkbox" name="perm_timeout" value="1"> Sustur (Timeout)</label>
-                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasaÄŸÄ±</label>
+                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasağı</label>
                                     <label><input type="checkbox" name="perm_voicetimeout" value="1"> Sesli timeout</label>
-                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldÄ±r</label>
-                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldÄ±r</label>
-                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldÄ±r</label>
-                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yÃ¶netimi</label>
+                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldır</label>
+                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldır</label>
+                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldır</label>
+                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yönetimi</label>
                                 </div>
                                 <button class="pickbtn" type="submit" style="width:100%;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
                             </form>
@@ -371,19 +371,19 @@
                             <form method="post" action="/servers/{{ server[0] }}/roles/{{ r[0] }}/edit" data-nav="soft" class="inline-edit-form">
                                 <span style="font-weight:bold; color:var(--primary); width:30px; text-align:center;"><i class="fa-solid fa-circle" style="font-size:0.6rem;"></i></span>
                                 <input name="name" type="text" value="{{ r[1] }}" style="margin-bottom:0; background:transparent; border:none; padding:5px;">
-                                <button type="submit">GÃ¼ncelle</button>
+                                <button type="submit">Güncelle</button>
                             </form>
                             {% endfor %}
                         </div>
 
                         <div id="tab-members" class="settings-tab-content">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Ãœye Yetkilendirme</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Üye Yetkilendirme</h3>
                             {% for m in members %}
                             <div class="modern-user-card">
                                 <div class="who"><img src="{{ m.avatar }}" alt="a"> {{ m.username }}</div>
                                 <form method="post" action="/servers/{{ server[0] }}/members/{{ m.id }}/role" data-nav="soft" style="display:flex; gap:10px; align-items:center;">
                                     <select name="roleid" style="margin-bottom:0; min-width:180px;">
-                                        <option value="0">VarsayÄ±lan Ãœye</option>
+                                        <option value="0">Varsayılan Üye</option>
                                         {% for r in roles %}
                                         <option value="{{ r[0] }}" {% if m.roleid == r[0] %}selected{% endif %}>{{ r[1] }}</option>
                                         {% endfor %}
@@ -392,7 +392,7 @@
                                 </form>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>HenÃ¼z Ã¼ye yok.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>Henüz üye yok.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
@@ -405,23 +405,23 @@
         <div class="modal" id="createCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori OluÅŸtur</h2>
+                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori Oluştur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/create" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori AdÄ±</label>
+                            <label>Kategori Adı</label>
                             <input name="name" type="text" placeholder="Yeni kategori..." required>
                         </div>
                         <div class="form-group">
-                            <label>TÃ¼r</label>
+                            <label>Tür</label>
                             <select name="kind">
-                                <option value="text">MesajlaÅŸma</option>
+                                <option value="text">Mesajlaşma</option>
                                 <option value="voice">Sesli</option>
                             </select>
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> Oluştur</button>
                     </form>
                 </div>
             </div>
@@ -430,17 +430,17 @@
         <div class="modal" id="editCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi DÃ¼zenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi Düzenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/0/edit" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori AdÄ±</label>
+                            <label>Kategori Adı</label>
                             <input name="name" type="text" required>
                         </div>
                         <div class="form-group">
-                            <label>TÃ¼r</label>
+                            <label>Tür</label>
                             <select name="kind">
                                 <option value="text">Mesaj</option>
                                 <option value="voice">Sesli</option>
@@ -455,14 +455,14 @@
         <div class="modal" id="createChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal OluÅŸtur</h2>
+                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal Oluştur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/create" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal AdÄ±</label>
+                                <label>Kanal Adı</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -475,17 +475,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal TÃ¼rÃ¼</label>
+                                <label>Kanal Türü</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
+                                <label>İçerik Kısıtlaması</label>
                                 <select name="contentmode">
-                                    <option value="all">TÃ¼mÃ¼</option>
-                                    <option value="image">Sadece gÃ¶rsel</option>
+                                    <option value="all">Tümü</option>
+                                    <option value="image">Sadece görsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -493,14 +493,14 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller (BoÅŸ = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller (Boş = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (BoÅŸ = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (Boş = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> Oluştur</button>
                     </form>
                 </div>
             </div>
@@ -509,14 +509,14 @@
         <div class="modal" id="editChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> KanalÄ± DÃ¼zenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kanalı Düzenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/0/edit" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal AdÄ±</label>
+                                <label>Kanal Adı</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -529,17 +529,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal TÃ¼rÃ¼</label>
+                                <label>Kanal Türü</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
+                                <label>İçerik Kısıtlaması</label>
                                 <select name="contentmode">
-                                    <option value="all">TÃ¼mÃ¼</option>
-                                    <option value="image">Sadece gÃ¶rsel</option>
+                                    <option value="all">Tümü</option>
+                                    <option value="image">Sadece görsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -547,7 +547,7 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
@@ -555,7 +555,7 @@
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya PaylaÅŸabilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya Paylaşabilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="shareperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
@@ -567,11 +567,11 @@
         <div class="modal" id="inviteModal">
             <div class="modal-content" style="max-width: 480px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> ArkadaÅŸlarÄ±nÄ± Davet Et</h2>
+                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> Arkadaşlarını Davet Et</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('inviteModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body" style="text-align: left;">
-                    <p style="color:var(--muted); margin-bottom: 20px;">ArkadaÅŸlarÄ±nÄ±zÄ± bu sunucuya davet etmek iÃ§in aÅŸaÄŸÄ±daki linki veya kodu paylaÅŸabilirsiniz.</p>
+                    <p style="color:var(--muted); margin-bottom: 20px;">Arkadaşlarınızı bu sunucuya davet etmek için aşağıdaki linki veya kodu paylaşabilirsiniz.</p>
                     
                     <label style="display:block; font-weight:600; color:var(--muted); font-size:0.85rem; margin-bottom:5px; text-transform:uppercase;">Davet Linki</label>
                     <div style="background: rgba(var(--bg-rgb), 0.8); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(var(--primary-rgb), 0.4); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
@@ -591,7 +591,7 @@
                         </button>
                     </div>
                     
-                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kÄ±smÄ±ndan girilerek de kullanÄ±labilir.</p>
+                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kısmından girilerek de kullanılabilir.</p>
                 </div>
             </div>
         </div>
@@ -600,7 +600,4 @@
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>
-
-
-
 
