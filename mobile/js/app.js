@@ -9,6 +9,10 @@
   let literalI18nMap = null;
   let literalI18nObserver = null;
   let literalI18nFetchStarted = false;
+  let refreshQueued = false;
+  let refreshCooldownUntil = 0;
+  let dmReconnectDelay = 2000;
+  let eventReconnectDelay = 2000;
 
   function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -96,8 +100,8 @@
       literalI18nFetchStarted = true;
       try {
         const res = await fetch('/api/i18n/literals', {
-          headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache, no-store' },
-          cache: 'no-store',
+          headers: { 'X-Requested-With': 'fetch' },
+          cache: 'force-cache',
         });
         const data = await res.json();
         literalI18nMap = data && data.ok ? (data.map || {}) : {};
@@ -149,8 +153,9 @@
   function startPresence() {
     if (presenceTimer) clearInterval(presenceTimer);
     presenceTimer = setInterval(() => {
+      if (document.hidden) return;
       fetch('/presence/ping', { method: 'POST', headers: { 'X-Requested-With': 'fetch' } }).catch(() => {});
-    }, 20000);
+    }, 45000);
   }
 
   function initProfileCrop() {
@@ -166,7 +171,23 @@
   }
 
   window.triggerBackgroundRefresh = async function() {
-      if (globalRefreshing) return;
+      const now = Date.now();
+      if (globalRefreshing) {
+          refreshQueued = true;
+          return;
+      }
+      if (now < refreshCooldownUntil) {
+          if (!refreshQueued) {
+              refreshQueued = true;
+              setTimeout(() => {
+                  if (!globalRefreshing) {
+                      refreshQueued = false;
+                      window.triggerBackgroundRefresh();
+                  }
+              }, Math.max(50, refreshCooldownUntil - now));
+          }
+          return;
+      }
       const p = window.location.pathname || '';
       if (p.startsWith('/casino/case/')) return;
       
@@ -177,8 +198,16 @@
       if (anyModalOpen || ctxOpen || dropOpen) return;
 
       globalRefreshing = true;
-      await softNavigate(window.location.href, true);
-      globalRefreshing = false;
+      refreshCooldownUntil = Date.now() + 2500;
+      try {
+          await softNavigate(window.location.href, true);
+      } finally {
+          globalRefreshing = false;
+          if (refreshQueued) {
+              refreshQueued = false;
+              setTimeout(() => window.triggerBackgroundRefresh(), 200);
+          }
+      }
   };
 
   function initDmStream() {
@@ -200,6 +229,7 @@
     if (!peer || !convid) return;
 
     dmSource = new EventSource(`/dm/stream/${peer}?last=${encodeURIComponent(last)}`);
+    dmReconnectDelay = 2000;
     dmSource.onmessage = async (evt) => {
       try {
         const data = JSON.parse(evt.data || '{}');
@@ -212,7 +242,8 @@
     dmSource.onerror = () => {
       if (dmSource) dmSource.close();
       dmSource = null;
-      setTimeout(initDmStream, 2000);
+      dmReconnectDelay = Math.min(dmReconnectDelay * 2, 30000);
+      setTimeout(initDmStream, dmReconnectDelay);
     };
   }
 
@@ -261,7 +292,7 @@
               profileModal.style.left = 'auto';
               profileModal.style.right = '12px';
               profileModal.style.top = 'auto';
-              profileModal.style.bottom = 'calc(88px + env(safe-area-inset-bottom, 0px))';
+              profileModal.style.bottom = 'calc(74px + env(safe-area-inset-bottom, 0px))';
               profileModal.style.display = 'block';
               modalOverlay.style.display = 'block';
           }
@@ -367,7 +398,7 @@
               margin: 0;
               overflow-x: hidden;
               overflow-y: hidden !important;
-              padding: max(0px, env(safe-area-inset-top, 0px)) 0 calc(86px + env(safe-area-inset-bottom, 0px)) 0 !important;
+              padding: max(0px, env(safe-area-inset-top, 0px)) 0 calc(72px + env(safe-area-inset-bottom, 0px)) 0 !important;
           }
           body.shell-active,
           body.shell-active main,
@@ -391,8 +422,8 @@
           .server-main {
               width: min(100%, 980px);
               margin: 0 auto;
-              padding: max(0px, env(safe-area-inset-top, 0px)) 14px calc(104px + env(safe-area-inset-bottom, 0px)) 14px !important;
-              height: calc(100dvh - 86px - env(safe-area-inset-bottom, 0px));
+              padding: max(0px, env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px)) 14px !important;
+              height: calc(100dvh - 72px - env(safe-area-inset-bottom, 0px));
               overflow-x: clip;
               overflow-y: auto;
               -webkit-overflow-scrolling: touch;
@@ -424,22 +455,25 @@
               bottom: 0;
               z-index: 9999;
               width: 100%;
-              display: grid !important;
-              grid-template-columns: repeat(5, minmax(0, 1fr));
-              gap: 6px;
-              align-items: stretch;
-              padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+              display: flex !important;
+              flex-wrap: nowrap;
+              gap: 4px;
+              align-items: center;
+              justify-content: flex-start;
+              padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
               background: rgba(var(--panel-rgb), 0.94);
               border-top: 1px solid rgba(var(--line-rgb), 0.55);
               box-shadow: 0 -10px 32px rgba(0, 0, 0, 0.24);
               backdrop-filter: blur(22px);
               -webkit-backdrop-filter: blur(22px);
-              overflow: visible;
+              overflow-x: auto;
+              overflow-y: hidden;
+              white-space: nowrap;
           }
           .server-rail::-webkit-scrollbar { display: none; }
           .rail-btn-wrapper {
-              min-width: 0;
-              width: 100%;
+              flex: 0 0 auto;
+              min-width: 78px;
               display: flex;
               align-items: stretch;
               justify-content: center;
@@ -450,14 +484,14 @@
           }
           .rail-btn {
               width: 100%;
-              min-height: 58px;
+              min-height: 50px;
               border-radius: 16px;
               display: flex;
               flex-direction: column;
               justify-content: center;
               align-items: center;
-              gap: 4px;
-              padding: 6px 4px;
+              gap: 2px;
+              padding: 4px 4px;
               color: var(--text);
               background: rgba(var(--bg-rgb), 0.22);
               border: 1px solid rgba(var(--line-rgb), 0.55);
@@ -471,9 +505,9 @@
               box-shadow: none !important;
               transform: none !important;
           }
-          .rail-btn i { font-size: 1rem; line-height: 1; color: inherit; }
+          .rail-btn i { font-size: 0.95rem; line-height: 1; color: inherit; }
           .rail-label {
-              font-size: 0.68rem;
+              font-size: 0.62rem;
               font-weight: 600;
               line-height: 1;
               letter-spacing: 0.02em;
@@ -514,7 +548,7 @@
           .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
           @media (min-width: 768px) {
               body.shell-active {
-                  padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px)) !important;
+                  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
               }
               .server-main {
                   padding-left: 20px !important;
@@ -706,8 +740,8 @@
   async function updateDynamicRail() {
       try {
           const res = await fetch('/api/nav', {
-              headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache, no-store' },
-              cache: 'no-store'
+              headers: { 'X-Requested-With': 'fetch' },
+              cache: 'default'
           });
           const data = await res.json();
           if (!data.ok) return;
@@ -1236,12 +1270,9 @@
     try {
         const res = await fetch(url, { 
             headers: { 
-                'X-Requested-With': 'fetch',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
+                'X-Requested-With': 'fetch'
             },
-            cache: 'no-store'
+            cache: 'default'
         });
         if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
@@ -1262,12 +1293,9 @@
           method: (form.method || 'GET').toUpperCase(),
           body: fd,
           headers: { 
-              'X-Requested-With': 'fetch',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
+              'X-Requested-With': 'fetch'
           },
-          cache: 'no-store'
+          cache: 'default'
         });
         if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
@@ -1374,6 +1402,7 @@
       eventSource = null;
     }
     eventSource = new EventSource(`/events/stream?last=${encodeURIComponent(String(lastEventVersion || 0))}`);
+    eventReconnectDelay = 2000;
     eventSource.onmessage = async (evt) => {
       try {
         const data = JSON.parse(evt.data || '{}');
@@ -1387,7 +1416,8 @@
     eventSource.onerror = () => {
       if (eventSource) eventSource.close();
       eventSource = null;
-      setTimeout(initEventStream, 2000);
+      eventReconnectDelay = Math.min(eventReconnectDelay * 2, 30000);
+      setTimeout(initEventStream, eventReconnectDelay);
     };
   }
 

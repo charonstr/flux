@@ -1672,19 +1672,31 @@ def logout():
 
 @app.route("/media/<path:filename>")
 def media(filename: str):
-    return send_from_directory(MEDIA, filename)
+    resp = send_from_directory(MEDIA, filename)
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 @app.route("/assets/<path:filename>")
 def projectassets(filename: str):
-    return send_from_directory(ROOT / "assets", filename)
+    resp = send_from_directory(ROOT / "assets", filename)
+    resp.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    return resp
 
 
 @app.route("/<zone>/<path:filename>")
 def assets(zone: str, filename: str):
     if zone not in {"pc", "mobile"}:
         abort(404)
-    return send_from_directory(ROOT / zone, filename)
+    resp = send_from_directory(ROOT / zone, filename)
+    ext = Path(filename).suffix.lower()
+    if ext in {".js", ".css"}:
+        resp.headers["Cache-Control"] = "public, max-age=3600"
+    elif ext in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"}:
+        resp.headers["Cache-Control"] = "public, max-age=604800, immutable"
+    else:
+        resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
 
 
 def run() -> None:

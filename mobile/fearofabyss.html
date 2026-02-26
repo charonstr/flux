@@ -43,7 +43,7 @@
             left: 0;
             right: 0;
             top: 0;
-            bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+            bottom: calc(var(--mobile-nav-height, var(--bottom-nav-height, 74px)) + var(--mobile-safe-bottom, env(safe-area-inset-bottom, 0px)));
             z-index: 1050;
             overflow: hidden;
             pointer-events: none;
@@ -320,6 +320,46 @@
         }
 
         .bg-texture, .ambient-orb { display: none !important; }
+        #balanceBadge {
+            position: fixed;
+            left: 84.60245394925459vw;
+            top: 3.1309913903379595vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #foaFloorBadge {
+            position: fixed;
+            left: 55.70145353264765vw;
+            top: 3.1309913903379595vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #depotBadge {
+            position: fixed;
+            left: 19.948379563264526vw;
+            top: 3.1309913903379595vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #foaTopNav {
+            position: fixed;
+            left: 50vw;
+            top: 78.17891276301667vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #gameNavBar {
+            position: fixed;
+            left: 50vw;
+            top: 90vh;
+            right: auto;
+            bottom: auto !important;
+            transform: translate(-50%, 0);
+        }
     </style>
 </head>
 <body>
@@ -328,12 +368,12 @@
         <div id="foaGridCanvas" class="foa-grid-canvas"></div>
         <div id="foaCardMenu" class="foa-card-menu"></div>
 
-        <div class="balance-badge">
+        <div id="balanceBadge" class="balance-badge">
             <i class="fa-solid fa-coins"></i>
             <span id="balanceText">{{ balance or 0 }}</span>
         </div>
         <div id="foaFloorBadge" class="foa-floor-badge"><i class="fa-solid fa-layer-group" style="margin-right:4px;"></i> {{ t.get("foa_floor", "Floor") }}: 1</div>
-        <div class="foa-top-nav">
+        <div id="foaTopNav" class="foa-top-nav">
             <button id="towerNavBtn" type="button"><i class="fa-brands fa-fort-awesome" style="margin-right:4px;"></i> {{ t.get("foa_tower", "Tower") }}</button>
             <button id="charsNavBtn" type="button"><i class="fa-solid fa-users" style="margin-right:4px;"></i> {{ t.get("foa_characters", "Characters") }}</button>
             <button id="depotNavBtn" type="button"><i class="fa-solid fa-warehouse" style="margin-right:4px;"></i> {{ t.get("foa_depot", "Depot") }}</button>
@@ -361,8 +401,6 @@
         if (window.__foaCleanup && typeof window.__foaCleanup === 'function') {
             try { window.__foaCleanup(); } catch (_) {}
         }
-        const storageKey = 'foa_layout_mobile_v1';
-        const deviceKind = 'mobile';
         const canvas = document.getElementById('foaGridCanvas');
         const cardMenu = document.getElementById('foaCardMenu');
         const balanceText = document.getElementById('balanceText');
@@ -381,6 +419,23 @@
         let stateTimer = null;
         let menuMode = 'card';
         let lastChestTier = '';
+        const uiDeviceKind = 'mobile';
+        const uiStorageKey = 'foa_ui_layout_mobile_v1';
+        const UI_LAYOUT_DEFAULT = {
+            balanceBadge: { x: 0.8460245394925459, y: 0.031309913903379595 },
+            floorBadge: { x: 0.5570145353264765, y: 0.031309913903379595 },
+            depotBadge: { x: 0.19948379563264526, y: 0.031309913903379595 },
+            topNav: { x: 0.5, y: 0.7817891276301667 },
+            gameNav: { x: 0.50, y: 0.90 },
+        };
+        let uiDrag = null;
+        let uiCleanupFns = [];
+        function setGameNavVisible(show) {
+            const top = document.getElementById('foaTopNav');
+            const game = document.getElementById('gameNavBar');
+            if (top) top.style.display = show ? 'inline-flex' : 'none';
+            if (game) game.style.display = show ? '' : 'none';
+        }
         const I18N = {
             floor: `{{ t.get("foa_floor", "Floor") }}`,
             tower: `{{ t.get("foa_tower", "Tower") }}`,
@@ -431,11 +486,23 @@
         };
 
         const frozenDefaults = [
-            { id: 'g1', x: 0.14, y: 0.18, w: 0.26, h: 0.18 },
-            { id: 'g2', x: 0.44, y: 0.18, w: 0.26, h: 0.18 },
-            { id: 'g3', x: 0.14, y: 0.40, w: 0.26, h: 0.18 },
-            { id: 'g4', x: 0.44, y: 0.40, w: 0.26, h: 0.18 }
-];
+            { id: 'g1772050398048', x: 0.025367152553405728, y: 0.3830788697461272, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050405527', x: 0.27231105785191745, y: 0.3818016769968384, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050408696', x: 0.5168096863330618, y: 0.3818016769968384, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050416883', x: 0.7637537315348909, y: 0.3830788697461272, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050363354', x: 0.025367339091162358, y: 0.47529548906335983, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050366376', x: 0.2698661074756241, y: 0.47657265745315225, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050377328', x: 0.5168098262363792, y: 0.4778497771239521, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050383942', x: 0.7637535449971342, y: 0.4778497771239521, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050279272', x: 0.02536733909116237, y: 0.5700664629932339, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050275541', x: 0.26986592093786754, y: 0.5713435339450413, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050271262', x: 0.5192547766126724, y: 0.5700664142742414, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772048679298', x: 0.762448715237044, y: 0.5719820937804413, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050315152', x: 0.02536733909116237, y: 0.6644952200235855, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050318148', x: 0.26986592093786754, y: 0.6632181490717782, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050318922', x: 0.5168096396986226, y: 0.665772388413378, w: 0.20965673399243503, h: 0.07272024248806723 },
+            { id: 'g1772050319504', x: 0.7637536382660125, y: 0.6657724371323707, w: 0.20965673399243503, h: 0.07272024248806723 }
+        ];
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeItemsOrder(list) {
 const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
@@ -467,23 +534,13 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
             return rows.flatMap((r) => r.items.map((x) => x.item));
         }
 
-        function loadFrozenItems() {
-            try {
-                const raw = localStorage.getItem(storageKey);
-                if (!raw) return normalizeItemsOrder(frozenDefaults);
-                const parsed = JSON.parse(raw);
-                if (!Array.isArray(parsed) || !parsed.length) return normalizeItemsOrder(frozenDefaults);
-                return normalizeItemsOrder(parsed);
-            } catch {
-                return normalizeItemsOrder(frozenDefaults);
-            }
-        }
-        let items = loadFrozenItems();
+        let items = normalizeItemsOrder(frozenDefaults.map((it) => ({ ...it })));
 
 
         function openCardMenu(force = false) {
             if (cardMenu.style.display === 'block' && !force) { return; }
             cardMenu.style.display = 'block';
+            setGameNavVisible(false);
             const vw = window.innerWidth || document.documentElement.clientWidth || 0;
             const vh = window.innerHeight || document.documentElement.clientHeight || 0;
             const rect = cardMenu.getBoundingClientRect();
@@ -495,6 +552,7 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
 
         function closeCardMenu() {
             cardMenu.style.display = 'none';
+            setGameNavVisible(true);
         }
         function esc(text) {
             return String(text || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -508,36 +566,83 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
             const res = await fetch(path, opts);
             return res.json();
         }
-        function persistLocalItems(items) {
+        function uiClamp01(v) { return Math.max(0, Math.min(1, Number(v || 0))); }
+        function uiSaveLocal(layout) {
+            try { localStorage.setItem(uiStorageKey, JSON.stringify(layout || {})); } catch (_) {}
+        }
+        function uiLoadLocal() {
             try {
-                localStorage.setItem(storageKey, JSON.stringify(items || []));
-} catch (_) {}
-}
-function readLocalItems() {
-try {
-const raw = localStorage.getItem(storageKey);
-if (!raw) return [];
-const parsed = JSON.parse(raw);
-return Array.isArray(parsed) ? parsed : [];
+                const raw = localStorage.getItem(uiStorageKey);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : null;
             } catch (_) {
-                return [];
+                return null;
             }
         }
-        async function syncLayoutWithServer() {
-            const localItems = normalizeItemsOrder(readLocalItems());
-            if (localItems.length > 0) {
-                await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: localItems, set_default: true });
-                return;
-            }
-            const fromDb = await api(`/api/fear-of-abyss/layout?device=${encodeURIComponent(deviceKind)}`, 'GET');
-            if (fromDb && fromDb.ok && Array.isArray(fromDb.items) && fromDb.items.length > 0) {
-                const normalized = normalizeItemsOrder(fromDb.items);
-                persistLocalItems(normalized);
-                queueRender();
-                return;
-            }
-            await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: normalizeItemsOrder(frozenDefaults), set_default: true });
-}
+        async function uiSaveRemote(layout) {
+            try { await api('/api/fear-of-abyss/ui-layout', 'POST', { device: uiDeviceKind, layout, set_default: true }); } catch (_) {}
+        }
+        async function uiLoadRemote() {
+            try {
+                const res = await api(`/api/fear-of-abyss/ui-layout?device=${encodeURIComponent(uiDeviceKind)}`, 'GET');
+                if (res && res.ok && res.layout && typeof res.layout === 'object') return res.layout;
+            } catch (_) {}
+            return null;
+        }
+        function uiResolveTargets() {
+            return {
+                balanceBadge: document.getElementById('balanceBadge'),
+                floorBadge: document.getElementById('foaFloorBadge'),
+                depotBadge: document.getElementById('depotBadge'),
+                topNav: document.getElementById('foaTopNav'),
+                gameNav: document.getElementById('gameNavBar'),
+            };
+        }
+        function uiApplyOne(el, pos) {
+            if (!el || !pos) return;
+            const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+            const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+            el.style.position = 'fixed';
+            el.style.left = `${Math.round(uiClamp01(pos.x) * vw)}px`;
+            el.style.top = `${Math.round(uiClamp01(pos.y) * vh)}px`;
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+            el.style.transform = 'translate(-50%, 0)';
+            el.style.zIndex = el.style.zIndex || '1700';
+            el.style.touchAction = 'none';
+        }
+        function uiBindDrag(el, key, layout) {
+            return;
+        }
+        function uiSnapPosition(key, x, y, layout, vw, vh) {
+            const snapPx = 14;
+            const tX = snapPx / vw;
+            const tY = snapPx / vh;
+            let sx = x;
+            let sy = y;
+            if (Math.abs(sx - 0.5) <= tX) sx = 0.5;
+            Object.entries(layout || {}).forEach(([k, p]) => {
+                if (k === key || !p) return;
+                if (Math.abs(sx - Number(p.x || 0)) <= tX) sx = Number(p.x || 0);
+                if (Math.abs(sy - Number(p.y || 0)) <= tY) sy = Number(p.y || 0);
+                const mirrorX = 1 - Number(p.x || 0);
+                if (Math.abs(sx - mirrorX) <= tX) sx = mirrorX;
+            });
+            return { x: uiClamp01(sx), y: uiClamp01(sy) };
+        }
+        async function initUiLayout() {
+            uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
+            uiCleanupFns = [];
+            const layout = { ...UI_LAYOUT_DEFAULT };
+            const targets = uiResolveTargets();
+            Object.entries(targets).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key]));
+            const onResize = () => {
+                Object.entries(uiResolveTargets()).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key]));
+            };
+            window.addEventListener('resize', onResize, { passive: true });
+            uiCleanupFns.push(() => window.removeEventListener('resize', onResize));
+        }
 function findCardBuilding(cardId) {
 if (!foaState || !Array.isArray(foaState.buildings)) return null;
 return foaState.buildings.find(x => String(x.card_id) === String(cardId)) || null;
@@ -1143,17 +1248,10 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
             });
         }
 
+
         const onDocClick = () => closeCardMenu();
-        const onBeforeUnload = () => {
-            const items = normalizeItemsOrder(loadFrozenItems());
-            navigator.sendBeacon(
-                '/api/fear-of-abyss/layout',
-                new Blob([JSON.stringify({ device: deviceKind, items, set_default: true })], { type: 'application/json' })
-            );
-        };
         window.addEventListener('resize', queueRender, { passive: true });
         document.addEventListener('click', onDocClick);
-        window.addEventListener('beforeunload', onBeforeUnload);
         cardMenu.addEventListener('click', (ev) => ev.stopPropagation());
         window.addEventListener('orientationchange', queueRender, { passive: true });
         if (window.visualViewport) {
@@ -1168,9 +1266,11 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
         // Initial draw + delayed redraws for server-shell reflow after full refresh.
         lastGridSignature = gridSignatureFromState(foaState);
         render();
-        syncLayoutWithServer();
+        api('/api/fear-of-abyss/layout', 'POST', { device: 'mobile', items, set_default: true }).catch(() => {});
         refreshState();
         stateTimer = setInterval(refreshState, 1000);
+        initUiLayout();
+        setTimeout(initUiLayout, 400);
         towerNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderTowerPanel(); });
         charsNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderCharactersPanel(); });
         depotNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderDepotPanel(); });
@@ -1182,13 +1282,14 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
             stateTimer = null;
             window.removeEventListener('resize', queueRender);
             window.removeEventListener('orientationchange', queueRender);
-            window.removeEventListener('beforeunload', onBeforeUnload);
             document.removeEventListener('click', onDocClick);
+            uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
+            uiCleanupFns = [];
         };
     })();
     </script>
 
-    <nav class="mobile-bottom-nav">
+    <nav id="gameNavBar" class="mobile-bottom-nav">
         <a href="/home" class="nav-item" data-nav="soft">
             <i class="fa-solid fa-house"></i><span>{{ t.get("home", "Anasayfa") }}</span>
         </a>

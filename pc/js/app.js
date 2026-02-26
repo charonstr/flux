@@ -9,6 +9,10 @@
   let literalI18nMap = null;
   let literalI18nObserver = null;
   let literalI18nFetchStarted = false;
+  let refreshQueued = false;
+  let refreshCooldownUntil = 0;
+  let dmReconnectDelay = 2000;
+  let eventReconnectDelay = 2000;
 
   function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -96,8 +100,8 @@
       literalI18nFetchStarted = true;
       try {
         const res = await fetch('/api/i18n/literals', {
-          headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache, no-store' },
-          cache: 'no-store',
+          headers: { 'X-Requested-With': 'fetch' },
+          cache: 'force-cache',
         });
         const data = await res.json();
         literalI18nMap = data && data.ok ? (data.map || {}) : {};
@@ -149,8 +153,9 @@
   function startPresence() {
     if (presenceTimer) clearInterval(presenceTimer);
     presenceTimer = setInterval(() => {
+      if (document.hidden) return;
       fetch('/presence/ping', { method: 'POST', headers: { 'X-Requested-With': 'fetch' } }).catch(() => {});
-    }, 20000);
+    }, 45000);
   }
 
   function initProfileCrop() {
@@ -166,7 +171,23 @@
   }
 
   window.triggerBackgroundRefresh = async function() {
-      if (globalRefreshing) return;
+      const now = Date.now();
+      if (globalRefreshing) {
+          refreshQueued = true;
+          return;
+      }
+      if (now < refreshCooldownUntil) {
+          if (!refreshQueued) {
+              refreshQueued = true;
+              setTimeout(() => {
+                  if (!globalRefreshing) {
+                      refreshQueued = false;
+                      window.triggerBackgroundRefresh();
+                  }
+              }, Math.max(50, refreshCooldownUntil - now));
+          }
+          return;
+      }
       const p = window.location.pathname || '';
       if (p.startsWith('/casino/case/')) return;
       
@@ -177,8 +198,16 @@
       if (anyModalOpen || ctxOpen || dropOpen) return;
 
       globalRefreshing = true;
-      await softNavigate(window.location.href, true);
-      globalRefreshing = false;
+      refreshCooldownUntil = Date.now() + 2500;
+      try {
+          await softNavigate(window.location.href, true);
+      } finally {
+          globalRefreshing = false;
+          if (refreshQueued) {
+              refreshQueued = false;
+              setTimeout(() => window.triggerBackgroundRefresh(), 200);
+          }
+      }
   };
 
   function initDmStream() {
@@ -200,6 +229,7 @@
     if (!peer || !convid) return;
 
     dmSource = new EventSource(`/dm/stream/${peer}?last=${encodeURIComponent(last)}`);
+    dmReconnectDelay = 2000;
     dmSource.onmessage = async (evt) => {
       try {
         const data = JSON.parse(evt.data || '{}');
@@ -212,7 +242,8 @@
     dmSource.onerror = () => {
       if (dmSource) dmSource.close();
       dmSource = null;
-      setTimeout(initDmStream, 2000);
+      dmReconnectDelay = Math.min(dmReconnectDelay * 2, 30000);
+      setTimeout(initDmStream, dmReconnectDelay);
     };
   }
 
@@ -481,8 +512,8 @@
   async function updateDynamicRail() {
       try {
           const res = await fetch('/api/nav', { 
-              headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache, no-store' },
-              cache: 'no-store'
+              headers: { 'X-Requested-With': 'fetch' },
+              cache: 'default'
           });
           const data = await res.json();
           if (!data.ok) return;
@@ -990,12 +1021,9 @@
     try {
         const res = await fetch(url, { 
             headers: { 
-                'X-Requested-With': 'fetch',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
+                'X-Requested-With': 'fetch'
             },
-            cache: 'no-store'
+            cache: 'default'
         });
         if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
@@ -1016,12 +1044,9 @@
           method: (form.method || 'GET').toUpperCase(),
           body: fd,
           headers: { 
-              'X-Requested-With': 'fetch',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
+              'X-Requested-With': 'fetch'
           },
-          cache: 'no-store'
+          cache: 'default'
         });
         if (!res.ok) throw new Error('Not OK');
         const html = await res.text();
@@ -1126,6 +1151,7 @@
       eventSource = null;
     }
     eventSource = new EventSource(`/events/stream?last=${encodeURIComponent(String(lastEventVersion || 0))}`);
+    eventReconnectDelay = 2000;
     eventSource.onmessage = async (evt) => {
       try {
         const data = JSON.parse(evt.data || '{}');
@@ -1139,7 +1165,8 @@
     eventSource.onerror = () => {
       if (eventSource) eventSource.close();
       eventSource = null;
-      setTimeout(initEventStream, 2000);
+      eventReconnectDelay = Math.min(eventReconnectDelay * 2, 30000);
+      setTimeout(initEventStream, eventReconnectDelay);
     };
   }
 

@@ -402,6 +402,38 @@
         }
 
         .bg-texture, .ambient-orb { display: none !important; }
+        #balanceBadge {
+            position: fixed;
+            left: 81.62109851837158vw;
+            top: 2.857143376149288vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #foaFloorBadge {
+            position: fixed;
+            left: 50vw;
+            top: 2.857143376149288vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #depotBadge {
+            position: fixed;
+            left: 69.65901454289755vw;
+            top: 2.857143376149288vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #foaTopNav {
+            position: fixed;
+            left: 50vw;
+            top: 86.99319229644983vh;
+            right: auto;
+            bottom: auto;
+            transform: translate(-50%, 0);
+        }
     </style>
 </head>
 <body>
@@ -410,12 +442,12 @@
         <div id="foaGridCanvas" class="foa-grid-canvas"></div>
         <div id="foaCardMenu" class="foa-card-menu"></div>
 
-        <div class="balance-badge">
+        <div id="balanceBadge" class="balance-badge">
         <i class="fa-solid fa-coins"></i>
         <span id="balanceText">{{ balance or 0 }}</span>
         </div>
         <div id="foaFloorBadge" class="foa-floor-badge">{{ t.get("foa_floor", "Floor") }}: 1</div>
-        <div class="foa-top-nav">
+        <div id="foaTopNav" class="foa-top-nav">
             <button id="towerNavBtn" type="button">{{ t.get("foa_tower", "Tower") }}</button>
             <button id="charsNavBtn" type="button">{{ t.get("foa_characters", "Characters") }}</button>
             <button id="depotNavBtn" type="button">{{ t.get("foa_depot", "Depot") }}</button>
@@ -463,6 +495,20 @@
         let stateTimer = null;
         let menuMode = 'card';
         let lastChestTier = '';
+        const uiDeviceKind = 'pc';
+        const uiStorageKey = 'foa_ui_layout_pc_v1';
+        const UI_LAYOUT_DEFAULT = {
+            balanceBadge: { x: 0.8162109851837158, y: 0.02857143376149288 },
+            floorBadge: { x: 0.5, y: 0.02857143376149288 },
+            depotBadge: { x: 0.6965901454289755, y: 0.02857143376149288 },
+            topNav: { x: 0.5, y: 0.8699319229644983 },
+        };
+        let uiDrag = null;
+        let uiCleanupFns = [];
+        function setGameNavVisible(show) {
+            const top = document.getElementById('foaTopNav');
+            if (top) top.style.display = show ? 'inline-flex' : 'none';
+        }
         const I18N = {
             floor: `{{ t.get("foa_floor", "Floor") }}`,
             tower: `{{ t.get("foa_tower", "Tower") }}`,
@@ -567,6 +613,7 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
         function openCardMenu(force = false) {
             if (cardMenu.style.display === 'block' && !force) { return; }
             cardMenu.style.display = 'block';
+            setGameNavVisible(false);
             const vw = window.innerWidth || document.documentElement.clientWidth || 0;
             const vh = window.innerHeight || document.documentElement.clientHeight || 0;
             const rect = cardMenu.getBoundingClientRect();
@@ -578,6 +625,7 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
 
         function closeCardMenu() {
             cardMenu.style.display = 'none';
+            setGameNavVisible(true);
         }
         function esc(text) {
             return String(text || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -590,6 +638,80 @@ const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
             }
             const res = await fetch(path, opts);
             return res.json();
+        }
+        function uiClamp01(v) { return Math.max(0, Math.min(1, Number(v || 0))); }
+        function uiSaveLocal(layout) {
+            try { localStorage.setItem(uiStorageKey, JSON.stringify(layout || {})); } catch (_) {}
+        }
+        function uiLoadLocal() {
+            try {
+                const raw = localStorage.getItem(uiStorageKey);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : null;
+            } catch (_) { return null; }
+        }
+        async function uiSaveRemote(layout) {
+            try { await api('/api/fear-of-abyss/ui-layout', 'POST', { device: uiDeviceKind, layout, set_default: true }); } catch (_) {}
+        }
+        async function uiLoadRemote() {
+            try {
+                const res = await api(`/api/fear-of-abyss/ui-layout?device=${encodeURIComponent(uiDeviceKind)}`, 'GET');
+                if (res && res.ok && res.layout && typeof res.layout === 'object') return res.layout;
+            } catch (_) {}
+            return null;
+        }
+        function uiResolveTargets() {
+            return {
+                balanceBadge: document.getElementById('balanceBadge'),
+                floorBadge: document.getElementById('foaFloorBadge'),
+                depotBadge: document.getElementById('depotBadge'),
+                topNav: document.getElementById('foaTopNav'),
+            };
+        }
+        function uiApplyOne(el, pos, key) {
+            if (!el || !pos) return;
+            const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+            const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+            el.style.position = 'fixed';
+            el.style.left = `${Math.round(uiClamp01(pos.x) * vw)}px`;
+            el.style.top = `${Math.round(uiClamp01(pos.y) * vh)}px`;
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+            el.style.transform = 'translate(-50%, 0)';
+            el.style.zIndex = el.style.zIndex || '1700';
+            el.style.touchAction = 'none';
+        }
+        function uiBindDrag(el, key, layout) {
+            return;
+        }
+        function uiSnapPosition(key, x, y, layout, vw, vh) {
+            const snapPx = 14;
+            const tX = snapPx / vw;
+            const tY = snapPx / vh;
+            let sx = x;
+            let sy = y;
+            if (Math.abs(sx - 0.5) <= tX) sx = 0.5;
+            Object.entries(layout || {}).forEach(([k, p]) => {
+                if (k === key || !p) return;
+                if (Math.abs(sx - Number(p.x || 0)) <= tX) sx = Number(p.x || 0);
+                if (Math.abs(sy - Number(p.y || 0)) <= tY) sy = Number(p.y || 0);
+                const mirrorX = 1 - Number(p.x || 0);
+                if (Math.abs(sx - mirrorX) <= tX) sx = mirrorX;
+            });
+            return { x: uiClamp01(sx), y: uiClamp01(sy) };
+        }
+        async function initUiLayout() {
+            uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
+            uiCleanupFns = [];
+            const layout = { ...UI_LAYOUT_DEFAULT };
+            const targets = uiResolveTargets();
+            Object.entries(targets).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key], key));
+            const onResize = () => {
+                Object.entries(uiResolveTargets()).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key], key));
+            };
+            window.addEventListener('resize', onResize, { passive: true });
+            uiCleanupFns.push(() => window.removeEventListener('resize', onResize));
         }
         function persistLocalItems(items) {
             try {
@@ -1289,6 +1411,8 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
         syncLayoutWithServer();
         refreshState();
         stateTimer = setInterval(refreshState, 1000);
+        initUiLayout();
+        setTimeout(initUiLayout, 400);
         
         towerNavBtn.innerHTML = `<i class="fa-brands fa-fort-awesome" style="margin-right:6px;"></i> ${I18N.tower}`;
         charsNavBtn.innerHTML = `<i class="fa-solid fa-users" style="margin-right:6px;"></i> ${I18N.characters}`;
@@ -1307,6 +1431,8 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
             window.removeEventListener('orientationchange', queueRender);
             window.removeEventListener('beforeunload', onBeforeUnload);
             document.removeEventListener('click', onDocClick);
+            uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
+            uiCleanupFns = [];
         };
     })();
     </script>
