@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CS2 Kasa Açılışı - Euphorium</title>
+  <title>{{ t.get("cs2_case", "CS2 Case") }} - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -174,7 +174,7 @@
                 const rand = constants.items[Math.floor(Math.random() * constants.items.length)];
                 html += renderItem(rand);
             } else {
-                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name">?</div></div>`;
+                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name"></div></div>`;
             }
         }
         caseTrack.innerHTML = html;
@@ -308,5 +308,6 @@
   </script>
 </body>
 </html>
+
 
 

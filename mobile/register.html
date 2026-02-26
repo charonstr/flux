@@ -1,30 +1,17 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <script>
-        (function(){
-            try {
-                var t = localStorage.getItem("theme");
-                var l = t === "light";
-                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
-                document.documentElement.style.colorScheme = l ? "light" : "dark";
-            } catch(e) {
-                document.documentElement.style.backgroundColor = "#1a202c";
-            }
-        })();
-    </script>
-    <style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("register", "Register") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* === Asil ve Modern Auth Düzeni === */
         
         /* Ana kapsayıcı */
         .auth-modern-wrap {
-            min-height: 100dvh; /* Mobilde klavye açılınca UI'ı bozmaması için dvh (Dynamic Viewport) */
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -33,8 +20,7 @@
             width: 100%;
             max-width: 100%;
             position: relative;
-            overflow-x: hidden;
-            overflow-y: auto; /* Mobilde aşağı kaydırabilmek için auto yapıldı */
+            overflow: hidden;
             background-color: var(--bg);
         }
 
@@ -49,7 +35,7 @@
             opacity: 0.5;
         }
 
-        /* Yavaşça Yüzerek Yer Değiştiren Ortam Işıkları (Performans İçin GPU Hızlandırma Eklendi) */
+        /* Yavaşça Yüzerek Yer Değiştiren Ortam Işıkları (MOR VE ANA RENK) */
         .ambient-orb {
             position: absolute;
             border-radius: 50%;
@@ -57,7 +43,6 @@
             z-index: 0;
             opacity: 0.4;
             will-change: transform;
-            transform: translateZ(0); /* Donanım hızlandırması (GPU) zorlaması - Mobilde kasmayı önler */
         }
 
         .orb-1 {
@@ -78,17 +63,17 @@
 
         /* Ekranın içinde süzülme rotaları */
         @keyframes driftPrimary {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            33% { transform: translate3d(35vw, 15vh, 0) scale(1.1); }
-            66% { transform: translate3d(15vw, 45vh, 0) scale(0.9); }
-            100% { transform: translate3d(0, 0, 0) scale(1); }
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(35vw, 15vh) scale(1.1); }
+            66% { transform: translate(15vw, 45vh) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
         }
 
         @keyframes driftPurple {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            33% { transform: translate3d(-30vw, -40vh, 0) scale(1.2); }
-            66% { transform: translate3d(-50vw, -10vh, 0) scale(0.95); }
-            100% { transform: translate3d(0, 0, 0) scale(1); }
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-30vw, -40vh) scale(1.2); }
+            66% { transform: translate(-50vw, -10vh) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
         }
 
         /* İkiye Bölünmüş Merkezi Panel */
@@ -97,7 +82,6 @@
             width: 100%;
             max-width: 900px;
             min-height: 550px;
-            margin: auto; /* Dikeyde de ortalamayı korumak için */
             background: rgba(var(--panel-rgb), 0.85);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -155,12 +139,6 @@
             position: relative;
             z-index: 3; 
             filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.2));
-            animation: pulseIcon 3s ease-in-out infinite alternate; /* Nabız efekti eklendi */
-        }
-        
-        @keyframes pulseIcon {
-            from { filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.2)); }
-            to { filter: drop-shadow(0 0 20px rgba(var(--primary-rgb), 0.6)); }
         }
         /* ------------------------------------------------------------- */
 
@@ -175,7 +153,6 @@
             color: var(--muted);
             font-size: 1.05rem;
             max-width: 80%;
-            line-height: 1.5;
         }
 
         /* Sağ Taraf: Form Alanı */
@@ -215,7 +192,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Input Stilleri */
+        /* İnput Stilleri */
         .input-label {
             display: block;
             font-size: 0.85rem;
@@ -224,11 +201,6 @@
             margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        /* Input Font Size iOS zoom bug'ını engellemek için 16px yapıldı */
-        .input-group input {
-            font-size: 16px !important; 
         }
 
         /* Eşit ve Modern Butonlar */
@@ -250,30 +222,16 @@
             font-size: 1rem;
             border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            touch-action: manipulation; /* Mobildeki tıklama gecikmesini kaldırır */
         }
 
         .pickbtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.3);
         }
-        
-        .pickbtn:active {
-            transform: translateY(0); /* Tıklanma hissini artırmak için */
-        }
 
         .linkbtn.full:hover {
             transform: translateY(-2px);
             background: var(--line);
-        }
-
-        /* Göz İkonu Tıklanma Alanı Genişletildi */
-        .passrow .tiny {
-            padding: 0 15px; 
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         /* Tema Butonları */
@@ -287,116 +245,12 @@
         }
 
         @media (max-width: 768px) {
-            .auth-box { 
-                flex-direction: column; 
-                min-height: auto; 
-            }
+            .auth-box { flex-direction: column; min-height: auto; }
             .auth-visual { display: none; }
-            .auth-form-side { 
-                padding: 40px 25px; 
-            }
-            .theme-buttons { 
-                top: 10px; 
-                right: 10px; 
-            }
-            /* Mobilde orbların blur'unu biraz düşürerek kasma riskini tamamen yok ediyoruz */
-            .ambient-orb {
-                filter: blur(60px); 
-            }
+            .auth-form-side { padding: 40px 25px; }
+            .theme-buttons { top: 10px; right: 10px; }
         }
     </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-  :root{
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --app-vh: 100dvh;
-  }
-
-  html{
-    width:100%;
-    max-width:100%;
-    overflow-x: clip;
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
-    background: var(--bg, #0b0b0b);
-  }
-
-  body{
-    width:100%;
-    max-width:100%;
-    min-height:100vh;
-    min-height:100svh;
-    min-height:100dvh;
-    min-height:var(--app-vh);
-    overflow-x: clip !important;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    padding-left:max(0px, var(--safe-left));
-    padding-right:max(0px, var(--safe-right));
-  }
-
-  *, *::before, *::after{
-    box-sizing:border-box;
-    min-width:0;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  img, video, canvas, svg, iframe{
-    max-width:100%;
-  }
-
-  input, textarea, select, button{
-    font: inherit;
-  }
-
-  textarea{
-    max-width:100%;
-  }
-
-  /* Common mobile app-shell helpers (safe, generic) */
-  .topbar, .header, .app-header, nav.top, [data-fixed="top"]{
-    padding-top: max(0px, var(--safe-top));
-  }
-
-  .bottombar, .bottom-nav, .tabbar, .app-bottom, [data-fixed="bottom"]{
-    padding-bottom: max(0px, var(--safe-bottom));
-  }
-
-  /* Modals / drawers / popups often overflow on mobile */
-  .modal, .popup, .sheet, .drawer, dialog, [role="dialog"]{
-    max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-    max-width: min(100%, calc(100vw - 12px));
-  }
-
-  /* Prevent fixed/sticky elements from creating horizontal overflow */
-  [style*="position: fixed"], [style*="position:fixed"],
-  [style*="position: sticky"], [style*="position:sticky"]{
-    max-width:100vw;
-  }
-
-  /* Keyboard open state: reduce jank on mobile */
-  html.keyboard-open,
-  html.keyboard-open body{
-    overscroll-behavior-y: none;
-  }
-
-  @media (max-width: 768px){
-    html, body{
-      overflow-x: clip !important;
-    }
-    /* Blur effects can stutter on some devices */
-    .glass, .blur, .frosted,
-    [class*="glass"], [class*="blur"]{
-      backdrop-filter: saturate(120%) blur(10px);
-      -webkit-backdrop-filter: saturate(120%) blur(10px);
-    }
-  }
-</style>
-
 </head>
 <body>
     <main class="wrap auth-modern-wrap">
@@ -422,7 +276,7 @@
                 <p class="subtitle">{{ t.get("register_subtitle", "Fast, secure and free to join.") }}</p>
                 
                 {% if error %}
-                <div class="error" style="margin-bottom: 20px; font-size: 0.9rem; padding: 10px; border-radius: 8px;">
+                <div class="error" style="margin-bottom: 20px; font-size: 0.9rem;">
                     <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
                 </div>
                 {% endif %}
@@ -443,94 +297,21 @@
                                 <i class="fa-solid fa-lock"></i>
                                 <input id="password" name="password" type="password" required placeholder="{{ t.get('password', 'Password') }}">
                             </div>
-                            <button type="button" class="tiny" onclick="window.togglepass(this)"><i class="fa-solid fa-eye-slash"></i></button>
+                            <button type="button" class="tiny" onclick="togglepass(this)"><i class="fa-solid fa-eye-slash"></i></button>
                         </div>
                     </div>
 
                     <div class="action-area">
                         <button type="submit" class="pickbtn">{{ t.get("register", "Register") }}</button>
-                        <a href="/login" data-nav="soft" class="linkbtn full">{{ t.get("login", "Already have an account?") }}</a>
+                        <a href="/login" data-nav="soft" class="linkbtn full">{{ t.get("login", "Already have an account") }}</a>
                     </div>
                 </form>
             </div>
         </div>
     </main>
     <script src="/mobile/js/app.js"></script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function () {
-  const docEl = document.documentElement;
-  let baseVVH = 0;
-  let rafId = 0;
-
-  function getViewportHeight() {
-    if (window.visualViewport && window.visualViewport.height) {
-      return window.visualViewport.height;
-    }
-    return window.innerHeight || docEl.clientHeight || 0;
-  }
-
-  function applyViewportVars() {
-    const vh = Math.round(getViewportHeight());
-    if (!baseVVH || vh > baseVVH) baseVVH = vh;
-    docEl.style.setProperty('--app-vh', vh + 'px');
-    const keyboardOpen = baseVVH - vh > 120;
-    docEl.classList.toggle('keyboard-open', keyboardOpen);
-  }
-
-  function scheduleApply() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(applyViewportVars);
-  }
-
-  // Clamp accidental horizontal overflow caused by oversized elements
-  function clampWideElements() {
-    const viewportW = Math.max(docEl.clientWidth, window.innerWidth || 0);
-    const nodes = document.body ? document.body.querySelectorAll('*') : [];
-    for (const el of nodes) {
-      if (!el || !el.getBoundingClientRect) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.width > viewportW + 2) {
-        if (!el.dataset._mobileClamp) {
-          el.style.maxWidth = '100%';
-          el.style.overflowWrap = el.style.overflowWrap || 'anywhere';
-          el.dataset._mobileClamp = '1';
-        }
-      }
-    }
-  }
-
-  function scheduleClamp() {
-    requestAnimationFrame(() => {
-      try { clampWideElements(); } catch (e) {}
-    });
-  }
-
-  window.addEventListener('resize', scheduleApply, { passive: true });
-  window.addEventListener('orientationchange', scheduleApply, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scheduleApply, { passive: true });
-    window.visualViewport.addEventListener('scroll', scheduleApply, { passive: true });
-  }
-
-  document.addEventListener('focusin', scheduleApply, true);
-  document.addEventListener('focusout', scheduleApply, true);
-  window.addEventListener('load', () => { scheduleApply(); scheduleClamp(); }, { once: true });
-
-  // Observe dynamic UI changes (messages, modals, etc.)
-  const mo = new MutationObserver(() => {
-    scheduleApply();
-    scheduleClamp();
-  });
-  if (document.documentElement) {
-    mo.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
-  }
-
-  applyViewportVars();
-  setTimeout(scheduleClamp, 120);
-})();
-</script>
-
 </body>
 </html>
+
+
+

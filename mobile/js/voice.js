@@ -1,242 +1,211 @@
-/**
- * Voice.js - Sesli Kanal ve WebRTC Yönetimi
- * Gelişmiş Mobil Deneyimi ve Premium Visualizer Desteği
- */
+(function () {
+  window.initVoicePage = function () {
+    const root = document.getElementById("voicepage");
+    if (!root) return;
+    if (root.dataset.voiceInit === "1") return;
+    root.dataset.voiceInit = "1";
 
-(function() {
-    'use strict';
+    const serverId = root.getAttribute("data-server");
+    const channelId = root.getAttribute("data-channel");
+    const me = Number(root.getAttribute("data-me") || "0");
+    const joinBtn = document.getElementById("voicejoin");
+    const muteBtn = document.getElementById("voicemute");
+    const usersBox = document.getElementById("voiceusers");
+    const audios = document.getElementById("audios");
 
-    // Global Ses Durumu
-    const VoiceState = {
-        isMuted: false,
-        isDeafened: false,
-        localStream: null,
-        audioCtx: null,
-        analyser: null,
-        dataArray: null,
-        animationId: null,
-        peers: {},
-        currentChannelId: null
-    };
+    let stream = null;
+    let source = null;
+    let refreshTimer = null;
+    let lastSignal = 0;
+    const peers = new Map();
+    let muted = false;
+    let joined = false;
 
-    // DOM Elementleri
-    function drawRoundedRectCompat(ctx, x, y, w, h, r) {
-        if (!ctx) return;
-        if (typeof ctx.roundRect === 'function') {
-            ctx.beginPath();
-            ctx.roundRect(x, y, w, h, r);
-            return;
-        }
-        const rr = Math.max(0, Math.min(r || 0, Math.min(w, h) / 2));
-        ctx.beginPath();
-        ctx.moveTo(x + rr, y);
-        ctx.arcTo(x + w, y, x + w, y + h, rr);
-        ctx.arcTo(x + w, y + h, x, y + h, rr);
-        ctx.arcTo(x, y + h, x, y, rr);
-        ctx.arcTo(x, y, x + w, y, rr);
-        ctx.closePath();
+    function iceConfig() {
+      return { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
     }
 
-    const elements = {
-        muteBtn: document.getElementById('muteBtn'),
-        deafenBtn: document.getElementById('deafenBtn'),
-        disconnectBtn: document.getElementById('disconnectBtn'),
-        visualizer: document.getElementById('voiceVisualizer'),
-        userList: document.getElementById('voiceUserList')
-    };
-
-    /**
-     * Ses Görselleştiriciyi Başlat (Canvas API)
-     */
-    function initVisualizer() {
-        if (!elements.visualizer || !VoiceState.localStream) return;
-
-        if (!VoiceState.audioCtx) {
-            VoiceState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            VoiceState.analyser = VoiceState.audioCtx.createAnalyser();
-            const source = VoiceState.audioCtx.createMediaStreamSource(VoiceState.localStream);
-            source.connect(VoiceState.analyser);
-            VoiceState.analyser.fftSize = 64;
-            const bufferLength = VoiceState.analyser.frequencyBinCount;
-            VoiceState.dataArray = new Uint8Array(bufferLength);
-        }
-
-        const canvas = elements.visualizer;
-        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width && rect.height) {
-            canvas.width = Math.round(rect.width * dpr);
-            canvas.height = Math.round(rect.height * dpr);
-        }
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const width = rect.width || canvas.width;
-        const height = rect.height || canvas.height;
-
-        function draw() {
-            VoiceState.animationId = requestAnimationFrame(draw);
-            VoiceState.analyser.getByteFrequencyData(VoiceState.dataArray);
-
-            ctx.clearRect(0, 0, width, height);
-            
-            // Premium Gradient Efekti
-            const gradient = ctx.createLinearGradient(0, 0, width, 0);
-            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
-            gradient.addColorStop(0.5, 'rgba(129, 140, 248, 0.8)');
-            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.2)');
-
-            const barWidth = (width / VoiceState.dataArray.length) * 2.5;
-            let x = 0;
-
-            for (let i = 0; i < VoiceState.dataArray.length; i++) {
-                const barHeight = (VoiceState.dataArray[i] / 255) * height;
-                
-                ctx.fillStyle = gradient;
-                // Oval çubuk çizimi
-                const radius = barWidth / 2;
-                const y = (height - barHeight) / 2;
-                
-                drawRoundedRectCompat(ctx, x, y, barWidth - 2, barHeight, 5);
-                ctx.fill();
-
-                x += barWidth + 1;
-            }
-        }
-
-        draw();
+    async function postSignal(target, kind, payload) {
+      const fd = new FormData();
+      fd.append("target", String(target));
+      fd.append("kind", kind);
+      fd.append("payload", payload);
+      await fetch(`/voice/signal/${serverId}/${channelId}`, {
+        method: "POST",
+        body: fd,
+        headers: { "X-Requested-With": "fetch" },
+      });
     }
 
-    /**
-     * Mikrofonu Aç/Kapat
-     */
-    function toggleMute() {
-        if (!VoiceState.localStream) return;
+    function ensurePeer(remoteId) {
+      if (peers.has(remoteId)) return peers.get(remoteId);
+      const pc = new RTCPeerConnection(iceConfig());
+      if (stream) {
+        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      }
+      pc.onicecandidate = (e) => {
+        if (e.candidate) postSignal(remoteId, "candidate", JSON.stringify(e.candidate)).catch(() => {});
+      };
+      pc.ontrack = (e) => {
+        const id = `audio-${remoteId}`;
+        let el = document.getElementById(id);
+        if (!el) {
+          el = document.createElement("audio");
+          el.id = id;
+          el.autoplay = true;
+          el.controls = true;
+          audios.appendChild(el);
+        }
+        el.srcObject = e.streams[0];
+        const p = el.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      };
+      peers.set(remoteId, pc);
+      return pc;
+    }
 
-        VoiceState.isMuted = !VoiceState.isMuted;
-        VoiceState.localStream.getAudioTracks().forEach(track => {
-            track.enabled = !VoiceState.isMuted;
+    function syncLocalTracksToPeers() {
+      if (!stream) return;
+      const tracks = stream.getAudioTracks();
+      peers.forEach((pc) => {
+        tracks.forEach((track) => {
+          const sender = pc.getSenders().find((s) => s.track && s.track.kind === track.kind);
+          if (sender) sender.replaceTrack(track);
+          else pc.addTrack(track, stream);
         });
-
-        // UI Güncelleme
-        if (VoiceState.isMuted) {
-            elements.muteBtn.classList.add('active');
-            elements.muteBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i>';
-            showToast("Mikrofon kapatıldı");
-        } else {
-            elements.muteBtn.classList.remove('active');
-            elements.muteBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            showToast("Mikrofon açıldı");
-        }
+      });
     }
 
-    /**
-     * Sesi (Kulaklığı) Aç/Kapat
-     */
-    function toggleDeafen() {
-        VoiceState.isDeafened = !VoiceState.isDeafened;
-        
-        // Tüm uzak ses tracklerini sustur
-        const remoteAudios = document.querySelectorAll('.remote-audio');
-        remoteAudios.forEach(audio => {
-            audio.muted = VoiceState.isDeafened;
-        });
-
-        // UI Güncelleme
-        if (VoiceState.isDeafened) {
-            elements.deafenBtn.classList.add('active');
-            elements.deafenBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
-            if (!VoiceState.isMuted) toggleMute(); // Sağırlaşan kişi otomatik mute olur
-            showToast("Sesler susturuldu");
-        } else {
-            elements.deafenBtn.classList.remove('active');
-            elements.deafenBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-            showToast("Sesler açıldı");
-        }
+    async function makeOffer(remoteId) {
+      const pc = ensurePeer(remoteId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await postSignal(remoteId, "offer", JSON.stringify(offer));
     }
 
-    /**
-     * Kanaldan Ayrıl
-     */
-    function disconnect() {
-        if (VoiceState.animationId) cancelAnimationFrame(VoiceState.animationId);
-        
-        if (VoiceState.localStream) {
-            VoiceState.localStream.getTracks().forEach(track => track.stop());
-        }
-
-        if (VoiceState.audioCtx) {
-            VoiceState.audioCtx.close();
-        }
-
-        showToast("Bağlantı kesildi");
-        
-        // Sunucuya ayrılma bilgisini gönder ve ana sayfaya dön
-        setTimeout(() => {
-            window.location.href = document.referrer || '/';
-        }, 500);
+    async function handleSignal(msg) {
+      if (!msg || !msg.kind || msg.kind === "ping") return;
+      const sender = Number(msg.sender || 0);
+      if (!sender || sender === me) return;
+      const pc = ensurePeer(sender);
+      if (msg.kind === "hello") {
+        await makeOffer(sender);
+        return;
+      }
+      if (msg.kind === "offer") {
+        const offer = JSON.parse(msg.payload || "{}");
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await postSignal(sender, "answer", JSON.stringify(answer));
+        return;
+      }
+      if (msg.kind === "answer") {
+        const answer = JSON.parse(msg.payload || "{}");
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        return;
+      }
+      if (msg.kind === "candidate") {
+        const cand = JSON.parse(msg.payload || "{}");
+        if (cand && cand.candidate) await pc.addIceCandidate(new RTCIceCandidate(cand));
+      }
     }
 
-    /**
-     * Medya İzinlerini Al ve Başlat
-     */
-    async function startVoice() {
+    function startSignalStream() {
+      if (source) source.close();
+      source = new EventSource(`/voice/stream/${serverId}/${channelId}last=${lastSignal}`);
+      source.onmessage = async (evt) => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }, 
-                video: false 
-            });
-            
-            VoiceState.localStream = stream;
-            initVisualizer();
-            showToast("Ses bağlantısı başarılı");
-
-        } catch (err) {
-            console.error("Mikrofon erişim hatası:", err);
-            showToast("Mikrofon izni reddedildi!", "error");
-        }
+          const data = JSON.parse(evt.data || "{}");
+          if (data.id) lastSignal = Math.max(lastSignal, Number(data.id));
+          await handleSignal(data);
+        } catch (_) {}
+      };
+      source.onerror = () => {
+        if (source) source.close();
+        source = null;
+        setTimeout(startSignalStream, 2000);
+      };
     }
 
-    /**
-     * Basit Toast Bildirimi (App.js ile uyumlu)
-     */
-    function showToast(message, type = "info") {
-        if (window.MobileApp && window.MobileApp.showNotification) {
-            window.MobileApp.showNotification(message, type);
-        } else {
-            console.log(`[Voice] ${type.toUpperCase()}: ${message}`);
-        }
+    async function refreshUsers() {
+      const res = await fetch(`/voice/ping/${serverId}/${channelId}`, {
+        method: "POST",
+        headers: { "X-Requested-With": "fetch" },
+      });
+      const data = await res.json();
+      if (!data.ok) return;
+      usersBox.innerHTML = "";
+      (data.users || []).forEach((u) => {
+        const row = document.createElement("div");
+        row.className = "user-voice-card";
+        row.innerHTML = `<img src="${u.avatar}" alt=""><div class="name">${u.username}</div>`;
+        usersBox.appendChild(row);
+      });
     }
 
-    function resumeAudioContext() {
-        if (VoiceState.audioCtx && VoiceState.audioCtx.state === 'suspended') {
-            VoiceState.audioCtx.resume().catch(() => {});
-        }
+    async function joinVoice() {
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      }
+      syncLocalTracksToPeers();
+      await refreshUsers();
+      startSignalStream();
+      await postSignal(0, "hello", "{}");
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => refreshUsers().catch(() => {}), 12000);
+      joined = true;
+      joinBtn.innerHTML = '<i class="fa-solid fa-phone-slash"></i> Kanaldan Ayril';
+      muteBtn.disabled = false;
     }
 
-    // Event Listeners
-    if (elements.muteBtn) elements.muteBtn.addEventListener('click', function(){ resumeAudioContext(); toggleMute(); });
-    if (elements.deafenBtn) elements.deafenBtn.addEventListener('click', function(){ resumeAudioContext(); toggleDeafen(); });
-    if (elements.disconnectBtn) elements.disconnectBtn.addEventListener('click', disconnect);
+    function leaveVoice() {
+      joined = false;
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+      if (source) {
+        source.close();
+        source = null;
+      }
+      peers.forEach((pc) => {
+        try {
+          pc.close();
+        } catch (_) {}
+      });
+      peers.clear();
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+        stream = null;
+      }
+      if (audios) audios.innerHTML = "";
+      muted = false;
+      joinBtn.innerHTML = '<i class="fa-solid fa-phone-volume"></i> Kanala Baglan';
+      muteBtn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> Sustur';
+      muteBtn.disabled = true;
+    }
 
-    // Başlat
-    document.addEventListener('DOMContentLoaded', () => {
-        // Kanal ID'sini URL'den veya data attribute'dan al
-        const pathParts = window.location.pathname.split('/');
-        VoiceState.currentChannelId = pathParts[pathParts.length - 1];
-        
-        startVoice();
+    joinBtn.addEventListener("click", () => {
+      if (joined) {
+        leaveVoice();
+        return;
+      }
+      joinVoice().catch(() => {
+        alert("Mikrofon erisimi veya ses baglantisi baslatilamadi.");
+      });
     });
-
-    // Sayfa değiştirilirken temizlik yap
-    window.addEventListener('beforeunload', () => {
-        if (VoiceState.localStream) {
-            VoiceState.localStream.getTracks().forEach(track => track.stop());
-        }
+    muteBtn.addEventListener("click", () => {
+      if (!stream) return;
+      muted = !muted;
+      stream.getAudioTracks().forEach((t) => (t.enabled = !muted));
+      muteBtn.innerHTML = muted
+         '<i class="fa-solid fa-microphone"></i> Sesi Ac'
+        : '<i class="fa-solid fa-microphone-slash"></i> Sustur';
     });
+    if (muteBtn) muteBtn.disabled = true;
+  };
 
+  window.initVoicePage();
 })();
+

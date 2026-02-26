@@ -1,721 +1,105 @@
-﻿<!DOCTYPE html>
-<html lang="tr">
+<!doctype html>
+<html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Euphorium - Arkadaşlar</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <title>{{ t.get("friends", "Friends") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100dvh;
-            overflow: hidden;
-            background-color: #1a202c;
-            color: #f4f7fa;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overscroll-behavior-y: none;
-        }
+        /* === Arkadaşlar Listesi Minimal Tasarım === */
+        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100vh; }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; }
+        .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -10%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
+        .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -10%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+        @keyframes driftPrimary { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10vw, 10vh) scale(1.1); } }
+        @keyframes driftPurple { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-10vw, -10vh) scale(1.2); } }
 
-        *, *::before, *::after {
-            box-sizing: border-box;
-        }
+        .topbar { background: rgba(var(--panel-rgb), 0.65) !important; backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 25px; }
 
-        img, video, iframe {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
+        .friends-container { max-width: 700px; margin: 0 auto; padding: 90px 20px 60px 20px; }
 
-        .app-shell {
-            display: grid;
-            grid-template-rows: 70px 1fr;
-            height: 100dvh;
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
-        }
+        .panel { background: rgba(var(--panel-rgb), 0.8) !important; backdrop-filter: blur(24px) !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; border-radius: 20px !important; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important; padding: 35px !important; display: flex; flex-direction: column; animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        body[data-theme="dark"] .panel { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.04) !important; }
+        @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
-        .app-header {
-            grid-row: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            background-color: rgba(26, 32, 44, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #2d3748;
-            z-index: 50;
-        }
+        .panel h1 { font-size: 1.8rem; margin: 0 0 5px 0; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(var(--text-rgb), 0.05); padding-bottom: 20px; margin-bottom: 20px; }
+        .panel h1 i { color: var(--primary); }
+        .section-title { font-size: 1.05rem; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px; color: var(--text); }
+        .section-title i { color: var(--primary); }
 
-        .brand {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #818cf8;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .modern-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 16px; margin-bottom: 12px; transition: all 0.3s; }
+        .modern-card:hover { transform: translateY(-3px); background: rgba(var(--bg-rgb), 0.8); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); border-color: var(--primary); }
+        .modern-card .who { display: flex; align-items: center; gap: 15px; font-weight: 600; font-size: 1.05rem; }
+        .modern-card .who img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        
+        .modern-card .acts { display: flex; gap: 8px; align-items: center; }
+        .modern-card .pickbtn, .modern-card .linkbtn { padding: 8px 14px !important; font-size: 0.9rem !important; border-radius: 8px !important; height: auto !important; }
+        
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--muted); text-align: center; background: rgba(var(--bg-rgb), 0.2); border-radius: 16px; border: 1px dashed rgba(var(--line-rgb), 0.6); margin-top: 10px; }
+        .empty-state i { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; color: var(--primary); }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .profile-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #2d3748;
-            padding: 8px 16px;
-            border-radius: 20px;
-            color: #f4f7fa;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        .profile-btn:hover {
-            background: #4a5568;
-        }
-
-        /* Tema birligi: home/dm ile ayni panel ve cizgi dili */
-        .app-header {
-            background: rgba(var(--panel-rgb), 0.68);
-            border-bottom: 1px solid rgba(var(--line-rgb), 0.7);
-        }
-        .profile-btn {
-            background: rgba(var(--bg-rgb), 0.42);
-            border: 1px solid rgba(var(--line-rgb), 0.8);
-        }
-        .friend-card {
-            background: rgba(var(--panel-rgb), 0.62);
-            border: 1px solid rgba(var(--line-rgb), 0.7);
-        }
-        .friend-name { color: var(--text); }
-        .friend-status-text { color: var(--muted); }
-
-        .app-body {
-            grid-row: 2;
-            display: flex;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        .app-sidebar {
-            width: 260px;
-            min-width: 260px;
-            background-color: #1a202c;
-            border-right: 1px solid #2d3748;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 0;
-            overflow-y: auto;
-        }
-
-        /* Sidebar kapatma */
-        .app-sidebar { display: none !important; }
-        .app-content { width: 100% !important; }
-
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px 24px;
-            color: #a0aec0;
-            text-decoration: none;
-            font-size: 1.05rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .sidebar-link:hover, .sidebar-link.active {
-            color: #818cf8;
-            background-color: rgba(129, 140, 248, 0.1);
-            border-right: 3px solid #818cf8;
-        }
-
-        .sidebar-link i {
-            font-size: 1.2rem;
-            width: 24px;
-            text-align: center;
-        }
-
-        .app-content {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 0;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .friends-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #2d3748;
-            padding-bottom: 15px;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: #a0aec0;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 10px 15px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .tab-btn:hover {
-            background: rgba(45, 55, 72, 0.5);
-            color: #f4f7fa;
-        }
-
-        .tab-btn.active {
-            background: #2d3748;
-            color: #818cf8;
-        }
-
-        .add-friend-btn {
-            margin-left: auto;
-            background: #10b981;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .add-friend-btn:hover {
-            background: #059669;
-        }
-
-        .friends-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .friend-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #2d3748;
-            padding: 15px 20px;
-            border-radius: 12px;
-            border: 1px solid #4a5568;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .friend-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .friend-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .friend-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #4a5568;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            position: relative;
-        }
-
-        .status-dot {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid #2d3748;
-        }
-
-        .status-online { background: #10b981; }
-        .status-offline { background: #6b7280; }
-        .status-idle { background: #f59e0b; }
-
-        .friend-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .friend-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #f4f7fa;
-        }
-
-        .friend-status-text {
-            font-size: 0.85rem;
-            color: #a0aec0;
-        }
-
-        .friend-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            color: #f4f7fa;
-        }
-
-        .btn-message { background: #4f46e5; }
-        .btn-message:hover { background: #4338ca; }
-        .btn-remove { background: #ef4444; }
-        .btn-remove:hover { background: #dc2626; }
-
-        .mobile-bottom-nav {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .app-shell {
-                grid-template-rows: 60px 1fr 65px;
-            }
-
-            .app-header {
-                padding: 0 15px;
-            }
-
-            .brand {
-                font-size: 1.2rem;
-            }
-
-            .profile-btn span {
-                display: none;
-            }
-
-            .profile-btn {
-                padding: 8px;
-                border-radius: 50%;
-            }
-
-            .app-body {
-                flex-direction: column;
-            }
-
-            .app-sidebar {
-                display: none;
-            }
-
-            .app-content {
-                padding: 15px;
-            }
-
-            .friends-header {
-                flex-wrap: wrap;
-                gap: 10px;
-                margin-bottom: 20px;
-            }
-
-            .tab-btn {
-                font-size: 0.95rem;
-                padding: 8px 12px;
-                flex: 1;
-                text-align: center;
-            }
-
-            .add-friend-btn {
-                width: 100%;
-                justify-content: center;
-                margin-left: 0;
-            }
-
-            .friend-card {
-                padding: 12px 15px;
-            }
-
-            .friend-avatar {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-
-            .friend-name {
-                font-size: 1rem;
-            }
-
-            .action-btn {
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-
-            .mobile-bottom-nav {
-                grid-row: 3;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                background-color: rgba(26, 32, 44, 0.98);
-                backdrop-filter: blur(10px);
-                border-top: 1px solid #2d3748;
-                width: 100%;
-                z-index: 100;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-
-            .nav-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-                color: #a0aec0;
-                text-decoration: none;
-                font-size: 0.75rem;
-                padding: 10px;
-                flex: 1;
-                transition: color 0.2s;
-            }
-
-            .nav-item i {
-                font-size: 1.3rem;
-            }
-
-            .nav-item:hover, .nav-item.active {
-                color: #818cf8;
-            }
-        }
+        @media(max-width: 600px) { .modern-card { flex-direction: column; align-items: flex-start; gap: 15px; } .modern-card .acts { width: 100%; justify-content: flex-end; } }
     </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-  :root{
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --app-vh: 100dvh;
-  }
-
-  html{
-    width:100%;
-    max-width:100%;
-    overflow-x: clip;
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
-    background: var(--bg, #0b0b0b);
-  }
-
-  body{
-    width:100%;
-    max-width:100%;
-    min-height:100vh;
-    min-height:100svh;
-    min-height:100dvh;
-    min-height:var(--app-vh);
-    overflow-x: clip !important;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    padding-left:max(0px, var(--safe-left));
-    padding-right:max(0px, var(--safe-right));
-  }
-
-  *, *::before, *::after{
-    box-sizing:border-box;
-    min-width:0;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  img, video, canvas, svg, iframe{
-    max-width:100%;
-  }
-
-  input, textarea, select, button{
-    font: inherit;
-  }
-
-  textarea{
-    max-width:100%;
-  }
-
-  /* Common mobile app-shell helpers (safe, generic) */
-  .topbar, .header, .app-header, nav.top, [data-fixed="top"]{
-    padding-top: max(0px, var(--safe-top));
-  }
-
-  .bottombar, .bottom-nav, .tabbar, .app-bottom, [data-fixed="bottom"]{
-    padding-bottom: max(0px, var(--safe-bottom));
-  }
-
-  /* Modals / drawers / popups often overflow on mobile */
-  .modal, .popup, .sheet, .drawer, dialog, [role="dialog"]{
-    max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-    max-width: min(100%, calc(100vw - 12px));
-  }
-
-  /* Prevent fixed/sticky elements from creating horizontal overflow */
-  [style*="position: fixed"], [style*="position:fixed"],
-  [style*="position: sticky"], [style*="position:sticky"]{
-    max-width:100vw;
-  }
-
-  /* Keyboard open state: reduce jank on mobile */
-  html.keyboard-open,
-  html.keyboard-open body{
-    overscroll-behavior-y: none;
-  }
-
-  @media (max-width: 768px){
-    html, body{
-      overflow-x: clip !important;
-    }
-    /* Blur effects can stutter on some devices */
-    .glass, .blur, .frosted,
-    [class*="glass"], [class*="blur"]{
-      backdrop-filter: saturate(120%) blur(10px);
-      -webkit-backdrop-filter: saturate(120%) blur(10px);
-    }
-  }
-</style>
-
 </head>
 <body>
-    <div class="app-shell">
-        <header class="app-header">
-            <a href="/home" class="brand">
-                <i class="fa-solid fa-infinity"></i> Euphorium
-            </a>
-            <div class="header-actions">
-                <a href="/profile" class="profile-btn">
-                    <i class="fa-solid fa-user-circle"></i>
-                    <span>Profilim</span>
-                </a>
-            </div>
-        </header>
+    <div class="bg-texture"></div><div class="ambient-orb orb-1"></div><div class="ambient-orb orb-2"></div>
 
-        <div class="app-body">
-            <aside class="app-sidebar">
-                <a href="/home" class="sidebar-link">
-                    <i class="fa-solid fa-house"></i> Ana Sayfa
-                </a>
-                <a href="/dm" class="sidebar-link">
-                    <i class="fa-solid fa-message"></i> DM
-                </a>
-                <a href="/friends" class="sidebar-link active">
-                    <i class="fa-solid fa-user-group"></i> Arkadaşlar
-                </a>
-                <a href="/casino" class="sidebar-link">
-                    <i class="fa-solid fa-dice"></i> Casino
-                </a>
-                <a href="/settings" class="sidebar-link">
-                    <i class="fa-solid fa-gear"></i> Ayarlar
-                </a>
-            </aside>
-
-            <main class="app-content">
-                <div class="friends-header">
-                    <button class="tab-btn active">Çevrimiçi</button>
-                    <button class="tab-btn">Tümü</button>
-                    <button class="tab-btn">İstekler</button>
-                    <button class="add-friend-btn">
-                        <i class="fa-solid fa-user-plus"></i> Arkadaş Ekle
-                    </button>
-                </div>
-
-                <div class="friends-list">
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            <div class="friend-avatar">
-                                A
-                                <span class="status-dot status-online"></span>
-                            </div>
-                            <div class="friend-details">
-                                <span class="friend-name">Ahmet Yılmaz</span>
-                                <span class="friend-status-text">CS2 Oynuyor</span>
-                            </div>
-                        </div>
-                        <div class="friend-actions">
-                            <a href="/dm" class="action-btn btn-message">
-                                <i class="fa-solid fa-message"></i>
-                            </a>
-                            <button class="action-btn btn-remove">
-                                <i class="fa-solid fa-user-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            <div class="friend-avatar">
-                                B
-                                <span class="status-dot status-idle"></span>
-                            </div>
-                            <div class="friend-details">
-                                <span class="friend-name">Burak Can</span>
-                                <span class="friend-status-text">Boşta</span>
-                            </div>
-                        </div>
-                        <div class="friend-actions">
-                            <a href="/dm" class="action-btn btn-message">
-                                <i class="fa-solid fa-message"></i>
-                            </a>
-                            <button class="action-btn btn-remove">
-                                <i class="fa-solid fa-user-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="friend-card">
-                        <div class="friend-info">
-                            <div class="friend-avatar">
-                                C
-                                <span class="status-dot status-offline"></span>
-                            </div>
-                            <div class="friend-details">
-                                <span class="friend-name">Cemre Su</span>
-                                <span class="friend-status-text">Son görülme: 2 saat önce</span>
-                            </div>
-                        </div>
-                        <div class="friend-actions">
-                            <a href="/dm" class="action-btn btn-message">
-                                <i class="fa-solid fa-message"></i>
-                            </a>
-                            <button class="action-btn btn-remove">
-                                <i class="fa-solid fa-user-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </main>
+    <header class="topbar">
+        <div class="topbar-left">
+            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}"><i class="fa-solid fa-arrow-left"></i></button>
+            <span style="font-weight: 600; margin-left: 10px; color: var(--text);">{{ t.get("friends", "Friends") }}</span>
         </div>
-
-        <nav class="mobile-bottom-nav">
-            <a href="/home" class="nav-item" data-nav="soft">
-                <i class="fa-solid fa-house"></i>
-                <span>Home</span>
-            </a>
-            <a href="/dm" class="nav-item" data-nav="soft">
-                <i class="fa-solid fa-paper-plane"></i>
-                <span>DM</span>
-            </a>
-            <a href="/servers" class="nav-item" data-nav="soft">
-                <i class="fa-solid fa-server"></i>
-                <span>Sunucular</span>
-            </a>
-            <a href="/friends" class="nav-item active" data-nav="soft">
-                <i class="fa-solid fa-user-group"></i>
-                <span>Arkadaş</span>
-            </a>
-            <a href="/settings" class="nav-item" data-nav="soft">
-                <i class="fa-solid fa-gear"></i>
-                <span>Ayarlar</span>
-            </a>
+        <nav class="topbar-right">
+            <a href="/profile" data-nav="soft" class="navbtn" title="{{ t.get('profile', 'Profile') }}"><i class="fa-solid fa-user"></i></a>
         </nav>
-    </div>
+    </header>
+
+    <main class="wrap friends-container">
+        <section class="panel">
+            <h2 class="section-title"><i class="fa-solid fa-user-clock"></i> {{ t.get("requests", "Friend requests") }} ({{ pending|length }})</h2>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:22px;">
+                {% for p in pending %}
+                <div class="modern-card">
+                    <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn" title="Kabul Et"><i class="fa-solid fa-check"></i></button></form>
+                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn" title="Reddet"><i class="fa-solid fa-xmark"></i></button></form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <span>{{ t.get("norequests", "No friend requests.") }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h1><i class="fa-solid fa-user-group"></i> {{ t.get("friends", "Friends") }} ({{ friends|length }})</h1>
+            
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                {% for f in friends %}
+                <div class="modern-card">
+                    <div class="who"><img src="{{ f.avatar }}" alt="a"> {{ f.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/dm/start" data-nav="soft"><input type="hidden" name="peerid" value="{{ f.id }}"><button class="pickbtn" title="Mesaj Gönder"><i class="fa-solid fa-paper-plane"></i></button></form>
+                        <form method="post" action="/social/remove/{{ f.id }}" data-nav="soft"><button class="linkbtn" title="Arkadaşlıktan Çıkar"><i class="fa-solid fa-user-minus"></i></button></form>
+                        <form method="post" action="/social/block/{{ f.id }}" data-nav="soft"><button class="linkbtn" style="color:#ef4444; border-color:rgba(239,68,68,0.3);" title="Kullanıcıyı Engelle"><i class="fa-solid fa-ban"></i></button></form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-user-ninja"></i>
+                    <span>Henüz hiç arkadaşın yok. Ana sayfadan yeni insanları keşfet!</span>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
     <script src="/mobile/js/app.js"></script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function () {
-  const docEl = document.documentElement;
-  let baseVVH = 0;
-  let rafId = 0;
-
-  function getViewportHeight() {
-    if (window.visualViewport && window.visualViewport.height) {
-      return window.visualViewport.height;
-    }
-    return window.innerHeight || docEl.clientHeight || 0;
-  }
-
-  function applyViewportVars() {
-    const vh = Math.round(getViewportHeight());
-    if (!baseVVH || vh > baseVVH) baseVVH = vh;
-    docEl.style.setProperty('--app-vh', vh + 'px');
-    const keyboardOpen = baseVVH - vh > 120;
-    docEl.classList.toggle('keyboard-open', keyboardOpen);
-  }
-
-  function scheduleApply() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(applyViewportVars);
-  }
-
-  // Clamp accidental horizontal overflow caused by oversized elements
-  function clampWideElements() {
-    const viewportW = Math.max(docEl.clientWidth, window.innerWidth || 0);
-    const nodes = document.body ? document.body.querySelectorAll('*') : [];
-    for (const el of nodes) {
-      if (!el || !el.getBoundingClientRect) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.width > viewportW + 2) {
-        if (!el.dataset._mobileClamp) {
-          el.style.maxWidth = '100%';
-          el.style.overflowWrap = el.style.overflowWrap || 'anywhere';
-          el.dataset._mobileClamp = '1';
-        }
-      }
-    }
-  }
-
-  function scheduleClamp() {
-    requestAnimationFrame(() => {
-      try { clampWideElements(); } catch (e) {}
-    });
-  }
-
-  window.addEventListener('resize', scheduleApply, { passive: true });
-  window.addEventListener('orientationchange', scheduleApply, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scheduleApply, { passive: true });
-    window.visualViewport.addEventListener('scroll', scheduleApply, { passive: true });
-  }
-
-  document.addEventListener('focusin', scheduleApply, true);
-  document.addEventListener('focusout', scheduleApply, true);
-  window.addEventListener('load', () => { scheduleApply(); scheduleClamp(); }, { once: true });
-
-  // Observe dynamic UI changes (messages, modals, etc.)
-  const mo = new MutationObserver(() => {
-    scheduleApply();
-    scheduleClamp();
-  });
-  if (document.documentElement) {
-    mo.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
-  }
-
-  applyViewportVars();
-  setTimeout(scheduleClamp, 120);
-})();
-</script>
-
 </body>
 </html>
+
+
+

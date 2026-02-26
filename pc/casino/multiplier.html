@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Carpan - Euphorium</title>
+  <title>{{ t.get("multiplier_game", "Multiplier") }} - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -43,7 +43,7 @@
     
     
     .mx-box.locked::before { 
-      content: '?'; 
+      content: ''; 
       color: #64748b; 
       font-size: 2.2rem;
       animation: pulseLocked 2.5s infinite ease-in-out;
@@ -235,7 +235,13 @@
 
       function intVal(v) {
         const n = Number(v || 0);
-        return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+        return Number.isFinite(n)  Math.max(0, Math.floor(n)) : 0;
+      }
+
+      function nextFrame() {
+        return new Promise(function (resolve) {
+          requestAnimationFrame(function () { resolve(); });
+        });
       }
 
       function setBusy(v) {
@@ -251,6 +257,10 @@
         boxes.forEach(function (b) {
           b.className = "mx-box locked";
           b.textContent = "";
+          // Force animation state reset so the next reveal always replays.
+          b.style.animation = "none";
+          void b.offsetWidth;
+          b.style.animation = "";
         });
       }
 
@@ -274,7 +284,7 @@
 
       function setStatus(msg, isErr) {
         stateText.textContent = msg || "";
-        stateText.style.color = isErr ? "#fca5a5" : "";
+        stateText.style.color = isErr  "#fca5a5" : "";
       }
 
       function formatTime(ts) {
@@ -298,7 +308,7 @@
       async function loadState() {
         const res = await fetch("/casino/multiplier/state", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
         const data = await res.json();
-        if (!data || !data.ok) throw new Error(data?.error || "state_failed");
+        if (!data || !data.ok) throw new Error(data.error || "state_failed");
         applyLimits(data.constants || constants);
         updateBalance(data.balance);
         if (!betInput.value) betInput.value = String(intVal(constants.min_bet || 100));
@@ -313,12 +323,12 @@
       }
 
       function showResult(round) {
-        const picks = Array.isArray(round.picks) ? round.picks : [];
-        picksText.textContent = picks.length ? picks.map(function (p) { return p + "x"; }).join(", ") : "-";
+        const picks = Array.isArray(round.picks)  round.picks : [];
+        picksText.textContent = picks.length  picks.map(function (p) { return p + "x"; }).join(", ") : "-";
         totalText.textContent = String(round.total_multiplier || "-") + "x";
         betOutText.textContent = String(intVal(round.bet_amount));
         payoutText.textContent = String(intVal(round.payout_amount));
-        payoutText.className = intVal(round.payout_amount) >= intVal(round.bet_amount) ? "gain" : "loss";
+        payoutText.className = intVal(round.payout_amount) >= intVal(round.bet_amount)  "gain" : "loss";
 
         resultCard.classList.remove("flash", "mega");
         void resultCard.offsetWidth;
@@ -328,10 +338,11 @@
 
       async function revealPicks(picks) {
         resetBoxes();
+        await nextFrame();
         const baseInterval = intVal(constants.reveal_interval_ms || 350);
         
-        for (let i = 0; i < 5; i++) {
-          const value = picks[i] || "-";
+        for (let i = 0; i < boxes.length; i++) {
+          const value = typeof picks[i] !== "undefined"  picks[i] : "-";
           const num = Number(value);
           const box = boxes[i];
           if (!box) continue;
@@ -365,7 +376,11 @@
             waitMultiplier = 0.7; // 0 olunca çok hızlı ve sönük geçsin
           }
 
-          box.className = "mx-box " + tierClass;
+          box.className = "mx-box";
+          box.style.animation = "none";
+          void box.offsetWidth;
+          box.style.animation = "";
+          box.classList.add(tierClass);
           
           await new Promise(function (r) { setTimeout(r, baseInterval * waitMultiplier); });
         }
@@ -417,7 +432,7 @@
       };
       maxBtn.onclick = function () {
         const maxBet = Math.min(intVal(constants.max_bet || 10000), intVal(balance));
-        betInput.value = String(maxBet > 0 ? maxBet : intVal(constants.min_bet || 100));
+        betInput.value = String(maxBet > 0  maxBet : intVal(constants.min_bet || 100));
       };
       playBtn.onclick = playRound;
 
@@ -441,6 +456,7 @@
   </script>
 </body>
 </html>
+
 
 
 

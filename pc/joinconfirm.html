@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Davet Onayı - Euphorium</title>
+    <title>{{ t.get("invite_confirm", "Invite Confirmation") }} - Euphorium</title>
     <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -37,13 +37,13 @@
                     <img src="{{ server.avatar }}" alt="server avatar">
                     <div>
                         <h1>{{ server.name }}</h1>
-                        <div class="hint">Bu sunucuya katılmak istiyor musun?</div>
+                        <div class="hint">Bu sunucuya katÄ±lmak istiyor musun</div>
                     </div>
                 </div>
                 <div class="invite-code"><i class="fa-solid fa-link"></i> {{ invitecode }}</div>
                 <form method="post" class="actions" data-nav="soft">
-                    <button type="submit" name="action" value="join" class="pickbtn"><i class="fa-solid fa-check"></i> Katıl</button>
-                    <button type="submit" name="action" value="cancel" class="linkbtn"><i class="fa-solid fa-xmark"></i> İptal</button>
+                    <button type="submit" name="action" value="join" class="pickbtn"><i class="fa-solid fa-check"></i> KatÄ±l</button>
+                    <button type="submit" name="action" value="cancel" class="linkbtn"><i class="fa-solid fa-xmark"></i> Ä°ptal</button>
                 </form>
             </section>
         </main>
@@ -51,3 +51,4 @@
     <script src="/pc/js/app.js"></script>
 </body>
 </html>
+

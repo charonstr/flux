@@ -1,8 +1,9 @@
-(function () {
+﻿(function () {
   'use strict';
 
   const MobileApp = {
     init() {
+      this.ensureProfileModal();
       this.applyTheme();
       this.bindThemeButtons();
       this.bindSoftNav();
@@ -84,6 +85,30 @@
 
       // Expose for pages that may call it
       this.closeProfileModal = close;
+    },
+
+    ensureProfileModal() {
+      let overlay = document.getElementById('modalOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'modalOverlay';
+        overlay.className = 'modal-overlay';
+        document.body.appendChild(overlay);
+      }
+      let modal = document.getElementById('profileModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'profileModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <a href="/profile" data-nav="soft" class="modal-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+            <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>Settings</span></a>
+            <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
     },
 
     bindOutsideDismiss() {

@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-SUPPORTED = {"tr", "en"}
+SUPPORTED = {"tr", "en", "es"}
 
 
 def language(code: str) -> str:
@@ -18,3 +18,4 @@ def texts(code: str) -> dict:
         return {}
     with file.open("r", encoding="utf-8-sig") as handle:
         return json.load(handle)
+

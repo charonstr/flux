@@ -1,562 +1,294 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-    <script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("dm", "DM") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* === Premium DM Arayüzü Tasarımı === */
-
-        body {
-            position: relative;
-            background-color: var(--bg);
-            overflow: hidden;
-            min-height: 100dvh;
-            margin: 0;
-        }
-
+        
+        body { position: relative; background-color: var(--bg); overflow: hidden; min-height: 100vh; }
+        
         /* Arka Plan ve Işıklar */
-        .bg-texture {
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: -1;
-            opacity: 0.5;
-        }
+        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
+        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; }
+        .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -10%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
+        .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -10%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
+        @keyframes driftPrimary { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(10vw, 10vh) scale(1.1); } }
+        @keyframes driftPurple { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-10vw, -10vh) scale(1.2); } }
 
-        .ambient-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(100px);
-            z-index: -2;
-            opacity: 0.3;
-            will-change: transform;
-            transform: translateZ(0);
-        }
-
-        .orb-1 {
-            width: 45vw;
-            height: 45vw;
-            background: var(--primary);
-            top: -10%;
-            left: -10%;
-            animation: driftPrimary 30s ease-in-out infinite alternate;
-        }
-
-        .orb-2 {
-            width: 40vw;
-            height: 40vw;
-            background: #818cf8;
-            bottom: -10%;
-            right: -10%;
-            animation: driftPurple 25s ease-in-out infinite alternate;
-        }
-
-        @keyframes driftPrimary {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); }
-        }
-
-        @keyframes driftPurple {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); }
-        }
-
-        /* Topbar (FIX) */
-        .topbar {
-            background: rgba(var(--panel-rgb), 0.65) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-sizing: border-box;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 12px;
-            gap: 10px;
-        }
-
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .topbar .profile-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(var(--bg-rgb), 0.45);
-            border: 1px solid rgba(var(--line-rgb), 0.8);
-            color: var(--text);
-            border-radius: 999px;
-            padding: 6px 10px;
-            height: 40px;
-            max-width: 100%;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .topbar .profile-btn .avatar {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            object-fit: cover;
-            display: block;
-            flex-shrink: 0;
-        }
-
-        .topbar .profile-btn span {
-            font-size: 0.9rem;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 140px;
-        }
-
-        .topbar .navbtn {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-            background: rgba(var(--bg-rgb), 0.35);
-            border: 1px solid rgba(var(--line-rgb), 0.7);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .topbar .navbtn i {
-            font-size: 1rem;
-            line-height: 1;
-        }
-
-        .topbar .navbtn:hover,
-        .topbar .navbtn.active {
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.14);
-            border-color: rgba(var(--primary-rgb), 0.35);
-        }
-
-        /* Modal için temel stiller */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            z-index: 1200;
-        }
-
-        .modal {
-            position: fixed;
-            top: 68px;
-            left: 12px;
-            right: 12px;
-            z-index: 1201;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-6px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-
-        .modal-content {
-            background: rgba(var(--panel-rgb), 0.96);
-            border: 1px solid rgba(var(--line-rgb), 0.9);
-            border-radius: 14px;
-            padding: 10px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-        }
-
-        .lang-switcher {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .modal-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border-radius: 10px;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .modal-link:hover {
-            background: rgba(var(--bg-rgb), 0.45);
-        }
-
-        body.modal-open .modal-overlay {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        body.modal-open .modal {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
+        /* Topbar */
+        .topbar { background: rgba(var(--panel-rgb), 0.65) !important; backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); position: fixed; width: 100%; top: 0; z-index: 1000; }
 
         /* Ana Grid Yapısı */
-        .dm-wrap {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 72px 20px 20px 20px;
-            height: 100dvh;
-            display: grid;
-            grid-template-columns: 340px 1fr;
-            gap: 20px;
-            box-sizing: border-box;
+        .dm-wrap { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 0; 
+            height: calc(100vh - 120px); 
+            display: grid; 
+            grid-template-columns: 340px 1fr; 
+            gap: 20px; 
+        }
+        
+        .dm-panel { 
+            background: rgba(var(--panel-rgb), 0.6) !important; 
+            backdrop-filter: blur(24px) !important; 
+            -webkit-backdrop-filter: blur(24px) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+            border-radius: 24px !important; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+        
+        body[data-theme="dark"] .dm-panel { 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.03) !important; 
         }
 
-        .dm-panel {
-            background: rgba(var(--panel-rgb), 0.6) !important;
-            backdrop-filter: blur(24px) !important;
-            -webkit-backdrop-filter: blur(24px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 24px !important;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            min-height: 0;
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        body[data-theme="dark"] .dm-panel {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
-            border: 1px solid rgba(255, 255, 255, 0.03) !important;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        /* --- SOL SÜTUN: Sohbet Listesi --- */
         .sidebar-header {
-            padding: 18px 16px 12px 16px;
+            padding: 25px 20px 15px 20px;
             border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-shrink: 0;
         }
 
         .sidebar-header h2 {
             margin: 0;
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .sidebar-header h2 i {
-            color: var(--primary);
-        }
+        .sidebar-header h2 i { color: var(--primary); }
 
-        .conversations-list {
-            padding: 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .conversations-list { 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
             flex-grow: 1;
-            min-height: 0;
         }
-
-        .conversations-list::-webkit-scrollbar { width: 6px; }
+        
+        .conversations-list::-webkit-scrollbar { width: 6px; } 
         .conversations-list::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 10px; }
-
-        .conversation-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: 14px;
-            text-decoration: none;
-            color: var(--text);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        
+        .conversation-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            padding: 12px 15px; 
+            border-radius: 16px; 
+            text-decoration: none; 
+            color: var(--text); 
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
             position: relative;
             background: transparent;
-            touch-action: manipulation;
         }
-
-        .conversation-item:hover {
-            background: rgba(var(--bg-rgb), 0.5);
+        
+        .conversation-item:hover { 
+            background: rgba(var(--bg-rgb), 0.5); 
             transform: translateX(4px);
         }
-
-        .conversation-item.active {
-            background: rgba(var(--primary-rgb), 0.15);
+        
+        .conversation-item.active { 
+            background: rgba(var(--primary-rgb), 0.15); 
             box-shadow: inset 4px 0 0 var(--primary);
         }
-
-        .conversation-item img {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            object-fit: cover;
-            flex-shrink: 0;
+        
+        .conversation-item img { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            object-fit: cover; 
         }
-
+        
         .conv-info {
             display: flex;
             flex-direction: column;
             gap: 4px;
             overflow: hidden;
             width: 100%;
-            min-width: 0;
         }
 
-        .conv-info strong {
-            font-size: 0.98rem;
+        .conv-info strong { 
+            font-size: 1.05rem; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .conv-info p { 
+            margin: 0; 
+            font-size: 0.85rem; 
+            color: var(--muted); 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .conv-info p {
-            margin: 0;
-            font-size: 0.82rem;
-            color: var(--muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-header {
-            padding: 14px 16px;
-            border-bottom: 1px solid rgba(var(--text-rgb), 0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(var(--bg-rgb), 0.2);
+        /* --- SAĞ SÜTUN: Mesajlaşma Alanı --- */
+        .chat-header { 
+            padding: 20px 25px; 
+            border-bottom: 1px solid rgba(var(--text-rgb), 0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: rgba(var(--bg-rgb), 0.2); 
             backdrop-filter: blur(10px);
             z-index: 10;
-            flex-shrink: 0;
-            min-height: 72px;
         }
-
-        .chat-header img {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 2px solid rgba(var(--primary-rgb), 0.3);
-            flex-shrink: 0;
+        
+        .chat-header img { width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(var(--primary-rgb), 0.3); }
+        .chat-header-info h2 { margin: 0 0 4px 0; font-size: 1.2rem; }
+        .chat-header-info p { margin: 0; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 6px;}
+        
+        /* Aktiflik Noktası */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; }
+        .status-dot.offline { background: var(--muted); }
+        
+        /* Mesaj Kutusu */
+        .chat-messages { 
+            flex-grow: 1; 
+            padding: 25px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
         }
-
-        .chat-header-info {
-            min-width: 0;
-        }
-
-        .chat-header-info h2 {
-            margin: 0 0 4px 0;
-            font-size: 1rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-header-info p {
-            margin: 0;
-            font-size: 0.8rem;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-
-        .status-dot.offline {
-            background: var(--muted);
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            min-height: 0;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar { width: 6px; } 
         .chat-messages::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
-
-        .msg-bubble {
-            max-width: 80%;
-            padding: 12px 14px;
-            border-radius: 18px;
-            font-size: 0.9rem;
-            line-height: 1.45;
-            position: relative;
+        
+        /* Modern Balonlar */
+        .msg-bubble { 
+            max-width: 70%; 
+            padding: 14px 18px; 
+            border-radius: 22px; 
+            font-size: 0.95rem; 
+            line-height: 1.5; 
+            position: relative; 
             word-wrap: break-word;
         }
-
-        .msg-bubble.mine {
-            align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary), #818cf8);
-            color: #ffffff !important;
-            border-bottom-right-radius: 6px;
-            box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.25);
+        
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        
+        /* Benim Mesajım */
+        .msg-bubble.mine { 
+            align-self: flex-end; 
+            background: linear-gradient(135deg, var(--primary), #818cf8); 
+            color: #ffffff !important; 
+            border-bottom-right-radius: 6px; 
+            box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.25); 
         }
-
-        .msg-bubble.other {
-            align-self: flex-start;
-            background: rgba(var(--panel-rgb), 0.8);
-            border: 1px solid rgba(var(--line-rgb), 0.8);
-            color: #111827;
-            border-bottom-left-radius: 6px;
+        
+        /* Karşı Tarafın Mesajı */
+        .msg-bubble.other { 
+            align-self: flex-start; 
+            background: rgba(var(--panel-rgb), 0.8); 
+            border: 1px solid rgba(var(--line-rgb), 0.8); 
+            color: #111827; 
+            border-bottom-left-radius: 6px; 
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
-
-        body[data-theme="dark"] .msg-bubble.other {
-            background: rgba(var(--bg-rgb), 0.6);
-            color: #f8fafc;
-        }
-
+        body[data-theme="dark"] .msg-bubble.other { background: rgba(var(--bg-rgb), 0.6); color: #f8fafc; }
         .msg-bubble p { color: inherit !important; margin: 0; }
 
-        .msg-bubble img,
-        .msg-bubble video {
-            max-width: 100%;
-            border-radius: 14px;
-            margin-top: 5px;
+        .msg-bubble img, .msg-bubble video { 
+            max-width: 100%; 
+            border-radius: 14px; 
+            margin-top: 5px; 
             display: block;
         }
-
-        .chat-input-wrapper {
-            padding: 0 16px 16px 16px;
-            background: transparent;
-            flex-shrink: 0;
+        
+        /* --- Yüzen (Floating) Mesaj Girdisi --- */
+        .chat-input-wrapper { 
+            padding: 0 25px 25px 25px; 
+            background: transparent; 
         }
 
-        .chat-input-form {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            background: rgba(var(--panel-rgb), 0.85);
+        .chat-input-form { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            background: rgba(var(--panel-rgb), 0.85); 
             backdrop-filter: blur(20px);
-            padding: 6px;
-            border-radius: 26px;
-            border: 1px solid rgba(var(--line-rgb), 0.8);
+            padding: 8px; 
+            border-radius: 30px; /* Hap şeklinde tasarım */
+            border: 1px solid rgba(var(--line-rgb), 0.8); 
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
+            transition: all 0.3s; 
         }
+        
+        body[data-theme="dark"] .chat-input-form { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
 
-        body[data-theme="dark"] .chat-input-form {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        }
-
-        .chat-input-form:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.2);
+        .chat-input-form:focus-within { 
+            border-color: var(--primary); 
+            box-shadow: 0 10px 30px rgba(var(--primary-rgb), 0.2); 
             transform: translateY(-2px);
         }
-
-        .chat-input-form input[type="text"] {
-            flex-grow: 1;
-            min-width: 0;
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            padding: 10px 10px;
-            font-size: 16px !important;
-            color: var(--text);
+        
+        .chat-input-form input[type="text"] { 
+            flex-grow: 1; 
+            background: transparent; 
+            border: none; 
+            box-shadow: none; 
+            padding: 12px 15px; 
+            font-size: 1rem; 
+            color: var(--text); 
         }
-
-        .chat-input-form input[type="text"]:focus {
-            outline: none;
-            box-shadow: none;
-        }
-
-        .action-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: grid;
-            place-items: center;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
+        
+        .chat-input-form input[type="text"]:focus { outline: none; box-shadow: none; }
+        
+        /* Butonlar */
+        .action-btn { 
+            width: 42px; 
+            height: 42px; 
+            border-radius: 50%; 
+            display: grid; 
+            place-items: center; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            font-size: 1.1rem; 
             flex-shrink: 0;
-            touch-action: manipulation;
         }
+        
+        .btn-attach { background: transparent; color: var(--muted); } 
+        .btn-attach:hover { color: var(--text); background: rgba(var(--text-rgb), 0.08); }
+        
+        .btn-send { background: var(--primary); color: #fff; } 
+        .btn-send:hover { transform: scale(1.05); background: var(--primary-hover); box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); }
 
-        .btn-attach {
-            background: transparent;
-            color: var(--muted);
-        }
-
-        .btn-attach:hover {
-            color: var(--text);
-            background: rgba(var(--text-rgb), 0.08);
-        }
-
-        .btn-send {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .btn-send:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-        }
-
-        .empty-chat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--muted);
+        /* --- Boş Durum (Empty State) --- */
+        .empty-chat { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100%; 
+            color: var(--muted); 
             text-align: center;
-            padding: 20px;
         }
-
+        
         .empty-icon-wrap {
-            width: 90px;
-            height: 90px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             background: rgba(var(--primary-rgb), 0.1);
             display: grid;
             place-items: center;
-            margin-bottom: 18px;
+            margin-bottom: 25px;
             border: 2px dashed rgba(var(--primary-rgb), 0.3);
             animation: floatSlow 4s ease-in-out infinite;
         }
@@ -567,137 +299,22 @@
             100% { transform: translateY(0); }
         }
 
-        .empty-chat i { font-size: 2.7rem; color: var(--primary); }
-        .empty-chat h2 { font-size: 1.25rem; margin-bottom: 8px; color: var(--text); }
-        .empty-chat p { font-size: 0.95rem; max-width: 300px; line-height: 1.5; margin: 0 auto; }
+        .empty-chat i { font-size: 3.5rem; color: var(--primary); }
+        .empty-chat h2 { font-size: 1.6rem; margin-bottom: 10px; color: var(--text); }
+        .empty-chat p { font-size: 1.05rem; max-width: 300px; line-height: 1.5; }
 
-        .mobile-back-btn { display: none; }
+        /* Mobil Uyumluluk */
+        @media(max-width: 900px) { 
+            .dm-wrap { grid-template-columns: 1fr; padding-top: 5px; height: calc(100vh - 100px);} 
+            .dm-panel { border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important; }
+            .conversations-list { display: {% if peer %}none{% else %}flex{% endif %}; } 
+            .chat-area { display: {% if peer %}flex{% else %}none{% endif %}; border-radius: 0; } 
+            .chat-input-wrapper { padding: 15px; }
+        }
 
-        .dm-mobile-bottom-nav { display: none; }
-
-        @media (max-width: 900px) {
-            .topbar {
-                height: 56px;
-                padding: 0 10px;
-            }
-
-            .topbar .profile-btn {
-                height: 36px;
-                padding: 5px 8px;
-            }
-
-            .topbar .profile-btn .avatar {
-                width: 22px;
-                height: 22px;
-            }
-
-            .topbar .profile-btn span {
-                display: none;
-            }
-
-            .topbar-right {
-                display: none;
-            }
-
-            .dm-wrap {
-                grid-template-columns: 1fr;
-                padding: 64px 8px 10px 8px;
-                padding-bottom: calc(74px + env(safe-area-inset-bottom));
-                height: 100dvh;
-                gap: 10px;
-            }
-
-            .dm-panel {
-                border-radius: 14px !important;
-            }
-
-            .sidebar-panel { display: {% if peer %}none{% else %}flex{% endif %}; }
-            .chat-area { display: {% if peer %}flex{% else %}none{% endif %}; }
-
-            .chat-header {
-                padding: 12px 12px;
-                min-height: 64px;
-            }
-
-            .chat-messages {
-                padding: 12px;
-            }
-
-            .chat-input-wrapper {
-                padding: 0 10px 10px 10px;
-            }
-
-            .mobile-back-btn {
-                display: inline-flex !important;
-                width: 34px;
-                height: 34px;
-                align-items: center;
-                justify-content: center;
-                margin-right: 2px;
-                border-radius: 10px;
-                border: 1px solid rgba(var(--line-rgb), 0.8);
-                background: rgba(var(--bg-rgb), 0.35);
-                color: var(--text);
-                flex-shrink: 0;
-                touch-action: manipulation;
-            }
-
-            .mobile-back-btn i {
-                font-size: 0.95rem;
-            }
-
-            .msg-bubble {
-                max-width: 88%;
-                font-size: 0.88rem;
-                padding: 10px 12px;
-            }
-
-            .dm-mobile-bottom-nav {
-                position: fixed;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                min-height: 65px;
-                background-color: rgba(var(--bg-rgb), 0.98);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border-top: 1px solid var(--border);
-                width: 100%;
-                z-index: 1100;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-
-            body[data-theme="light"] .dm-mobile-bottom-nav {
-                background-color: rgba(var(--bg-rgb), 0.96);
-            }
-
-            .dm-mobile-bottom-nav .nav-item {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 4px;
-                color: var(--muted);
-                font-size: 0.72rem;
-                padding: 8px 4px;
-                flex: 1;
-                min-height: 65px;
-                transition: color 0.2s ease;
-                text-align: center;
-                text-decoration: none;
-            }
-
-            .dm-mobile-bottom-nav .nav-item i {
-                font-size: 1.15rem;
-                line-height: 1;
-            }
-
-            .dm-mobile-bottom-nav .nav-item.active {
-                color: var(--primary);
-            }
+        body.shell-active .dm-wrap {
+            height: auto !important;
+            min-height: 0 !important;
         }
     </style>
 </head>
@@ -706,15 +323,15 @@
 
     <header class="topbar">
         <div class="topbar-left">
-            <button class="profile-btn" id="profileBtn" style="touch-action: manipulation;">
+            <button class="profile-btn" id="profileBtn">
                 <img src="{{ avatar }}" class="avatar" alt="avatar">
                 <span>{{ username or t.get("profile", "Profile") }}</span>
             </button>
         </div>
         <nav class="topbar-right">
-            <a href="/" data-nav="soft" class="navbtn" title="{{ t.get('home', 'Home') }}" style="touch-action: manipulation;"><i class="fa-solid fa-house"></i></a>
-            <a href="/dm" data-nav="soft" class="navbtn active" title="{{ t.get('dm', 'DM') }}" style="touch-action: manipulation;"><i class="fa-solid fa-paper-plane"></i></a>
-            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}" style="touch-action: manipulation;"><i class="fa-solid fa-server"></i></a>
+            <a href="/" data-nav="soft" class="navbtn" title="{{ t.get('home', 'Home') }}"><i class="fa-solid fa-house"></i></a>
+            <a href="/dm" data-nav="soft" class="navbtn active" title="{{ t.get('dm', 'DM') }}"><i class="fa-solid fa-paper-plane"></i></a>
+            <a href="/servers" data-nav="soft" class="navbtn" title="{{ t.get('servers', 'Servers') }}"><i class="fa-solid fa-server"></i></a>
         </nav>
     </header>
 
@@ -722,8 +339,8 @@
     <div class="modal" id="profileModal">
         <div class="modal-content">
              <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
             </div>
             <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span></a>
             <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
@@ -731,12 +348,12 @@
     </div>
 
     <main class="wrap dm-wrap" id="dmpage" data-peer="{{ peer.id if peer else '' }}" data-convid="{{ convid if convid else '' }}" data-last="{{ lastid if lastid else 0 }}">
-
-        <aside class="dm-panel sidebar-panel">
+        
+        <aside class="dm-panel">
             <div class="sidebar-header">
                 <h2><i class="fa-solid fa-message"></i> {{ t.get("messages", "Messages") }}</h2>
             </div>
-
+            
             <div class="conversations-list">
                 {% for p in peers %}
                 <a href="/dm/{{ p.id }}" data-nav="soft" class="conversation-item {% if peer and p.id == peer.id %}active{% endif %}">
@@ -752,9 +369,9 @@
 
         <section class="dm-panel chat-area">
             {% if peer %}
-
+            
             <div class="chat-header">
-                <button class="mobile-back-btn" onclick="window.goback()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="navbtn" style="display:none; margin-right:10px;" onclick="window.goback()"><i class="fa-solid fa-arrow-left"></i></button>
                 <img src="{{ peer.avatar }}" alt="avatar">
                 <div class="chat-header-info">
                     <h2>{{ peer.username }}</h2>
@@ -764,9 +381,9 @@
                     </p>
                 </div>
             </div>
-
+            
             <div class="chat-messages">
-                <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;"> 
                     {% for m in messages %}
                     <div class="msg-bubble {% if m.sender == myid %}mine{% else %}other{% endif %}" data-mid="{{ m.id }}">
                         {% if m.kind == 'text' %}
@@ -780,23 +397,23 @@
                     {% endfor %}
                 </div>
             </div>
-
+            
             <div class="chat-input-wrapper">
                 <form id="dmform" class="chat-input-form" method="post" enctype="multipart/form-data" data-nav="soft">
-
+                    
                     <button type="button" class="action-btn btn-attach" title="Dosya Ekle" onclick="document.getElementById('file-input').click()">
                         <i class="fa-solid fa-paperclip"></i>
                     </button>
                     <input name="file" id="file-input" type="file" accept=".zip,.rar,.7z,.tar,.gz,.bz2,.xz,image/*,video/*" style="display:none;">
-
+                    
                     <input name="text" type="text" placeholder="{{ t.get('message', 'Type a message...') }}" autocomplete="off" autofocus>
-
+                    
                     <button id="voicerecord" type="button" class="action-btn btn-attach" title="Ses Kaydet" data-start="{{ t.get('recordvoice','Record') }}" data-stop="{{ t.get('stoprecord','Stop') }}">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
-
+                    
                     <div id="voicewave" class="voicewave" style="display:none;"></div>
-
+                    
                     <button class="action-btn btn-send" type="submit" title="Gönder">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
@@ -813,28 +430,9 @@
             </div>
             {% endif %}
         </section>
-
+        
     </main>
-
-    <nav class="dm-mobile-bottom-nav">
-        <a href="/home" data-nav="soft" class="nav-item">
-            <i class="fa-solid fa-house"></i>
-            <span>{{ t.get("home", "Home") }}</span>
-        </a>
-        <a href="/dm" data-nav="soft" class="nav-item active">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>{{ t.get("dm", "DM") }}</span>
-        </a>
-        <a href="/servers" data-nav="soft" class="nav-item">
-            <i class="fa-solid fa-server"></i>
-            <span>{{ t.get("servers", "Servers") }}</span>
-        </a>
-        <a href="/settings" data-nav="soft" class="nav-item">
-            <i class="fa-solid fa-gear"></i>
-            <span>{{ t.get("settings", "Settings") }}</span>
-        </a>
-    </nav>
-
     <script src="/mobile/js/app.js"></script>
 </body>
 </html>
+

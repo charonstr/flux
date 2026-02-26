@@ -1,0 +1,1277 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fear of Abyss</title>
+    <link rel="stylesheet" href="/pc/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Genel Tipografi ve Renk Paleti */
+        :root {
+            --ui-bg-dark: rgba(15, 23, 42, 0.85);
+            --ui-border: rgba(100, 116, 139, 0.5);
+            --ui-glow: rgba(56, 189, 248, 0.3);
+            --ui-text-main: #f8fafc;
+            --ui-text-muted: #94a3b8;
+            --ui-accent: #38bdf8;
+            --font-title: 'Cinzel', serif;
+            --font-main: 'Inter', sans-serif;
+        }
+
+        body { 
+            margin: 0; 
+            min-height: 100vh; 
+            font-family: var(--font-main);
+            color: var(--ui-text-main);
+            background-color: #050608;
+            overflow: hidden;
+        }
+
+        .foa-page { min-height: 100vh; }
+        .foa-page-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: #050608 url("/assets/game/tower/towerback1.png") center center / contain no-repeat fixed;
+            filter: contrast(1.1) brightness(0.85); /* Arka planı biraz daha dramatik yapar */
+        }
+
+        .foa-grid-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 1050;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* Konumlandırma bozulmaması için base grid item */
+        .foa-grid-item {
+            position: absolute;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+            user-select: none;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .foa-grid-item:hover {
+            transform: none; /* Hoverda hafif yukarı kalkma efekti */
+            z-index: 1051;
+        }
+
+        .foa-grid-item.has-building {
+            border: 2px solid rgba(148, 163, 184, 0.4);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.05);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+        
+        .foa-grid-item.has-building:hover {
+            border-color: rgba(56, 189, 248, 0.8);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 2px 10px rgba(255,255,255,0.1);
+        }
+
+        .foa-grid-item-label {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            right: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: var(--font-title);
+            color: #f1f5f9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .foa-grid-item-label i {
+            color: var(--ui-accent);
+            filter: drop-shadow(0 0 4px var(--ui-accent));
+        }
+
+        .foa-progress {
+            position: absolute;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid rgba(148,163,184,0.2);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .foa-progress > i {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+            border-radius: 999px;
+            position: relative;
+        }
+        .foa-progress > i::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: progressGlow 1.5s infinite linear;
+        }
+
+        @keyframes progressGlow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes foaLoot { from { opacity: 0; transform: scale(.9) translateY(10px);} to {opacity:1; transform:scale(1) translateY(0);} }
+
+        /* Ãœst Rozetler (Badges) */
+        .balance-badge, .foa-floor-badge, .foa-depot-badge {
+            font-family: var(--font-title);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .balance-badge:hover, .foa-floor-badge:hover, .foa-depot-badge:hover {
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .balance-badge {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            z-index: 1200;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            color: #fbbf24;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: 1px;
+        }
+        .balance-badge i {
+            color: #f59e0b;
+            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+        }
+
+        .foa-floor-badge {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1200;
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: 1px solid rgba(125, 211, 252, 0.4);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(8, 14, 26, 0.95) 100%);
+            color: #e0f2fe;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .foa-floor-badge:hover { transform: translateX(-50%) scale(1.05) translateY(-2px); }
+
+        .foa-depot-badge {
+            position: fixed;
+            top: 16px;
+            right: 220px;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            color: #93c5fd;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+        .foa-depot-badge i { filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.6)); }
+
+        /* Navigasyon Barı */
+        .foa-top-nav {
+            position: fixed;
+            top: 76px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1200;
+            display: inline-flex;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 16px;
+            border: 1px solid var(--ui-border);
+            background: var(--ui-bg-dark);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .foa-top-nav button {
+            font-family: var(--font-title);
+            border: 1px solid rgba(148,163,184,0.2);
+            background: linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%);
+            color: var(--ui-text-main);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+        }
+        .foa-top-nav button:hover {
+            background: linear-gradient(180deg, rgba(51,65,85,0.9) 0%, rgba(30,41,59,1) 100%);
+            border-color: rgba(148,163,184,0.5);
+            color: #fff;
+            transform: none;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+        }
+        .foa-top-nav button:active { transform: none; }
+
+        
+        /* Ana Menü Kartı */
+        .foa-card-menu {
+            position: fixed;
+            z-index: 1400;
+            width: min(85vw, 800px);
+            height: min(85vh, 650px);
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255,255,255,0.05);
+            display: none;
+            padding: 24px;
+            color: var(--ui-text-main);
+            overflow-y: auto;
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Ã–zel Scrollbar */
+        .foa-card-menu::-webkit-scrollbar { width: 8px; }
+        .foa-card-menu::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
+        .foa-card-menu::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 10px; border: 1px solid rgba(15,23,42,1); }
+        .foa-card-menu::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 1); }
+
+        .foa-menu-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+        .foa-menu-title { 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            font-family: var(--font-title);
+            color: #f8fafc;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 1px;
+        }
+
+        /* Standart Menü Butonları */
+        .foa-close-btn {
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(127, 29, 29, 0.4);
+            color: #fca5a5;
+            border-radius: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: var(--font-main);
+            transition: all 0.2s;
+        }
+        .foa-close-btn:hover {
+            background: rgba(220, 38, 38, 0.6);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .foa-building-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .foa-building-btn, .foa-primary-btn {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            background: linear-gradient(180deg, rgba(51, 65, 85, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%);
+            color: var(--ui-text-main);
+            border-radius: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-main);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .foa-primary-btn { text-align: center; font-weight: 600; display: inline-flex; justify-content: center; align-items: center; }
+
+        .foa-building-btn:hover:not(:disabled), .foa-primary-btn:hover:not(:disabled) {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: linear-gradient(180deg, rgba(71, 85, 105, 0.8) 0%, rgba(51, 65, 85, 1) 100%);
+            transform: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.1);
+        }
+        
+        .foa-building-btn:active:not(:disabled), .foa-primary-btn:active:not(:disabled) {
+            transform: none;
+        }
+
+        .foa-building-btn b { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 1.1rem;
+            color: #e0f2fe;
+            font-family: var(--font-title);
+        }
+        .foa-building-btn small { 
+            opacity: 0.7; 
+            line-height: 1.4; 
+            display: block; 
+            font-size: 0.85rem;
+        }
+        .foa-building-btn:disabled, .foa-primary-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+            filter: grayscale(1);
+        }
+
+        .foa-card-meta { 
+            margin-bottom: 16px; 
+            opacity: 0.6; 
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Listeleme/Kutu Tasarımları (${I18N.characters} ve Loglar vb. için) */
+        .foa-list-item {
+            margin-bottom: 12px;
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 12px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+            transition: border-color 0.2s;
+        }
+        .foa-list-item:hover {
+            border-color: rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .foa-list-item b { color: #38bdf8; font-family: var(--font-title); font-size: 1.1rem;}
+        
+        .section-title {
+            font-family: var(--font-title);
+            color: #fbbf24;
+            font-size: 1.1rem;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed rgba(251, 191, 36, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bg-texture, .ambient-orb { display: none !important; }
+    </style>
+</head>
+<body>
+    <main class="foa-page">
+        <div class="foa-page-bg"></div>
+        <div id="foaGridCanvas" class="foa-grid-canvas"></div>
+        <div id="foaCardMenu" class="foa-card-menu"></div>
+
+        <div class="balance-badge">
+        <i class="fa-solid fa-coins"></i>
+        <span id="balanceText">{{ balance or 0 }}</span>
+        </div>
+        <div id="foaFloorBadge" class="foa-floor-badge">{{ t.get("foa_floor", "Floor") }}: 1</div>
+        <div class="foa-top-nav">
+            <button id="towerNavBtn" type="button">{{ t.get("foa_tower", "Tower") }}</button>
+            <button id="charsNavBtn" type="button">{{ t.get("foa_characters", "Characters") }}</button>
+            <button id="depotNavBtn" type="button">{{ t.get("foa_depot", "Depot") }}</button>
+        </div>
+        <div id="depotBadge" class="foa-depot-badge">
+            <i class="fa-solid fa-warehouse"></i>
+            <span id="depotText">{{ t.get("foa_depot", "Depot") }} Lv.1 | 100</span>
+        </div>
+
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal" id="profileModal">
+            <div class="modal-content">
+                <div class="lang-switcher">
+                    <button data-theme-set="light" class="navbtn"><i class="fa-solid fa-sun"></i></button>
+                    <button data-theme-set="dark" class="navbtn"><i class="fa-solid fa-moon"></i></button>
+                </div>
+                <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>{{ t.get("settings", "Settings") }}</span></a>
+                <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    (function () {
+        if (window.__foaCleanup && typeof window.__foaCleanup === 'function') {
+            try { window.__foaCleanup(); } catch (_) {}
+        }
+        const storageKey = 'foa_layout_pc_v1';
+        const deviceKind = 'pc';
+        const canvas = document.getElementById('foaGridCanvas');
+        const cardMenu = document.getElementById('foaCardMenu');
+        const balanceText = document.getElementById('balanceText');
+        const depotBadge = document.getElementById('depotBadge');
+        const depotText = document.getElementById('depotText');
+        const floorBadge = document.getElementById('foaFloorBadge');
+        const towerNavBtn = document.getElementById('towerNavBtn');
+        const charsNavBtn = document.getElementById('charsNavBtn');
+        const depotNavBtn = document.getElementById('depotNavBtn');
+        if (!canvas || !cardMenu || !balanceText || !depotBadge || !depotText || !floorBadge || !towerNavBtn || !charsNavBtn || !depotNavBtn) return;
+        let renderQueued = false;
+        let lastGridSignature = '';
+        let selectedCardId = '';
+        let foaState = null;
+        let towerState = null;
+        let stateTimer = null;
+        let menuMode = 'card';
+        let lastChestTier = '';
+        const I18N = {
+            floor: `{{ t.get("foa_floor", "Floor") }}`,
+            tower: `{{ t.get("foa_tower", "Tower") }}`,
+            characters: `{{ t.get("foa_characters", "Characters") }}`,
+            depot: `{{ t.get("foa_depot", "Depot") }}`,
+            close: `{{ t.get("close", "Close") }}`,
+            emptyDepot: `{{ t.get("foa_depot_empty", "Depot is empty.") }}`,
+            chestOpen: `{{ t.get("foa_chest_open", "Chest Opening") }}`,
+            all: `{{ t.get("all", "All") }}`
+        };
+
+        const frozenDefaults = [
+            { id: 'g1', x: 0.18, y: 0.18, w: 0.20, h: 0.16 },
+            { id: 'g2', x: 0.42, y: 0.18, w: 0.20, h: 0.16 },
+            { id: 'g3', x: 0.18, y: 0.38, w: 0.20, h: 0.16 },
+            { id: 'g4', x: 0.42, y: 0.38, w: 0.20, h: 0.16 }
+];
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function normalizeItemsOrder(list) {
+const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
+                idx,
+                item: {
+                    ...it,
+                    x: Number(it.x ?? 0),
+                    y: Number(it.y ?? 0),
+                    w: Number(it.w ?? 0.2),
+                    h: Number(it.h ?? 0.12),
+                },
+            }));
+            base.sort((a, b) => (a.item.y - b.item.y) || (a.item.x - b.item.x) || (a.idx - b.idx));
+
+            const rowTolerance = 0.04;
+            const rows = [];
+            base.forEach((entry) => {
+                const y = entry.item.y;
+                let row = rows.find((r) => Math.abs(y - r.y) <= rowTolerance);
+                if (!row) {
+                    row = { y, items: [] };
+                    rows.push(row);
+                }
+                row.items.push(entry);
+            });
+
+            rows.sort((a, b) => a.y - b.y);
+            rows.forEach((r) => r.items.sort((a, b) => (a.item.x - b.item.x) || (a.item.y - b.item.y) || (a.idx - b.idx)));
+            return rows.flatMap((r) => r.items.map((x) => x.item));
+        }
+
+        function loadFrozenItems() {
+            try {
+                const raw = localStorage.getItem(storageKey);
+                if (!raw) return normalizeItemsOrder(frozenDefaults);
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || !parsed.length) return normalizeItemsOrder(frozenDefaults);
+                return normalizeItemsOrder(parsed);
+            } catch {
+                return normalizeItemsOrder(frozenDefaults);
+            }
+        }
+
+        function openCardMenu(force = false) {
+            if (cardMenu.style.display === 'block' && !force) { return; }
+            cardMenu.style.display = 'block';
+            const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+            const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+            const rect = cardMenu.getBoundingClientRect();
+            const x = Math.max(8, Math.round((vw - rect.width) / 2));
+            const y = Math.max(8, Math.round((vh - rect.height) / 2));
+            cardMenu.style.left = x + 'px';
+            cardMenu.style.top = y + 'px';
+        }
+
+        function closeCardMenu() {
+            cardMenu.style.display = 'none';
+        }
+        function esc(text) {
+            return String(text || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+        }
+        async function api(path, method = 'GET', body = null) {
+            const opts = { method, headers: { 'X-Requested-With': 'fetch' }, cache: 'no-store' };
+            if (body) {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(body);
+            }
+            const res = await fetch(path, opts);
+            return res.json();
+        }
+        function persistLocalItems(items) {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(items || []));
+} catch (_) {}
+}
+function readLocalItems() {
+try {
+const raw = localStorage.getItem(storageKey);
+if (!raw) return [];
+const parsed = JSON.parse(raw);
+return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+        async function syncLayoutWithServer() {
+            const localItems = normalizeItemsOrder(readLocalItems());
+            if (localItems.length > 0) {
+                await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: localItems, set_default: true });
+                return;
+            }
+            const fromDb = await api(`/api/fear-of-abyss/layout?device=${encodeURIComponent(deviceKind)}`, 'GET');
+            if (fromDb && fromDb.ok && Array.isArray(fromDb.items) && fromDb.items.length > 0) {
+                const normalized = normalizeItemsOrder(fromDb.items);
+                persistLocalItems(normalized);
+                queueRender();
+                return;
+            }
+            await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: normalizeItemsOrder(frozenDefaults), set_default: true });
+}
+function findCardBuilding(cardId) {
+if (!foaState || !Array.isArray(foaState.buildings)) return null;
+return foaState.buildings.find(x => String(x.card_id) === String(cardId)) || null;
+}
+function gridSignatureFromState(state) {
+const buildings = Array.isArray(state?.buildings) ? state.buildings : [];
+return buildings
+.map((b) => [
+String(b.card_id || ''),
+String(b.building_key || ''),
+Number(b.level || 0),
+Number(b.is_upgrading ? 1 : 0),
+Number(b.upgrading_to || 0),
+String(b.upgrade_ends_at || ''),
+Math.round(Number(b.progress || 0) * 1000),
+].join('|'))
+.sort()
+.join('||');
+}
+function recipesForBuilding(buildingKey) {
+const rows = Array.isArray(foaState.recipes) ? foaState.recipes : [];
+return rows.filter((r) => String(r.building_key) === String(buildingKey));
+}
+function renderDepotPanel() {
+menuMode = 'depot';
+const t = towerState;
+if (!t) return;
+openCardMenu();
+const items = Array.isArray(t.depot_items) ? t.depot_items : [];
+            const chests = items.filter((x) => String(x.item_key || '').startsWith('chest_'));
+            let html = `
+                <div class="foa-menu-head">
+                    <div class="foa-menu-title"><i class="fa-solid fa-warehouse" style="margin-right:8px; color: #60a5fa;"></i> ${I18N.depot}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `;
+            if (!items.length) html += `<div style="text-align:center; padding:20px; opacity:0.6;">${I18N.emptyDepot}</div>`;
+            if (chests.length) {
+                html += `<div class="section-title">Kasalar</div><div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">`;
+                chests.forEach((c) => {
+                    const tier = String(c.item_key || '').replace('chest_', '');
+                    html += `<button class="foa-primary-btn" data-open-chest="${esc(tier)}"><i class="fa-solid fa-box-open" style="margin-right:6px;"></i> ${esc(c.item_name)} <span style="margin-left:8px; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">x${Number(c.qty || 0)}</span></button>`;
+                });
+                html += `</div>`;
+            }
+            
+            const standardItems = items.filter((x) => !String(x.item_key || '').startsWith('chest_'));
+            if(standardItems.length) {
+                html += `<div class="section-title">EÅŸyalar</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">`;
+                standardItems.forEach((it) => {
+                    html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
+                        <span>${esc(it.item_name)}</span>
+                        <b style="color:#f8fafc; background:rgba(56, 189, 248, 0.2); padding:4px 10px; border-radius:6px;">x${Number(it.qty || 0)}</b>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            if (lastChestTier) {
+                html += `
+                    <div style="margin-top:24px;padding:20px;background:rgba(15,23,42,0.8);border:1px solid rgba(148,163,184,0.3);border-radius:12px;animation:foaLoot .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                        <div class="section-title" style="margin-top:0;">${esc(lastChestTier).toUpperCase()} ${I18N.chestOpen}</div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="foa-primary-btn" data-open-amount="1">1 Aç</button>
+                            <button class="foa-primary-btn" data-open-amount="2">2 Aç</button>
+                            <button class="foa-primary-btn" data-open-amount="3">3 Aç</button>
+                            <button class="foa-primary-btn" data-open-amount="5">5 Aç</button>
+                            <button class="foa-primary-btn" data-open-amount="all" style="border-color:#fbbf24; color:#fbbf24;">${I18N.all}</button>
+                        </div>
+                    </div>
+                `;
+            }
+            cardMenu.innerHTML = html;
+            const closeBtn = document.getElementById('foaCloseBtn');
+            if (closeBtn) closeBtn.onclick = (ev) => { ev.stopPropagation(); closeCardMenu(); };
+            cardMenu.querySelectorAll('[data-open-chest]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const tier = b.getAttribute('data-open-chest');
+                if (!tier) return;
+                const chestItem = chests.find((x) => String(x.item_key || '') === `chest_${tier}`);
+                if (!chestItem) return;
+                if (Number(chestItem.qty || 0) <= 1) {
+                    const res = await api('/api/fear-of-abyss/depot/open_chest', 'POST', { tier, amount: 1 });
+                    if (res && res.ok) { towerState = res; foaState = res; updateTopBadges(); renderDepotPanel(); }
+                    return;
+                }
+                lastChestTier = tier;
+                renderDepotPanel();
+            });
+            cardMenu.querySelectorAll('[data-open-amount]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                if (!lastChestTier) return;
+                const raw = b.getAttribute('data-open-amount');
+                const chestItem = chests.find((x) => String(x.item_key || '') === `chest_${lastChestTier}`);
+                let amount = 1;
+                if (raw === 'all') amount = Number(chestItem.qty || 1);
+                else amount = Number(raw || 1);
+                const res = await api('/api/fear-of-abyss/depot/open_chest', 'POST', { tier: lastChestTier, amount });
+                if (res && res.ok) { towerState = res; foaState = res; updateTopBadges(); lastChestTier = ''; renderDepotPanel(); }
+            });
+        }
+
+        function renderTowerPanel() {
+            menuMode = 'tower';
+            const t = towerState;
+            if (!t) return;
+            openCardMenu();
+            const active = t.active_battle;
+            let html = `
+                <div class="foa-menu-head">
+                    <div class="foa-menu-title"><i class="fa-brands fa-fort-awesome" style="margin-right:8px; color: #a78bfa;"></i> ${I18N.tower} - ${I18N.floor} ${Number(t.floor || 1)}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">
+                    <div>SÄ±radaki DÃ¼ÅŸman: <b style="color:#ef4444;">${esc(t.enemy.enemy_name || '-')}</b> <span style="opacity:0.7">x${Number(t.enemy.enemy_count || 0)}</span></div>
+                    <div>Sonsuzluk TaÅŸÄ±: <b style="color:#c084fc;"><i class="fa-solid fa-gem"></i> ${Number(t.infinity_stones || 0)}</b></div>
+                </div>
+            `;
+            if (active) {
+                html += `
+                    <div class="section-title" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-khanda"></i> Aktif SavaÅŸ</div>
+                    <div class="foa-list-item">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+                            <div>DÃ¼ÅŸman: <b>${esc(active.enemy_name)}</b></div>
+                            <div style="text-align:right;">Kalan Süre: <b style="color:#fbbf24;">${formatRemaining(Number(active.remaining_sec || 0) * 1000)}</b></div>
+                            <div>Parti Gücü: <b style="color:#38bdf8;">${Number(active.party_power || 0)}</b></div>
+                            <div style="text-align:right;">DÃ¼ÅŸman GÃ¼cÃ¼: <b style="color:#ef4444;">${Number(active.enemy_power || 0)}</b></div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.4); height:8px; border-radius:4px; overflow:hidden; margin-bottom:16px;">
+                            <div style="width:${Math.round(Number(active.progress || 0) * 100)}%; height:100%; background:linear-gradient(90deg, #ef4444, #f97316);"></div>
+                        </div>
+                        <div style="font-weight:700; margin-bottom:8px; opacity:0.8;">Parti Durumu</div>
+                `;
+                (active.party || []).forEach((p) => {
+                    const isDead = p.is_dead;
+                    html += `<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px; border-left:3px solid ${isDead ? '#ef4444' : '#22c55e'};">
+                        <span>${esc(p.hero_name)} ${isDead ? '<span style="color:#ef4444;font-size:0.8em;">(Ã–LÃœ)</span>' : ''}</span>
+                        <span style="font-family:var(--font-main);"><i class="fa-solid fa-heart" style="color:#ef4444; font-size:0.9em;"></i> ${Number(p.hp || 0)}/${Number(p.max_hp || 0)}</span>
+                    </div>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<button class="foa-primary-btn" id="foaStartBattleBtn" style="width:100%; padding:16px; font-size:1.1rem; background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;"><i class="fa-solid fa-khanda" style="margin-right:8px;"></i> SavaÅŸÄ± BaÅŸlat</button>`;
+            }
+            
+            html += `<div class="section-title"><i class="fa-solid fa-scroll"></i> Son SavaÅŸ KayÄ±tlarÄ±</div>`;
+            (t.battle_logs || []).forEach((l) => {
+                const isWin = l.result.toLowerCase().includes('win') || l.result.toLowerCase().includes('kazan');
+                html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px;">
+                    <div>Kat ${Number(l.floor || 0)} - <span style="color:${isWin ? '#4ade80' : '#f87171'}; font-weight:bold;">${esc(l.result)}</span></div>
+                    <div style="display:flex; gap:16px; opacity:0.8; font-size:0.9rem;">
+                        <span><i class="fa-solid fa-coins" style="color:#fbbf24;"></i> ${Number(l.reward_gold || 0)}</span>
+                        <span>${esc(l.created_at || '')}</span>
+                    </div>
+                </div>`;
+            });
+            cardMenu.innerHTML = html;
+            const closeBtn = document.getElementById('foaCloseBtn');
+            if (closeBtn) closeBtn.onclick = (ev) => { ev.stopPropagation(); closeCardMenu(); };
+            const startBtn = document.getElementById('foaStartBattleBtn');
+            if (startBtn) startBtn.onclick = async (ev) => {
+                ev.stopPropagation();
+                const res = await api('/api/fear-of-abyss/tower/start_battle', 'POST', {});
+                if (res && res.ok) {
+                    towerState = res;
+                    renderTowerPanel();
+                }
+            };
+        }
+
+        function renderCharactersPanel() {
+            menuMode = 'characters';
+            const t = towerState;
+            if (!t) return;
+            openCardMenu();
+            let html = `
+                <div class="foa-menu-head">
+                    <div class="foa-menu-title"><i class="fa-solid fa-users" style="margin-right:8px; color: #34d399;"></i> ${I18N.characters}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `;
+            if (t.mage_tower && t.mage_tower.ready) {
+                html += `
+                    <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(52, 211, 153, 0.3); padding:16px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-family:var(--font-title); font-weight:bold; color:#34d399; margin-bottom:4px;">Kahraman Ã‡aÄŸÄ±rma</div>
+                            <div style="font-size:0.9rem; opacity:0.8;">Maliyet: Tekli ${Number(t.summon.single_cost || 500)} <i class="fa-solid fa-coins"></i> | 10'lu ${Number(t.summon.ten_cost || 5000)} <i class="fa-solid fa-coins"></i></div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="foa-primary-btn" id="foaSummonOneBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%);"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i> 1 Ã‡aÄŸrÄ±</button>
+                            <button class="foa-primary-btn" id="foaSummonTenBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;"><i class="fa-solid fa-users-rays" style="margin-right:6px;"></i> 10 Ã‡aÄŸrÄ±</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `<div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:20px; text-align:center; opacity:.7;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> Kahraman Ã§aÄŸÄ±rmak iÃ§in BÃ¼yÃ¼cÃ¼ Kulesi aktif olmalÄ±.</div>`;
+            }
+
+            html += `<div style="display:grid; grid-template-columns:1fr; gap:16px;">`;
+(t.heroes || []).forEach((h) => {
+const dead = Boolean(h.is_dead);
+const block = Boolean(h.hospital_block);
+const rarityColor = h.rarity === 'legendary' ? '#f59e0b' : h.rarity === 'epic' ? '#a855f7' : h.rarity === 'rare' ? '#3b82f6' : '#94a3b8';
+                
+                html += `<div class="foa-list-item" style="position:relative; overflow:hidden; border-left:4px solid ${rarityColor};">`;
+                if(dead) html += `<div style="position:absolute; inset:0; background:rgba(220, 38, 38, 0.1); pointer-events:none;"></div>`;
+                
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                        <div>
+                            <div style="font-family:var(--font-title); font-size:1.2rem; font-weight:bold; color:#fff;">${esc(h.hero_name)} <span style="font-size:0.7em; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); color:${rarityColor}; vertical-align:middle; text-transform:uppercase;">${esc(h.rarity || 'common')}</span></div>
+                            <div style="font-size:0.9rem; margin-top:4px; color:#cbd5e1;">Seviye ${Number(h.level || 1)} â€¢ XP: ${Number(h.xp || 0)}/${Number(h.next_level_xp || 100)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:bold; color:${dead ? '#ef4444' : '#22c55e'};">${dead ? '<i class="fa-solid fa-skull"></i> Ã–LÃœ' : 'CANLI'} ${block ? '<span style="color:#fbbf24;font-size:0.8em;">(Beklemede)</span>' : ''}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; margin-bottom:12px; text-align:center; font-size:0.9rem;">
+                        <div><i class="fa-solid fa-sword" style="color:#f87171;"></i> ATK<br><b>${Number(h.total_attack || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.attack || 0)})</span></div>
+                        <div style="border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-shield" style="color:#60a5fa;"></i> DEF<br><b>${Number(h.total_defense || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.defense || 0)})</span></div>
+                        <div><i class="fa-solid fa-heart" style="color:#ef4444;"></i> HP<br><b style="color:#e2e8f0;">${Number(h.total_hp || 0)} / ${Number(h.total_max_hp || 0)}</b></div>
+                    </div>
+                    
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+<button class="foa-primary-btn" data-toggle-party="${esc(h.hero_id)}" ${dead ? 'disabled' : ''} style="${h.in_party ? 'background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;' : ''}"> ${h.in_party ? '<i class="fa-solid fa-minus"></i> Partiden Ã‡Ä±kar' : '<i class="fa-solid fa-plus"></i> Partiye Ekle'}
+</button>
+<button class="foa-primary-btn" data-equip-best="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}><i class="fa-solid fa-shirt"></i> En İyi Ekipman</button>
+<button class="foa-primary-btn" data-train-hero="${esc(h.hero_id)}" ${dead || block ? 'disabled' : ''}><i class="fa-solid fa-dumbbell"></i> EÄŸit (20dk)</button>`;
+if (dead) {
+html += `<button class="foa-primary-btn" data-revive-hero="${esc(h.hero_id)}" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'} style="background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;"><i class="fa-solid fa-gem"></i> Canlandır</button>
+                        <button class="foa-primary-btn" data-delete-hero="${esc(h.hero_id)}" style="background:rgba(220, 38, 38, 0.2); color:#fca5a5;"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                }
+                html += `</div>`;
+                if (h.training) {
+                    html += `<div style="margin-top:12px; padding:8px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:6px; color:#fbbf24; text-align:center; font-size:0.9rem;">
+                        <i class="fa-solid fa-person-running"></i> EÄŸitimde: <b>${formatRemaining(msRemaining(h.training.ends_at))}</b> | Ã–dÃ¼l: XP +${Number(h.training.xp_gain || 0)}
+                    </div>`;
+                }
+                html += `</div>`;
+            });
+            html += `</div>`;
+            cardMenu.innerHTML = html;
+            const closeBtn = document.getElementById('foaCloseBtn');
+            if (closeBtn) closeBtn.onclick = (ev) => { ev.stopPropagation(); closeCardMenu(); };
+            const summonOne = document.getElementById('foaSummonOneBtn');
+            if (summonOne) summonOne.onclick = async (ev) => {
+                ev.stopPropagation();
+                const res = await api('/api/fear-of-abyss/hero/summon', 'POST', { count: 1 });
+                if (res && res.ok) { towerState = res; updateTopBadges(); renderCharactersPanel(); }
+            };
+            const summonTen = document.getElementById('foaSummonTenBtn');
+            if (summonTen) summonTen.onclick = async (ev) => {
+                ev.stopPropagation();
+                const res = await api('/api/fear-of-abyss/hero/summon', 'POST', { count: 10 });
+                if (res && res.ok) { towerState = res; updateTopBadges(); renderCharactersPanel(); }
+            };
+            cardMenu.querySelectorAll('[data-toggle-party]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const hid = b.getAttribute('data-toggle-party');
+                if (!hid) return;
+                const res = await api('/api/fear-of-abyss/tower/toggle_party', 'POST', { hero_id: hid });
+                if (res && res.ok) { towerState = res; renderCharactersPanel(); }
+            });
+            cardMenu.querySelectorAll('[data-equip-best]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const hid = b.getAttribute('data-equip-best');
+                if (!hid) return;
+                const res = await api('/api/fear-of-abyss/hero/equip_best', 'POST', { hero_id: hid });
+                if (res && res.ok) { towerState = res; renderCharactersPanel(); }
+            });
+            cardMenu.querySelectorAll('[data-train-hero]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const hid = b.getAttribute('data-train-hero');
+                if (!hid) return;
+                const res = await api('/api/fear-of-abyss/hero/train', 'POST', { hero_id: hid, minutes: 20 });
+                if (res && res.ok) { towerState = res; renderCharactersPanel(); }
+            });
+            cardMenu.querySelectorAll('[data-revive-hero]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const hid = b.getAttribute('data-revive-hero');
+                if (!hid) return;
+                const res = await api('/api/fear-of-abyss/hero/revive', 'POST', { hero_id: hid });
+                if (res && res.ok) { towerState = res; renderCharactersPanel(); }
+            });
+            cardMenu.querySelectorAll('[data-delete-hero]').forEach((b) => b.onclick = async (ev) => {
+                ev.stopPropagation();
+                const hid = b.getAttribute('data-delete-hero');
+                if (!hid) return;
+                const res = await api('/api/fear-of-abyss/hero/delete', 'POST', { hero_id: hid });
+                if (res && res.ok) { towerState = res; renderCharactersPanel(); }
+            });
+        }
+
+        function msRemaining(iso) {
+            if (!iso) return 0;
+            const end = new Date(iso).getTime();
+            if (!Number.isFinite(end)) return 0;
+            return Math.max(0, end - Date.now());
+        }
+        function formatRemaining(ms) {
+            const s = Math.floor(ms / 1000);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
+            if (h > 0) return `${h}s ${m}d ${sec}sn`;
+            if (m > 0) return `${m}d ${sec}sn`;
+            return `${sec}sn`;
+        }
+        function updateTopBadges() {
+            if (!foaState) return;
+            balanceText.textContent = String(Number(foaState.balance || 0));
+            if (foaState.depot && foaState.depot.built) {
+                depotBadge.style.display = 'inline-flex';
+                depotText.textContent = `${I18N.depot} Lv.${Number(foaState.depot.level || 1)} | ${Number(foaState.depot.capacity || 0)}`;
+} else {
+depotBadge.style.display = 'none';
+}
+}
+function renderMenu() {
+if (!selectedCardId) return;
+const current = findCardBuilding(selectedCardId);
+const defs = Array.isArray(foaState.building_defs) ? foaState.building_defs : [];
+const balance = Number(foaState.balance || 0);
+const builtKeys = new Set((foaState.buildings || []).map((b) => String(b.building_key || '')));
+const titleIcon = current ? (current.visual.icon || 'fa-solid fa-building') : 'fa-solid fa-hammer';
+            const titleText = current ? `${esc(current.building_name)} <span style="font-size:0.7em; opacity:0.8; vertical-align:middle;">(Lv.${Number(current.level || 1)})</span>` : 'Bina Ä°nÅŸasÄ±';
+            
+            let content = `
+                <div class="foa-menu-head">
+                    <div class="foa-menu-title"><i class="${titleIcon}" style="margin-right:8px; color: var(--ui-accent);"></i> ${titleText}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="foa-card-meta"><i class="fa-solid fa-location-dot"></i> Parsel: ${esc(selectedCardId)}</div>
+            `;
+if (!current) {
+content += '<div class="foa-building-list">';
+defs.forEach((d) => {
+const alreadyBuilt = builtKeys.has(String(d.key));
+const enough = balance >= 100;
+const disabled = alreadyBuilt || !enough;
+content += `<button class="foa-building-btn" data-build-key="${esc(d.key)}" ${disabled ? 'disabled' : ''}>
+                            <b>${esc(d.name)}</b>
+                            <small style="margin-bottom:8px;">${esc(d.desc)}</small>
+                            <div style="margin-top:auto; font-weight:600; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};"> ${alreadyBuilt ? '<i class="fa-solid fa-check"></i> Ä°nÅŸa Edildi' : `<i class="fa-solid fa-coins"></i> Maliyet: 100`}
+                            </div>
+</button>`;
+});
+content += '</div>';
+} else {
+const upgrading = Boolean(current.is_upgrading);
+const maxed = Number(current.level || 1) >= Number(current.max_level || 10);
+const rem = upgrading ? msRemaining(current.upgrade_ends_at) : 0;
+                
+                content += `<div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">`;
+                content += `<div style="margin-bottom:12px; font-size:1.05rem; line-height:1.5;">${esc((defs.find(d => d.key === current.building_key) || {}).desc || '')}</div>`;
+                content += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <span>GeliÅŸim Durumu</span>
+                                <b style="font-size:1.2rem; color:#38bdf8;">Lv. ${Number(current.level || 1)} <span style="opacity:0.5;font-size:0.8em;">/ ${Number(current.max_level || 10)}</span></b>
+                            </div>`;
+                            
+                if (upgrading) {
+                    content += `<div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); padding:12px; border-radius:8px; margin-bottom:16px; color:#fbbf24; display:flex; justify-content:space-between; align-items:center;">
+<span><i class="fa-solid fa-hammer"></i> Yükseltiliyor (Lv.${Number(current.upgrading_to || 0)})</span>
+<b>${formatRemaining(rem)}</b>
+</div>`;
+const instant = Number(current.quick_finish_cost || 0);
+const canFinish = balance >= instant;
+content += `<button class="foa-primary-btn" data-finish-now="${esc(selectedCardId)}" ${canFinish ? '' : 'disabled'} style="width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;"><i class="fa-solid fa-bolt"></i> Anında Bitir (${instant} Altın)</button>`;
+} else if (!maxed) {
+const price = Number(current.next_upgrade_cost || 0);
+const canBuy = !upgrading && balance >= price;
+content += `<button class="foa-primary-btn" data-upgrade-card="${esc(selectedCardId)}" ${canBuy ? '' : 'disabled'} style="width:100%;"><i class="fa-solid fa-arrow-up-right-dots"></i> Yükselt (<i class="fa-solid fa-coins" style="color:#fbbf24; margin:0 4px;"></i> ${price})</button>`;
+                } else {
+                    content += `<div style="text-align:center; padding:12px; background:rgba(34, 197, 94, 0.1); color:#4ade80; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.3);"><i class="fa-solid fa-star"></i> Maksimum Seviye</div>`;
+                }
+                content += `</div>`;
+
+                const recipeRows = recipesForBuilding(current.building_key);
+                if (recipeRows.length > 0) {
+                    content += `<div class="section-title"><i class="fa-solid fa-book-journal-whills"></i> Tarifler ve Ãœretim</div>`;
+                    content += `<div style="display:grid; gap:10px;">`;
+                    recipeRows.forEach((r) => {
+                        if (!r.unlocked) {
+                            content += `<div class="foa-list-item" style="opacity:0.6; display:flex; justify-content:space-between; margin-bottom:0;">
+                                <span><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${esc(r.name)}</span>
+                                <span>AÃ§Ä±lÄ±ÅŸ: Lv.${Number(r.min_level || 1)}</span>
+</div>`;
+return;
+}
+if (!r.owned) {
+const canBuyRecipe = balance >= Number(r.recipe_cost || 0);
+content += `<button class="foa-primary-btn" data-buy-recipe="${esc(r.key)}" ${canBuyRecipe ? '' : 'disabled'} style="justify-content:space-between;">
+                                <span><i class="fa-solid fa-scroll"></i> Tarif Al: ${esc(r.name)}</span>
+                                <span style="color:#fbbf24;">${Number(r.recipe_cost || 0)} <i class="fa-solid fa-coins"></i></span>
+</button>`;
+return;
+}
+const canCraft = balance >= Number(r.craft_cost || 0);
+content += `<button class="foa-primary-btn" data-craft-recipe="${esc(r.key)}" ${canCraft ? '' : 'disabled'} style="justify-content:space-between; background:linear-gradient(180deg, #0284c7 0%, #0369a1 100%); border-color:#38bdf8;">
+                            <span><i class="fa-solid fa-hammer"></i> Ãœret: ${esc(r.name)}</span>
+                            <span style="color:#fbbf24;">${Number(r.craft_cost || 0)} <i class="fa-solid fa-coins"></i></span>
+</button>`;
+});
+content += `</div>`;
+}
+if (current.building_key === 'vendor') {
+content += `<div class="section-title"><i class="fa-solid fa-store"></i> SatÄ±cÄ± StoÄŸu</div>`;
+const stock = Array.isArray(towerState.vendor_stock) ? towerState.vendor_stock : [];
+                    if (!stock.length) content += `<div style="opacity:0.7; text-align:center; padding:10px;">Stok bulunamadı.</div>`;
+                    else {
+                        content += `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">`;
+stock.forEach((s) => {
+const canBuy = Number(s.qty || 0) > 0 && balance >= Number(s.price || 0);
+content += `<button class="foa-primary-btn" data-vendor-buy="${Number(s.slot_idx || 0)}" ${canBuy ? '' : 'disabled'} style="flex-direction:column; align-items:flex-start; gap:8px;">
+                                <div style="font-weight:bold;">${esc(s.item_name)} <span style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-size:0.8em; margin-left:4px;">x${Number(s.qty || 0)}</span></div>
+                                <div style="color:#fbbf24; font-size:0.9rem;"><i class="fa-solid fa-coins"></i> ${Number(s.price || 0)}</div>
+</button>`;
+});
+content += `</div>`;
+}
+}
+if (current.building_key === 'blacksmith' || current.building_key === 'armorer') {
+const slot = current.building_key === 'blacksmith' ? 'weapon' : 'armor';
+const icon = current.building_key === 'blacksmith' ? 'fa-khanda' : 'fa-shield-halved';
+                    content += `<div class="section-title"><i class="fa-solid ${icon}"></i> Ekipman Yükseltme (${slot.toUpperCase()})</div>`;
+                    content += `<div style="display:grid; gap:10px;">`;
+let foundAny = false;
+(towerState.heroes || []).forEach((h) => {
+const inv = Array.isArray(h.inventory) ? h.inventory : [];
+                        const eq = inv.find((i) => String(i.slot) === slot && i.equipped);
+                        if (!eq) return;
+                        foundAny = true;
+                        const ilvl = Number(eq.item_level || 1);
+                        const cost = 5000 * (2 ** Math.max(0, ilvl - 1));
+                        const canUp = balance >= cost;
+                        content += `<button class="foa-primary-btn" data-gear-up="${esc(h.hero_id)}:${slot}" ${canUp ? '' : 'disabled'} style="justify-content:space-between; align-items:center;">
+                            <div style="text-align:left;">
+                                <div style="font-size:0.85rem; opacity:0.8; margin-bottom:2px;">${esc(h.hero_name)}</div>
+                                <b>${esc(eq.item_name)} <span style="color:#38bdf8;">Lv.${ilvl}</span></b>
+                            </div>
+                            <div style="color:#fbbf24;"><i class="fa-solid fa-arrow-up"></i> ${cost} <i class="fa-solid fa-coins"></i></div>
+                        </button>`;
+                    });
+                    if(!foundAny) content += `<div style="opacity:0.7; text-align:center; padding:10px;">YÃ¼kseltilecek kuÅŸanÄ±lmÄ±ÅŸ ekipman yok.</div>`;
+                    content += `</div>`;
+                }
+            }
+            cardMenu.innerHTML = content;
+            const closeBtn = document.getElementById('foaCloseBtn');
+            if (closeBtn) closeBtn.addEventListener('click', (ev) => { ev.stopPropagation(); closeCardMenu(); });
+            cardMenu.querySelectorAll('[data-build-key]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const key = btn.getAttribute('data-build-key');
+                    if (!key || !selectedCardId) return;
+                    const res = await api('/api/fear-of-abyss/build', 'POST', { card_id: selectedCardId, building_key: key });
+                    if (res && res.ok) {
+                        foaState = res;
+                        updateTopBadges();
+                        renderMenu();
+                    }
+                });
+            });
+            cardMenu.querySelectorAll('[data-upgrade-card]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    if (!selectedCardId) return;
+                    const res = await api('/api/fear-of-abyss/upgrade', 'POST', { card_id: selectedCardId });
+                    if (res && res.ok) {
+                        foaState = res;
+                        updateTopBadges();
+                        renderMenu();
+                    }
+                });
+            });
+            cardMenu.querySelectorAll('[data-finish-now]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    if (!selectedCardId) return;
+                    const res = await api('/api/fear-of-abyss/finish-now', 'POST', { card_id: selectedCardId });
+                    if (res && res.ok) {
+                        foaState = res;
+                        updateTopBadges();
+                        render();
+                        renderMenu();
+                    }
+                });
+            });
+            cardMenu.querySelectorAll('[data-buy-recipe]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const key = btn.getAttribute('data-buy-recipe');
+                    if (!key) return;
+                    const res = await api('/api/fear-of-abyss/recipe/buy', 'POST', { recipe_key: key });
+                    if (res && res.ok) {
+                        foaState = res;
+                        updateTopBadges();
+                        renderMenu();
+                    }
+                });
+            });
+            cardMenu.querySelectorAll('[data-craft-recipe]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const key = btn.getAttribute('data-craft-recipe');
+                    if (!key) return;
+                    const res = await api('/api/fear-of-abyss/craft', 'POST', { recipe_key: key, qty: 1 });
+                    if (res && res.ok) {
+                        foaState = res;
+                        updateTopBadges();
+                        renderMenu();
+                    }
+                });
+            });
+            cardMenu.querySelectorAll('[data-vendor-buy]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const slotIdx = Number(btn.getAttribute('data-vendor-buy') || 0);
+                    if (!slotIdx) return;
+                    const res = await api('/api/fear-of-abyss/vendor/buy', 'POST', { slot_idx: slotIdx, qty: 1 });
+                    if (res && res.ok) { towerState = res; foaState = res; updateTopBadges(); renderMenu(); }
+                });
+            });
+            cardMenu.querySelectorAll('[data-gear-up]').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    const raw = String(btn.getAttribute('data-gear-up') || '');
+                    const [heroId, slot] = raw.split(':');
+                    if (!heroId || !slot) return;
+                    const res = await api('/api/fear-of-abyss/gear/upgrade', 'POST', { hero_id: heroId, slot });
+                    if (res && res.ok) { towerState = res; foaState = res; updateTopBadges(); renderMenu(); }
+                });
+            });
+        }
+
+        async function refreshState() {
+            const res = await api('/api/fear-of-abyss/state', 'GET');
+            if (!res || !res.ok) return;
+            foaState = res;
+            updateTopBadges();
+            const nextSig = gridSignatureFromState(foaState);
+            if (nextSig !== lastGridSignature) {
+                lastGridSignature = nextSig;
+                render();
+            }
+            if (cardMenu.style.display === 'block') {
+                const hoveringMenu = cardMenu.matches(':hover');
+                if (!hoveringMenu) {
+                    if (menuMode === 'tower') renderTowerPanel();
+                    else if (menuMode === 'characters') renderCharactersPanel();
+                    else if (menuMode === 'depot') renderDepotPanel();
+                }
+            }
+            const tw = await api('/api/fear-of-abyss/tower/state', 'GET');
+            if (tw && tw.ok) {
+                towerState = tw;
+                floorBadge.innerHTML = `<i class="fa-solid fa-layer-group" style="margin-right:6px;"></i> ${I18N.floor}: ${Number(tw.floor || 1)}`;
+                const nextTowerLabel = `<i class="fa-brands fa-fort-awesome" style="margin-right:6px;"></i> ${I18N.tower} <span style="opacity:0.7;font-size:0.85em;margin-left:4px;">K${Number(tw.floor || 1)}</span>`;
+                if (towerNavBtn.innerHTML !== nextTowerLabel) towerNavBtn.innerHTML = nextTowerLabel;
+            }
+        }
+
+        function render() {
+            const items = loadFrozenItems();
+            const r = canvas.getBoundingClientRect();
+            const w = Math.max(1, r.width);
+            const h = Math.max(1, r.height);
+            canvas.innerHTML = '';
+
+            items.forEach((it, idx) => {
+                const x = clamp(Number(it.x ?? 0), 0, 1);
+                const y = clamp(Number(it.y ?? 0), 0, 1);
+                const iw = clamp(Number(it.w ?? 0.2), 0.02, 1);
+                const ih = clamp(Number(it.h ?? 0.12), 0.02, 1);
+
+                const el = document.createElement('div');
+                el.className = 'foa-grid-item';
+                el.style.left = (x * w) + 'px';
+                el.style.top = (y * h) + 'px';
+                el.style.width = (iw * w) + 'px';
+                el.style.height = (ih * h) + 'px';
+                el.dataset.cardId = `slot-${idx + 1}`;
+                
+                const st = findCardBuilding(el.dataset.cardId);
+                if (st) {
+                    const visual = st.visual || {};
+                    el.classList.add('has-building');
+if (visual.color) {
+el.style.borderColor = String(visual.color);
+el.style.background = `linear-gradient(135deg, color-mix(in srgb, ${String(visual.color)} 30%, rgba(15,23,42,0.9)) 0%, rgba(15,23,42,0.9) 100%)`;
+}
+const label = document.createElement('div');
+label.className = 'foa-grid-item-label';
+const icon = String(visual.icon || 'fa-solid fa-building');
+const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä°nÅŸa Lv.${Number(st.upgrading_to || 1)}`;
+                    label.innerHTML = `<i class="${icon}"></i><span>${esc(st.building_name)} <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">${levelText}</span></span>`;
+                    el.appendChild(label);
+                    if (st.is_upgrading) {
+                        const prog = Math.max(0, Math.min(1, Number(st.progress || 0)));
+                        const bar = document.createElement('div');
+                        bar.className = 'foa-progress';
+                        const inner = document.createElement('i');
+                        inner.style.width = `${Math.round(prog * 100)}%`;
+                        bar.appendChild(inner);
+                        el.appendChild(bar);
+                    }
+                } else {
+                    // BoÅŸ slotlar iÃ§in (isteÄŸe baÄŸlÄ±) hafif bir Ã§erÃ§eve veya iÅŸaret eklenebilir.
+                    el.style.border = "2px dashed rgba(100, 116, 139, 0.2)";
+                    el.style.borderRadius = "12px";
+                    el.style.background = "rgba(15, 23, 42, 0.2)";
+                    el.style.transition = "all 0.2s";
+                    el.addEventListener('mouseenter', () => { el.style.borderStyle = 'solid'; el.style.borderColor = 'rgba(100, 116, 139, 0.5)'; el.style.background = 'rgba(15, 23, 42, 0.4)'; });
+                    el.addEventListener('mouseleave', () => { el.style.borderStyle = 'dashed'; el.style.borderColor = 'rgba(100, 116, 139, 0.2)'; el.style.background = 'rgba(15, 23, 42, 0.2)'; });
+                }
+                
+                el.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    selectedCardId = String(el.dataset.cardId || '');
+                    menuMode = 'card';
+                    openCardMenu(true);
+                    renderMenu();
+                });
+                canvas.appendChild(el);
+            });
+        }
+
+        function queueRender() {
+            if (renderQueued) return;
+            renderQueued = true;
+            requestAnimationFrame(() => {
+                renderQueued = false;
+                render();
+            });
+        }
+
+        const onDocClick = () => closeCardMenu();
+        const onBeforeUnload = () => {
+            const items = normalizeItemsOrder(loadFrozenItems());
+            navigator.sendBeacon(
+                '/api/fear-of-abyss/layout',
+                new Blob([JSON.stringify({ device: deviceKind, items, set_default: true })], { type: 'application/json' })
+            );
+        };
+        window.addEventListener('resize', queueRender, { passive: true });
+        document.addEventListener('click', onDocClick);
+        window.addEventListener('beforeunload', onBeforeUnload);
+        cardMenu.addEventListener('click', (ev) => ev.stopPropagation());
+        window.addEventListener('orientationchange', queueRender, { passive: true });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', queueRender, { passive: true });
+            window.visualViewport.addEventListener('scroll', queueRender, { passive: true });
+        }
+        if (typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(() => queueRender());
+            ro.observe(canvas);
+        }
+
+        lastGridSignature = gridSignatureFromState(foaState);
+        render();
+        syncLayoutWithServer();
+        refreshState();
+        stateTimer = setInterval(refreshState, 1000);
+        
+        towerNavBtn.innerHTML = `<i class="fa-brands fa-fort-awesome" style="margin-right:6px;"></i> ${I18N.tower}`;
+        charsNavBtn.innerHTML = `<i class="fa-solid fa-users" style="margin-right:6px;"></i> ${I18N.characters}`;
+        depotNavBtn.innerHTML = `<i class="fa-solid fa-warehouse" style="margin-right:6px;"></i> ${I18N.depot}`;
+        
+        towerNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderTowerPanel(); });
+        charsNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderCharactersPanel(); });
+        depotNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderDepotPanel(); });
+        setTimeout(queueRender, 60);
+        setTimeout(queueRender, 220);
+
+        window.__foaCleanup = function () {
+            if (stateTimer) clearInterval(stateTimer);
+            stateTimer = null;
+            window.removeEventListener('resize', queueRender);
+            window.removeEventListener('orientationchange', queueRender);
+            window.removeEventListener('beforeunload', onBeforeUnload);
+            document.removeEventListener('click', onDocClick);
+        };
+    })();
+    </script>
+
+    <script src="/pc/js/app.js"></script>
+</body>
+</html>
+
+
+
+

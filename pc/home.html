@@ -1,16 +1,15 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("welcome", "Welcome") }}</title>
     <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* === Zenginleştirilmiş Bento Box Dashboard === */
+        /* === ZenginleÅŸtirilmiÅŸ Bento Box Dashboard === */
 
         body { position: relative; background-color: var(--bg); overflow: hidden; min-height: 100vh; margin: 0; padding: 0; }
-
         .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
         .ambient-orb { position: fixed; border-radius: 50%; filter: blur(120px); z-index: -2; opacity: 0.25; will-change: transform; }
         .orb-1 { width: 45vw; height: 45vw; background: var(--primary); top: -15%; left: -10%; animation: driftPrimary 30s ease-in-out infinite alternate; }
@@ -144,7 +143,7 @@
             <div class="bento-wrap">
                 <section class="panel welcome-panel">
                     <div class="welcome-content">
-                        <h1>{{ t.get("welcome", "Welcome to Euphorium!") }} 👋</h1>
+                        <h1>{{ t.get("welcome", "Welcome to Euphorium!") }}</h1>
                         <p>{{ t.get("subtitle", "This is your dashboard. Keep track of your community, manage your requests, and discover new servers.") }}</p>
                         <div class="welcome-actions">
                             <a href="/servers" data-nav="soft" class="pickbtn"><i class="fa-solid fa-compass"></i> {{ t.get("discover_servers", "Discover Servers") }}</a>
@@ -163,7 +162,7 @@
                         </div>
                         <div class="stat-card">
                             <i class="fa-solid fa-server"></i>
-                            <div class="stat-value">--</div> 
+                            <div class="stat-value">{{ servercount }}</div> 
                             <div class="stat-label">{{ t.get("servers", "Servers") }}</div>
                         </div>
                     </div>
@@ -252,7 +251,7 @@
                                 </form>
                                 {% elif s.status == 'sent' %}
                                 <form method="post" action="/social/revoke/{{ s.id }}" data-nav="soft">
-                                    <button class="linkbtn"><i class="fa-solid fa-paper-plane"></i> Geri Çek</button>
+                                    <button class="linkbtn"><i class="fa-solid fa-paper-plane"></i> {{ t.get("revoke", "Revoke") }}</button>
                                 </form>
                                 {% elif s.status == 'incoming' %}
                                 <button class="linkbtn" disabled><i class="fa-solid fa-clock-rotate-left"></i> {{ t.get("incoming", "Incoming request") }}</button>
@@ -281,3 +280,4 @@
     <script src="/pc/js/app.js"></script>
 </body>
 </html>
+

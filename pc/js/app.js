@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   let dmSource = null;
   let eventSource = null;
   let presenceTimer = null;
@@ -234,6 +234,31 @@
       });
   }
 
+  function ensureProfileModal(doc) {
+      let overlay = doc.getElementById('modalOverlay');
+      if (!overlay) {
+          overlay = doc.createElement('div');
+          overlay.id = 'modalOverlay';
+          overlay.className = 'modal-overlay';
+          doc.body.appendChild(overlay);
+      }
+
+      let modal = doc.getElementById('profileModal');
+      if (!modal) {
+          modal = doc.createElement('div');
+          modal.id = 'profileModal';
+          modal.className = 'modal';
+          modal.innerHTML = `
+              <div class="modal-content">
+                  <a href="/profile" data-nav="soft" class="modal-link"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+                  <a href="/settings" data-nav="soft" class="modal-link"><i class="fa-solid fa-cog"></i><span>Settings</span></a>
+                  <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></a>
+              </div>
+          `;
+          doc.body.appendChild(modal);
+      }
+  }
+
   function injectSPAStyles() {
       if (document.getElementById('spa-styles')) return;
       const style = document.createElement('style');
@@ -325,6 +350,7 @@
       const isDm = p.startsWith('/dm') ? 'active' : '';
       const isServers = p.startsWith('/servers') ? 'active' : '';
       const isCasino = p.startsWith('/casino') ? 'active' : '';
+      const isFearOfAbyss = p.startsWith('/fear-of-abyss') ? 'active' : '';
 
       rail.innerHTML = `
           <div class="rail-btn-wrapper">
@@ -335,6 +361,9 @@
           </div>
           <div class="rail-btn-wrapper">
               <a class="rail-btn ${isCasino}" href="/casino" data-nav="soft" title="Casino"><i class="fa-solid fa-dice"></i></a>
+          </div>
+          <div class="rail-btn-wrapper">
+              <a class="rail-btn ${isFearOfAbyss}" href="/fear-of-abyss" data-nav="soft" title="Fear of Abyss"><i class="fa-solid fa-skull"></i></a>
           </div>
           <div class="rail-divider"></div>
           <div class="rail-btn-wrapper">
@@ -413,6 +442,9 @@
               </div>
               <div class="rail-btn-wrapper">
                   <a class="rail-btn" href="/casino" data-nav="soft" title="Casino"><i class="fa-solid fa-dice"></i></a>
+              </div>
+              <div class="rail-btn-wrapper">
+                  <a class="rail-btn" href="/fear-of-abyss" data-nav="soft" title="Fear of Abyss"><i class="fa-solid fa-skull"></i></a>
               </div>
               <div class="rail-divider"></div>
           `;
@@ -928,6 +960,7 @@
 
   function bind() {
     ensureServerShell();
+    ensureProfileModal(document);
     ensureProfileLink(document); 
     window.initDraggableModals(); 
     
@@ -1079,6 +1112,7 @@
   
   document.addEventListener('DOMContentLoaded', () => {
       initTheme();
+      ensureProfileModal(document);
       ensureProfileLink(document);
       updateDynamicRail();
       document.querySelectorAll('.chat-messages, .chatbox').forEach(b => b.scrollTop = b.scrollHeight);

@@ -1,24 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <script>
-        (function(){
-            try {
-                var t = localStorage.getItem("theme");
-                var l = t === "light";
-                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
-                document.documentElement.style.colorScheme = l ? "light" : "dark";
-            } catch(e) {
-                document.documentElement.style.backgroundColor = "#1a202c";
-            }
-        })();
-    </script>
-    <style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("friendships", "Friendships") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* === Minimal ve Asil Arkadaşlar & Engeller Tasarımı === */
 
@@ -26,10 +13,7 @@
             position: relative;
             background-color: var(--bg);
             overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 100dvh; /* Mobilde tarayıcı barı sorunu için dvh */
-            margin: 0;
-            padding: 0;
+            min-height: 100vh;
         }
 
         /* Arka Plan Dokusu ve Yavaş Işıklar */
@@ -49,7 +33,6 @@
             z-index: -2;
             opacity: 0.3;
             will-change: transform;
-            transform: translateZ(0); /* Donanım hızlandırması - Kasmayı önler */
         }
 
         .orb-1 {
@@ -69,13 +52,13 @@
         }
 
         @keyframes driftPrimary {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 10vh) scale(1.1); }
         }
 
         @keyframes driftPurple {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-10vw, -10vh) scale(1.2); }
         }
 
         /* Topbar */
@@ -95,7 +78,6 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 25px;
-            box-sizing: border-box;
         }
 
         /* --- TEKİL KOMPAKT KART --- */
@@ -103,7 +85,6 @@
             max-width: 650px; /* Ayarlar sekmesi ile aynı hizada ve genişlikte */
             margin: 0 auto;
             padding: 90px 20px 60px 20px;
-            box-sizing: border-box;
         }
 
         .settings-card {
@@ -119,7 +100,6 @@
             padding: 35px !important;
             display: flex;
             flex-direction: column;
-            box-sizing: border-box;
         }
 
         body[data-theme="dark"] .settings-card {
@@ -215,7 +195,6 @@
             color: var(--text);
             border: 1px solid var(--line);
             box-shadow: none;
-            touch-action: manipulation;
         }
 
         .modern-card .pickbtn:hover {
@@ -270,59 +249,8 @@
             .modern-card .acts form, .modern-card .acts button {
                 width: 100%;
             }
-            .ambient-orb { filter: blur(60px); }
         }
     </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-  :root{
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --app-vh: 100dvh;
-  }
-  html{
-    width:100%;
-    max-width:100%;
-    overflow-x: clip;
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
-  }
-  body{
-    width:100%;
-    max-width:100%;
-    min-height:100vh;
-    min-height:100svh;
-    min-height:100dvh;
-    min-height:var(--app-vh);
-    overflow-x: clip !important;
-    padding-left:max(0px, var(--safe-left));
-    padding-right:max(0px, var(--safe-right));
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-  *, *::before, *::after { box-sizing:border-box; min-width:0; }
-  img, video, svg, canvas, iframe { max-width:100%; }
-  .topbar, .app-header, .header, [data-fixed="top"]{ padding-top:max(0px, var(--safe-top)); }
-  .mobile-bottom-nav, .bottombar, .bottom-nav, [data-fixed="bottom"]{
-    padding-bottom:max(0px, var(--safe-bottom));
-  }
-  .modal, .popup, .sheet, .drawer, dialog, [role="dialog"]{
-    max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-    max-width: min(100%, calc(100vw - 12px));
-  }
-  [style*="position: fixed"], [style*="position:fixed"],
-  [style*="position: sticky"], [style*="position:sticky"]{ max-width:100vw; }
-  @media (max-width:768px){
-    .glass, .blur, .frosted, [class*="glass"], [class*="blur"]{
-      backdrop-filter: saturate(120%) blur(10px);
-      -webkit-backdrop-filter: saturate(120%) blur(10px);
-    }
-  }
-</style>
-
 </head>
 <body>
     <div class="bg-texture"></div>
@@ -331,14 +259,14 @@
 
     <header class="topbar">
         <div class="topbar-left">
-            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}" style="touch-action: manipulation;">
+            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <span style="font-weight: 600; margin-left: 10px; color: var(--text);">{{ t.get("friendships", "Friendships") }}</span>
         </div>
         <nav class="topbar-right">
-            <a href="/settings" data-nav="soft" class="navbtn" title="{{ t.get('settings', 'Settings') }}" style="touch-action: manipulation;"><i class="fa-solid fa-cog"></i></a>
-            <button class="profile-btn" id="profileBtn" style="touch-action: manipulation;">
+            <a href="/settings" data-nav="soft" class="navbtn" title="{{ t.get('settings', 'Settings') }}"><i class="fa-solid fa-cog"></i></a>
+            <button class="profile-btn" id="profileBtn">
                 <img src="{{ avatar }}" class="avatar" alt="avatar">
             </button>
         </nav>
@@ -348,8 +276,8 @@
     <div class="modal" id="profileModal">
         <div class="modal-content">
              <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
             </div>
             <a href="/profile" data-nav="soft" class="modal-link">
                 <i class="fa-solid fa-user"></i>
@@ -398,55 +326,8 @@
 
     </main>
     <script src="/mobile/js/app.js"></script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function () {
-  const docEl = document.documentElement;
-  let baseVVH = 0;
-  let rafId = 0;
-
-  function vvHeight() {
-    return (window.visualViewport && window.visualViewport.height) || window.innerHeight || docEl.clientHeight || 0;
-  }
-  function applyVV() {
-    const vh = Math.round(vvHeight());
-    if (!baseVVH || vh > baseVVH) baseVVH = vh;
-    docEl.style.setProperty('--app-vh', vh + 'px');
-    docEl.classList.toggle('keyboard-open', (baseVVH - vh) > 120);
-  }
-  function schedule() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(applyVV);
-  }
-  function clampWide() {
-    const vw = Math.max(docEl.clientWidth, window.innerWidth || 0);
-    if (!document.body) return;
-    document.body.querySelectorAll('*').forEach(el => {
-      if (!el.getBoundingClientRect) return;
-      const w = el.getBoundingClientRect().width;
-      if (w > vw + 2 && !el.dataset._clamped) {
-        el.style.maxWidth = '100%';
-        el.style.overflowWrap = el.style.overflowWrap || 'anywhere';
-        el.dataset._clamped = '1';
-      }
-    });
-  }
-
-  ['resize','orientationchange'].forEach(ev => window.addEventListener(ev, schedule, {passive:true}));
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', schedule, {passive:true});
-    window.visualViewport.addEventListener('scroll', schedule, {passive:true});
-  }
-  document.addEventListener('focusin', schedule, true);
-  document.addEventListener('focusout', schedule, true);
-  window.addEventListener('load', () => { schedule(); requestAnimationFrame(clampWide); }, {once:true});
-  const mo = new MutationObserver(() => { schedule(); requestAnimationFrame(clampWide); });
-  mo.observe(document.documentElement, {subtree:true, childList:true});
-
-  applyVV();
-})();
-</script>
-
 </body>
 </html>
+
+
+

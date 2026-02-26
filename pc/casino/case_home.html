@@ -1,24 +1,25 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="{{ current }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kasalar - Euphorium</title>
+  <title>{{ t.get("cases", "Cases") }} - Euphorium</title>
   <link rel="stylesheet" href="/pc/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    .case-home { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .case-home { max-width: 1100px; margin: 0 auto; padding: clamp(10px, 3vw, 24px); }
     .top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 20px; }
-    .grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; }
+    .grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: clamp(10px, 2.8vw, 24px); }
     .card { background: transparent; border: none; border-radius: 0; padding: 0; text-decoration:none; color:var(--text); display:flex; flex-direction:column; align-items:center; }
     .cover { width: 100%; aspect-ratio: 1 / 1; background: transparent; display:grid; place-items:center; margin-bottom:2px; overflow:visible; }
     .cover img { width: 100%; height: 100%; object-fit: contain; display:block; transition: filter 0.2s ease; }
     .card:hover .cover img { filter: brightness(1.18); }
     .cover i { display: none; }
     .cover.noimg i { display: block; }
-    .price { color: #f59e0b; margin-top: 0; font-weight: 800; font-size: 1rem; position: relative; top: -36px; }
+    .price { color: #f59e0b; margin-top: 0; font-weight: 800; font-size: clamp(0.82rem, 2.8vw, 1rem); position: relative; top: clamp(-20px, -4.4vw, -36px); }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } .top { gap: 8px; } }
+    @media (max-width: 360px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -35,10 +36,10 @@
     (function(){
       const grid = document.getElementById('caseGrid');
       async function init(){
-        const res = await fetch('/api/casino/case/state?case=afet', { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
+        const res = await fetch('/api/casino/case/statecase=afet', { headers:{'X-Requested-With':'fetch'}, cache:'no-store' });
         const data = await res.json();
         if (!res.ok || !data.ok) return;
-        const cases = data.constants?.cases || [];
+        const cases = data.constants.cases || [];
         grid.innerHTML = cases.map(function(c){
           return '<a class="card" href="/casino/case/' + c.id + '" data-nav="soft">' +
                  '<div class="cover"><img src="/assets/casino/case/' + c.id + '/' + c.id + 'case.png" alt="' + c.name + '" onerror="if(!this.dataset.fallback){this.dataset.fallback=\'1\';this.src=\'/assets/casino/case/' + c.id + '/felaketcase.png\';return;}this.parentElement.classList.add(\'noimg\');this.remove();"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
@@ -51,3 +52,4 @@
   </script>
 </body>
 </html>
+

@@ -1,38 +1,23 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <script>
-        (function(){
-            try {
-                var t = localStorage.getItem("theme");
-                var l = t === "light";
-                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
-                document.documentElement.style.colorScheme = l ? "light" : "dark";
-            } catch(e) {
-                document.documentElement.style.backgroundColor = "#1a202c";
-            }
-        })();
-    </script>
-    <style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("settings", "Settings") }}</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* === Minimal ve Asil Ayarlar Tasarımı === */
+        :root {
+            --settings-max: 760px;
+        }
 
         body {
             position: relative;
             background-color: var(--bg);
             overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 100dvh; /* Mobil tarayıcı barları için dvh kullanıldı */
-            margin: 0;
-            padding: 0;
+            min-height: 100vh;
         }
 
-        /* Arka Plan Dokusu ve Yavaş Işıklar */
         .bg-texture {
             position: fixed;
             inset: 0;
@@ -41,7 +26,6 @@
             z-index: -1;
             opacity: 0.5;
         }
-
         .ambient-orb {
             position: fixed;
             border-radius: 50%;
@@ -49,7 +33,6 @@
             z-index: -2;
             opacity: 0.3;
             will-change: transform;
-            transform: translateZ(0); /* Donanım hızlandırması ile kasmayı önler */
         }
 
         .orb-1 {
@@ -69,16 +52,15 @@
         }
 
         @keyframes driftPrimary {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(10vw, 10vh, 0) scale(1.1); }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vw, 10vh) scale(1.1); }
         }
 
         @keyframes driftPurple {
-            0% { transform: translate3d(0, 0, 0) scale(1); }
-            100% { transform: translate3d(-10vw, -10vh, 0) scale(1.2); }
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-10vw, -10vh) scale(1.2); }
         }
 
-        /* Topbar */
         .topbar {
             background: rgba(var(--panel-rgb), 0.65) !important;
             backdrop-filter: blur(20px) !important;
@@ -86,7 +68,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
-            position: fixed;
+            position: sticky;
             top: 0;
             left: 0;
             width: 100%;
@@ -94,16 +76,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 25px;
-            box-sizing: border-box;
+            padding: calc(10px + env(safe-area-inset-top, 0px)) clamp(12px, 3.8vw, 24px) 10px;
         }
 
-        /* --- TEKİL KOMPAKT AYARLAR KARTI --- */
         .settings-container {
-            max-width: 650px; /* Okunabilirliği yüksek tutmak için dar tasarım */
+            max-width: var(--settings-max);
             margin: 0 auto;
-            padding: 90px 20px 60px 20px; /* Topbar yüksekliğini hesaba katan padding */
-            box-sizing: border-box;
+            padding: clamp(12px, 3.5vw, 20px);
+            padding-top: clamp(10px, 2.5vw, 16px);
+            padding-bottom: calc(var(--bottom-nav-height, 78px) + env(safe-area-inset-bottom, 0px) + 18px);
         }
 
         .settings-card {
@@ -111,15 +92,15 @@
             backdrop-filter: blur(24px) !important;
             -webkit-backdrop-filter: blur(24px) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 20px !important;
+            border-radius: clamp(16px, 3vw, 24px) !important;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
             opacity: 0;
             transform: translateY(20px);
             animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            padding: 35px !important;
+            padding: clamp(16px, 4vw, 30px) !important;
             display: flex;
             flex-direction: column;
-            box-sizing: border-box;
+            gap: clamp(18px, 3vw, 28px);
         }
 
         body[data-theme="dark"] .settings-card {
@@ -131,15 +112,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Ana Başlık */
         .settings-header {
-            margin-bottom: 30px;
+            margin-bottom: 0;
             text-align: left;
         }
 
         .settings-header h1 {
-            font-size: 2rem;
-            margin: 0 0 5px 0;
+            font-size: clamp(1.4rem, 6vw, 2rem);
+            margin: 0 0 8px 0;
             font-weight: 700;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, var(--text), var(--primary));
@@ -149,21 +129,57 @@
 
         .settings-header p {
             color: var(--muted);
-            font-size: 0.95rem;
+            font-size: clamp(0.86rem, 2.9vw, 0.95rem);
             margin: 0;
+            line-height: 1.5;
         }
 
-        /* Ayar Grupları */
         .settings-group {
-            margin-bottom: 35px;
+            margin-bottom: 0;
         }
 
         .settings-group:last-child {
             margin-bottom: 0;
         }
 
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .quick-card {
+            border: 1px solid rgba(var(--line-rgb), 0.5);
+            background: rgba(var(--bg-rgb), 0.45);
+            border-radius: 14px;
+            padding: 10px;
+            min-height: 82px;
+            display: grid;
+            place-content: center;
+            place-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color .2s ease, transform .2s ease, background .2s ease;
+        }
+
+        .quick-card i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .quick-card span {
+            font-size: 0.78rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .quick-card:active {
+            transform: scale(0.98);
+        }
+
         .group-title {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
             color: var(--primary);
             text-transform: uppercase;
@@ -174,11 +190,10 @@
             gap: 8px;
         }
 
-        /* Modern Ayar Satırları (List Items) */
         .setting-item {
             display: flex;
             align-items: center;
-            padding: 16px;
+            padding: 14px;
             background: rgba(var(--bg-rgb), 0.4);
             border: 1px solid rgba(var(--line-rgb), 0.5);
             border-radius: 14px;
@@ -188,7 +203,7 @@
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
-            touch-action: manipulation; /* Mobildeki tıklama gecikmesini kaldırır */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .setting-item:last-child {
@@ -203,16 +218,16 @@
         }
 
         .setting-icon {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             background: rgba(var(--primary-rgb), 0.1);
             color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            margin-right: 15px;
+            font-size: 1rem;
+            margin-right: 12px;
             flex-shrink: 0;
         }
 
@@ -225,11 +240,11 @@
 
         .setting-name {
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: clamp(0.94rem, 3.5vw, 1rem);
         }
 
         .setting-desc {
-            font-size: 0.85rem;
+            font-size: clamp(0.76rem, 2.7vw, 0.84rem);
             color: var(--muted);
             line-height: 1.4;
         }
@@ -245,7 +260,6 @@
             color: var(--primary);
         }
 
-        /* Tema Butonları Kutusu (Segmented Control Tarzı) */
         .theme-toggle-box {
             display: flex;
             gap: 10px;
@@ -262,9 +276,9 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 15px;
+            padding: 12px;
             background: transparent;
-            border: 1px solid transparent;
+            border: 1px solid rgba(var(--line-rgb), 0.4);
             border-radius: 10px;
             color: var(--muted);
             font-weight: 600;
@@ -272,11 +286,10 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-family: var(--font-primary);
-            touch-action: manipulation;
         }
 
         .theme-btn i {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
 
         .theme-btn:hover {
@@ -284,233 +297,55 @@
             color: var(--text);
         }
 
-        /* Aktif tema butonuna görsel efekt (CSS mantığıyla her zaman tıklanabilir, tıklanınca JS uygular) */
+        .theme-btn.active {
+            background: rgba(var(--primary-rgb), 0.18);
+            border-color: rgba(var(--primary-rgb), 0.48);
+            color: var(--text);
+        }
+
         .theme-btn:active {
             transform: scale(0.97);
         }
 
-        /* Mobil Uyumluluk */
-        @media (max-width: 600px) {
-            .settings-card {
-                padding: 25px 20px !important;
+        .settings-label {
+            font-weight: 700;
+            margin-left: 10px;
+            color: var(--text);
+            letter-spacing: 0.2px;
+            font-size: clamp(0.95rem, 3.7vw, 1.05rem);
+        }
+
+        @media (max-width: 640px) {
+            .quick-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
-            .setting-item {
-                padding: 12px;
-            }
-            .setting-icon {
-                width: 38px;
-                height: 38px;
-                margin-right: 12px;
-            }
-            .setting-name {
-                font-size: 0.95rem;
-            }
-            .ambient-orb {
-                filter: blur(60px); 
+        }
+
+        @media (max-width: 420px) {
+            .quick-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
-
-    <style id="cx-mobile-hardening">
-      :root{
-        --cx-safe-top: env(safe-area-inset-top, 0px);
-        --cx-safe-right: env(safe-area-inset-right, 0px);
-        --cx-safe-bottom: env(safe-area-inset-bottom, 0px);
-        --cx-safe-left: env(safe-area-inset-left, 0px);
-        --cx-app-height: 100dvh;
-        --cx-vv-height: 100dvh;
-      }
-
-      html{
-        height:100%;
-        width:100%;
-        overflow-x:hidden !important;
-        background: var(--bg, #0f172a);
-        -webkit-text-size-adjust:100%;
-      }
-      body{
-        min-height: var(--cx-app-height) !important;
-        width:100%;
-        max-width:100vw;
-        overflow-x:hidden !important;
-        overscroll-behavior-x:none;
-        overscroll-behavior-y:none;
-        padding-left:max(0px,var(--cx-safe-left));
-        padding-right:max(0px,var(--cx-safe-right));
-      }
-      *, *::before, *::after{
-        box-sizing:border-box;
-      }
-      img, video, canvas, svg, iframe{
-        max-width:100%;
-      }
-
-      /* Common app containers */
-      .app-shell, .cx-shell, .server-shell, .voice-shell, .settings-shell, .page-shell {
-        width:100%;
-        min-height: var(--cx-app-height);
-        max-width:100vw;
-      }
-
-      /* Fixed bars hardening */
-      .topbar, .cx-header, .mobile-header, .header, .navbar {
-        padding-top: max(0px, calc(var(--cx-safe-top) * 0.35));
-        left:0; right:0;
-        max-width:100vw;
-      }
-      .bottombar, .bottom-nav, .mobile-bottom-nav, .cx-bottom-nav {
-        padding-bottom: max(6px, calc(var(--cx-safe-bottom) + 6px)) !important;
-        left:0; right:0;
-        max-width:100vw;
-      }
-
-      /* Scroll containers */
-      .content, .main-content, .page-content, .chat-list, .dm-list, .server-content, .server-sidebar,
-      .sidebar-content, .settings-content, .panel-body, .scroll-area, .messages-wrap {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-      }
-
-      /* Modals / sheets */
-      .modal, .modal-overlay, .sheet, .dialog {
-        max-width:100vw;
-      }
-      .modal-content, .sheet-content, .dialog-content {
-        max-width:min(680px, calc(100vw - 20px)) !important;
-        max-height: min(88dvh, calc(var(--cx-vv-height) - 16px)) !important;
-        margin-bottom: max(0px, var(--cx-safe-bottom));
-      }
-
-      input, select, textarea {
-        font-size: 16px !important; /* prevent iOS zoom */
-        max-width:100%;
-      }
-
-      /* Mobile polish */
-      @media (max-width: 768px) {
-        html, body{
-          min-height: var(--cx-app-height) !important;
-        }
-
-        .ambient-orb, .cx-orb {
-          filter: blur(56px) !important;
-          opacity: .2 !important;
-        }
-
-        .topbar, .cx-header {
-          backdrop-filter: blur(12px) !important;
-          -webkit-backdrop-filter: blur(12px) !important;
-        }
-
-        .modal-content {
-          border-radius: 16px !important;
-        }
-
-        /* Better spacing for common fixed topbar layouts */
-        body.has-topbar main,
-        body.has-topbar .main-content,
-        body.has-topbar .page-content {
-          padding-top: calc(60px + var(--cx-safe-top)) !important;
-        }
-
-        /* Avoid horizontal clipping caused by transforms */
-        [style*="translate"], .animated, .card, .panel, .server-card, .dm-card {
-          max-width: 100%;
-        }
-      }
-
-      /* Keyboard-aware tweaks */
-      body.cx-keyboard-open .bottombar,
-      body.cx-keyboard-open .bottom-nav,
-      body.cx-keyboard-open .mobile-bottom-nav,
-      body.cx-keyboard-open .cx-bottom-nav {
-        transform: translateY(100%);
-        pointer-events:none;
-      }
-      body.cx-keyboard-open .modal-content{
-        max-height: min(80dvh, calc(var(--cx-vv-height) - 8px)) !important;
-      }
-    </style>
-
-
-    <script id="cx-mobile-hardening-js">
-    (function(){
-      var d = document, de = d.documentElement, b;
-      function setVars(){
-        var vh = window.innerHeight || de.clientHeight || 0;
-        de.style.setProperty('--cx-app-height', vh + 'px');
-        if (window.visualViewport) {
-          de.style.setProperty('--cx-vv-height', Math.round(window.visualViewport.height) + 'px');
-        } else {
-          de.style.setProperty('--cx-vv-height', vh + 'px');
-        }
-      }
-      function markTopbar(){
-        b = d.body || b;
-        if(!b) return;
-        var hasTopbar = d.querySelector('.topbar, .cx-header, .mobile-header');
-        b.classList.toggle('has-topbar', !!hasTopbar);
-      }
-      function keyboardState(){
-        b = d.body || b;
-        if(!b || !window.visualViewport) return;
-        var delta = (window.innerHeight || de.clientHeight) - window.visualViewport.height;
-        b.classList.toggle('cx-keyboard-open', delta > 140);
-      }
-      function hardenOverflow(){
-        b = d.body || b;
-        if(!b) return;
-        de.style.overflowX = 'hidden';
-        b.style.overflowX = 'hidden';
-      }
-      var raf;
-      function onResize(){
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(function(){
-          setVars(); markTopbar(); keyboardState(); hardenOverflow();
-        });
-      }
-      d.addEventListener('DOMContentLoaded', function(){ onResize(); setTimeout(onResize, 60); setTimeout(onResize, 350); });
-      window.addEventListener('load', onResize, {passive:true});
-      window.addEventListener('resize', onResize, {passive:true});
-      window.addEventListener('orientationchange', onResize, {passive:true});
-      window.addEventListener('pageshow', onResize, {passive:true});
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onResize, {passive:true});
-        window.visualViewport.addEventListener('scroll', onResize, {passive:true});
-      }
-    })();
-    </script>
-
 </head>
-<body class="">
+<body>
     <div class="bg-texture"></div>
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
     <header class="topbar">
-        <div class="topbar-left">
-            <button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}" style="touch-action: manipulation;">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <button class="profile-btn" id="profileBtn" style="touch-action: manipulation;">
-                <img src="{{ avatar }}" class="avatar" alt="avatar">
-            </button>
-            <span style="font-weight: 600; margin-left: 10px; color: var(--text);">{{ t.get("settings", "Settings") }}</span>
+        <div class="topbar-left"><button type="button" class="navbtn" data-go-back="1" title="{{ t.get('back', 'Back') }}"><i class="fa-solid fa-arrow-left"></i></button><button class="profile-btn" id="profileBtn"><img src="{{ avatar }}" class="avatar" alt="avatar"></button>
+            <span class="settings-label">{{ t.get("settings", "Settings") }}</span>
         </div>
-        <nav class="topbar-right">
-            <a href="/home" class="navbtn" title="{{ t.get('home', 'Home') }}" style="touch-action: manipulation;">
-                <i class="fa-solid fa-house"></i>
-            </a>
-        </nav>
+        <nav class="topbar-right"><a href="/home" class="navbtn" title="{{ t.get('home', 'Home') }}"><i class="fa-solid fa-house"></i></a></nav>
     </header>
 
     <div class="modal-overlay" id="modalOverlay"></div>
     <div class="modal" id="profileModal">
         <div class="modal-content">
              <div class="lang-switcher">
-                <button data-theme-set="light" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-sun"></i></button>
-                <button data-theme-set="dark" class='navbtn' style="touch-action: manipulation;"><i class="fa-solid fa-moon"></i></button>
+                <button data-theme-set="light" class='navbtn'><i class="fa-solid fa-sun"></i></button>
+                <button data-theme-set="dark" class='navbtn'><i class="fa-solid fa-moon"></i></button>
             </div>
             <a href="/profile" data-nav="soft" class="modal-link">
                 <i class="fa-solid fa-user"></i>
@@ -530,6 +365,24 @@
             <div class="settings-header">
                 <h1>{{ t.get("settings", "Settings") }}</h1>
                 <p>{{ t.get("settings_desc", "Manage your account preferences, theme, and security.") }}</p>
+            </div>
+
+            <div class="settings-group">
+                <h3 class="group-title"><i class="fa-solid fa-bolt"></i> {{ t.get("quick_actions", "Quick actions") }}</h3>
+                <div class="quick-grid">
+                    <a href="/profile" data-nav="soft" class="quick-card">
+                        <i class="fa-solid fa-user"></i>
+                        <span>{{ t.get("profile", "Profile") }}</span>
+                    </a>
+                    <a href="/changepassword" data-nav="soft" class="quick-card">
+                        <i class="fa-solid fa-key"></i>
+                        <span>{{ t.get("change_password", "Change password") }}</span>
+                    </a>
+                    <a href="/sitesettings" data-nav="soft" class="quick-card">
+                        <i class="fa-solid fa-globe"></i>
+                        <span>{{ t.get("sitesettings", "Site settings") }}</span>
+                    </a>
+                </div>
             </div>
 
             <div class="settings-group">
@@ -587,5 +440,33 @@
 
     </main>
     <script src="/mobile/js/app.js"></script>
+    <script>
+        (function () {
+            var buttons = Array.prototype.slice.call(document.querySelectorAll('.theme-btn[data-theme-set]'));
+            if (!buttons.length) return;
+
+            function markActive() {
+                var theme = (localStorage.getItem('theme') || 'dark').toLowerCase();
+                buttons.forEach(function (btn) {
+                    btn.classList.toggle('active', btn.getAttribute('data-theme-set') === theme);
+                });
+            }
+
+            markActive();
+            buttons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    setTimeout(markActive, 0);
+                });
+            });
+            window.addEventListener('storage', markActive);
+        })();
+    </script>
 </body>
 </html>
+
+
+
+
+
+
+

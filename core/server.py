@@ -1,4 +1,5 @@
 import json
+import random
 import sqlite3
 import time
 from collections import defaultdict
@@ -95,10 +96,12 @@ from core.database import (
     updateavatar,
     updatepassword,
     updateusername,
+    visitorlanguage,
 )
-from core.economy import get_balance, initialize_user_economy
+from core.economy import get_balance, initialize_user_economy, spend_gold
 from core.leveling import add_xp, get_level
 from core.texts import language, texts
+from core.fearofabyss_backend import register_fearofabyss_backend
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -182,9 +185,15 @@ def visitor() -> str:
 
 def userlanguage() -> str | None:
     current = session.get("language")
-    if not current:
-        return None
-    return language(current)
+    if current:
+        return language(current)
+    # Fallback: recover previously chosen language for this visitor token.
+    saved = visitorlanguage(visitor())
+    if saved:
+        lang = language(saved)
+        session["language"] = lang
+        return lang
+    return None
 
 
 def currentaccount():
@@ -459,6 +468,8 @@ def home():
         
     content = texts(current)
     ctx = navcontext(content, current)
+    mine, _ = serverlist(account[0])
+    ctx["servercount"] = len(mine)
     
     s, p = socialcards(account[0])
     ctx["suggestions"] = s
@@ -476,6 +487,25 @@ def home():
 @app.route("/")
 def root():
     return redirect(url_for("home"))
+
+register_fearofabyss_backend(
+    app,
+    request=request,
+    redirect=redirect,
+    render_template=render_template,
+    url_for=url_for,
+    connect=connect,
+    applyledger=applyledger,
+    initialize_user_economy=initialize_user_economy,
+    get_balance=get_balance,
+    spend_gold=spend_gold,
+    userlanguage=userlanguage,
+    currentaccount=currentaccount,
+    texts=texts,
+    navcontext=navcontext,
+    viewfile=viewfile,
+)
+
 
 
 @app.route("/casino")
@@ -1171,7 +1201,9 @@ def choose():
         if not currentaccount():
             return redirect(url_for("login"))
         return redirect(url_for("home"))
-    return render_template(viewfile("language.html"))
+    current = userlanguage() or "en"
+    content = texts(current)
+    return render_template(viewfile("language.html"), **navcontext(content, current))
 
 
 @app.route("/set/<code>")
@@ -1527,7 +1559,10 @@ def socialrevoke(target: int):
     if me:
         from core.database import connect
         with connect("social") as db:
-            db.execute("DELETE FROM friend_requests WHERE senderid = ? AND receiverid = ?", (me[0], target))
+            db.execute(
+                "DELETE FROM requests WHERE sender = ? AND receiver = ? AND status = 'pending'",
+                (me[0], target),
+            )
         emit(me[0], target)
     return redirect(url_for("home"))
 
@@ -1631,7 +1666,11 @@ def media(filename: str):
 
 @app.route("/assets/<path:filename>")
 def projectassets(filename: str):
-    return send_from_directory(ROOT / "assets", filename)
+    response = send_from_directory(ROOT / "assets", filename)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @app.route("/<zone>/<path:filename>")

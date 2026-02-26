@@ -2,357 +2,545 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <title>{{ server[2] }} - Euphorium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ t.get("servers", "Servers") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* === Sunucu Detay Platformu (Dual Pane) Düzeni === */
-        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100dvh; padding-top: 0; margin: 0; }
-        
-        /* Arka Plan Dokusu ve Işıklar */
-        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
-        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; transform: translateZ(0); }
-        .orb-1 { width: 55vw; height: 55vw; background: #10b981; top: -10%; left: -10%; animation: pulseActive 8s ease-in-out infinite alternate; }
-        .orb-2 { width: 45vw; height: 45vw; background: var(--primary); bottom: -10%; right: -10%; animation: pulseActive 10s ease-in-out infinite alternate-reverse; }
-        @keyframes pulseActive { 0% { transform: scale(0.9) translateZ(0); opacity:0.2; } 100% { transform: scale(1.1) translateZ(0); opacity:0.4; } }
+        .server-main {
+            width: min(100%, 980px) !important;
+            margin: 0 auto !important;
+            padding: 10px 10px calc(var(--mobile-nav-height, 74px) + var(--mobile-safe-bottom, 0px) + 14px) !important;
+            min-height: calc(100dvh - var(--mobile-nav-height, 74px) - var(--mobile-safe-bottom, 0px));
+            height: auto !important;
+            display: grid !important;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            background: transparent !important;
+            position: relative;
+        }
 
-        .server-main { padding: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; height: 100dvh !important; overflow: hidden !important; }
-        
-        /* SOL SÜTUN: SUNUCU MENÜSÜ */
-        .server-sidebar { position: relative; width: 260px; background: rgba(var(--panel-rgb), 0.4); border-right: 1px solid rgba(var(--line-rgb), 0.3); display: flex; flex-direction: column; z-index: 10; flex-shrink: 0; }
-        .server-sidebar-header { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--bg-rgb), 0.4); cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); touch-action: manipulation; }
-        .server-sidebar-header h2 { margin: 0; font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
-        .server-sidebar-header:hover { background: rgba(var(--line-rgb), 0.3); }
-        
-        .server-dropdown { position: absolute; top: 60px; left: 10px; width: 240px; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); padding: 8px; z-index: 1000; display: none; flex-direction: column; gap: 4px; animation: dropFade 0.2s ease; }
-        @keyframes dropFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .server-sidebar,
+        .server-content {
+            border: 1px solid rgba(var(--line-rgb), 0.45);
+            border-radius: 16px;
+            background: linear-gradient(160deg, rgba(var(--panel-rgb), 0.82), rgba(var(--panel-rgb), 0.62));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            overflow: hidden;
+        }
 
-        .sidebar-channels { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 12px; }
-        .sidebar-channels::-webkit-scrollbar { width: 4px; }
-        .sidebar-channels::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 4px; }
-        
-        .cat-group { display: flex; flex-direction: column; gap: 2px; }
-        .cat-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; padding: 4px 8px; margin-bottom: 2px; cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s; touch-action: manipulation; }
-        .cat-title:hover { color: var(--text); }
-        
-        .chan-link { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: all 0.1s; touch-action: manipulation; }
-        .chan-link:hover { background: rgba(var(--text-rgb), 0.05); color: var(--text); }
-        .chan-link.active { background: rgba(var(--primary-rgb), 0.2); color: var(--text); }
-        .chan-link i { font-size: 1.1rem; opacity: 0.7; }
-        .chan-link.active i { color: var(--primary); opacity: 1; }
+        .server-sidebar {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            max-height: min(30dvh, 230px);
+            min-height: 130px;
+            overflow: visible;
+            z-index: 30;
+        }
 
-        /* SAĞ SÜTUN: SUNUCU İÇERİĞİ */
-        .server-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; background: rgba(var(--bg-rgb), 0.5); backdrop-filter: blur(12px); }
-        .server-content-header { height: 56px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--panel-rgb), 0.2); position: sticky; top: 0; z-index: 5; flex-shrink: 0; }
-        .server-content-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-        
-        .server-content-body { padding: 30px; max-width: 900px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 24px; box-sizing: border-box; }
-        
-        .server-banner-card { border-radius: 16px; overflow: hidden; background: rgba(var(--panel-rgb), 0.6); border: 1px solid rgba(var(--line-rgb), 0.5); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .server-banner { height: 140px; background: linear-gradient(135deg, var(--primary), #818cf8); position: relative; }
-        .server-banner::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.2); }
-        .server-info { padding: 0 24px 24px 24px; position: relative; margin-top: -45px; z-index: 2; }
-        .server-info img { width: 90px; height: 90px; border-radius: 20px; border: 4px solid var(--panel); object-fit: cover; background: var(--panel); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-        
-        .welcome-box { background: rgba(var(--primary-rgb), 0.1); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; padding: 24px; }
+        .server-sidebar-header {
+            height: 52px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.35);
+            background: rgba(var(--bg-rgb), 0.28);
+            cursor: pointer;
+        }
 
-        /* Modallar (Evrensel tasarım) */
-        .modal-content { background: var(--panel) !important; border-radius: 16px !important; padding: 0 !important; overflow: hidden; border: 1px solid rgba(var(--line-rgb), 0.5) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important; display: flex; flex-direction: column; }
-        .modal-header { padding: 20px 25px; background: rgba(var(--bg-rgb), 0.5); border-bottom: 1px solid rgba(var(--line-rgb), 0.5); display: flex; justify-content: space-between; align-items: center; user-select: none; }
-        .modal-header h2 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
-        .modal-body { padding: 25px; }
-        .modal-close-btn { background: transparent; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s; padding: 5px; display: flex; align-items: center; justify-content: center; border-radius: 8px; touch-action: manipulation; }
-        .modal-close-btn:hover { background: rgba(var(--text-rgb), 0.1); color: #ef4444; }
-        .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
-        .form-group { flex: 1; min-width: 150px; margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--muted); font-size: 0.9rem; }
-        .form-group input, .form-group select { width: 100%; background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.8); border-radius: 10px; padding: 12px 15px; color: var(--text); outline: none; transition: all 0.3s; font-family: inherit; font-size: 16px !important; box-sizing: border-box; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
-        .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; background: rgba(var(--bg-rgb), 0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.3); margin-bottom: 15px; max-height: 200px; overflow-y: auto;}
-        .perm-grid label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text); padding: 5px 0;}
-        .perm-grid input[type="checkbox"] { accent-color: var(--primary); width: 18px; height: 18px; }
+        .server-sidebar-header h2 {
+            margin: 0;
+            font-size: 0.98rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        .context-menu { position: fixed; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 8px; min-width: 200px; z-index: 999999; display: none; flex-direction: column; gap: 4px; }
-        .ctx-item { padding: 10px 15px; color: var(--text); cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; font-weight: 500; transition: 0.2s; touch-action: manipulation; }
-        .ctx-item i { width: 16px; text-align: center; color: var(--primary); transition: 0.2s; }
-        .ctx-item:hover { background: var(--primary); color: #fff; }
-        .ctx-item:hover i { color: #fff; }
+        .server-dropdown {
+            position: absolute;
+            top: 56px;
+            left: 10px;
+            right: 10px;
+            width: auto;
+            background: rgba(var(--panel-rgb), 0.96);
+            border: 1px solid rgba(var(--primary-rgb), 0.32);
+            border-radius: 12px;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+            padding: 8px;
+            z-index: 1200;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .drawer-open-btn, .drawer-close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.6);
+            background: rgba(var(--bg-rgb), 0.35);
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .server-content-header .drawer-open-btn { margin-right: 8px; }
+        .sidebar-scrim { display: none; }
 
-        .settings-layout { display: flex; min-height: 500px; }
-        .settings-sidebar { width: 220px; border-right: 1px solid rgba(var(--line-rgb), 0.5); padding: 20px 10px; display: flex; flex-direction: column; gap: 8px; background: rgba(var(--bg-rgb), 0.2); }
-        .tab-side-btn { background: transparent; border: none; padding: 12px 15px; color: var(--muted); font-size: 1rem; font-weight: 600; text-align: left; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px; touch-action: manipulation; }
-        .tab-side-btn:hover { background: rgba(var(--line-rgb), 0.5); color: var(--text); }
-        .tab-side-btn.active { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
-        .settings-content { flex: 1; padding: 30px; overflow-y: auto; max-height: 70vh; }
-        .settings-tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .settings-tab-content.active { display: block; }
-        
-        .modern-user-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 14px; margin-bottom: 10px; transition: 0.2s;}
-        .modern-user-card:hover { border-color: var(--primary); }
-        .modern-user-card .who { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-        .modern-user-card .who img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-        
-        .inline-edit-form { display: flex; gap: 10px; align-items: center; background: rgba(var(--bg-rgb), 0.5); padding: 12px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.5); margin-bottom: 10px; flex-wrap: wrap; }
-        .inline-edit-form > * { flex: 1; min-width: 120px; }
-        .inline-edit-form button { flex: 0 0 auto; padding: 12px 20px; border-radius: 10px; border: none; background: var(--line); color: var(--text); font-weight: 600; cursor: pointer; transition: 0.2s; touch-action: manipulation; }
-        .inline-edit-form button:hover { background: var(--primary); color: #fff; }
+        .sidebar-channels {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-        /* Sidebar kapatma (tam genişlik görünüm) */
-        .server-sidebar { display: none !important; }
-        .server-main { flex-direction: column !important; }
-        .server-content, .settings-content { width: 100% !important; }
+        .sidebar-channels::-webkit-scrollbar {
+            width: 4px;
+        }
 
-        /* Mobil Uyumluluk */
-        @media (max-width: 768px) {
-            .server-main { flex-direction: column !important; height: 100dvh !important; }
-            
-            /* İçerik (Banner/Ana sayfa) Üstte */
-            .server-content { order: 1; height: 50dvh; }
-            .server-content-body { padding: 20px 15px; }
-            
-            /* Menü (Kanallar) Altta */
-            .server-sidebar { 
-                order: 2; 
-                width: 100%; 
-                height: 50dvh; 
-                border-right: none; 
-                border-bottom: none; 
-                border-top: 1px solid rgba(var(--line-rgb), 0.3); 
-                flex-shrink: 0; 
+        .sidebar-channels::-webkit-scrollbar-thumb {
+            background: rgba(var(--text-rgb), 0.15);
+            border-radius: 6px;
+        }
+
+        .cat-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .cat-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            letter-spacing: 0.45px;
+            cursor: pointer;
+        }
+
+        .chan-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 9px;
+            border-radius: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.92rem;
+            border: 1px solid transparent;
+            transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+        }
+
+        .chan-link:hover {
+            background: rgba(var(--text-rgb), 0.06);
+            color: var(--text);
+        }
+
+        .chan-link.active {
+            background: rgba(var(--primary-rgb), 0.18);
+            border-color: rgba(var(--primary-rgb), 0.35);
+            color: var(--text);
+        }
+
+        .chan-link i {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .server-content {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .server-content-header {
+            min-height: 52px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.35);
+            background: rgba(var(--bg-rgb), 0.22);
+        }
+
+        .server-content-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .server-content-body {
+            padding: 14px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+
+        .server-banner-card {
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(var(--panel-rgb), 0.56);
+            border: 1px solid rgba(var(--line-rgb), 0.4);
+        }
+
+        .server-banner {
+            height: 110px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            position: relative;
+        }
+
+        .server-banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .server-info {
+            padding: 0 14px 14px;
+            position: relative;
+            margin-top: -34px;
+            z-index: 2;
+        }
+
+        .server-info img {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            border: 3px solid var(--panel);
+            object-fit: cover;
+            background: var(--panel);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-box {
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        #serverSettingsModal .modal-content {
+            width: min(95vw, 960px) !important;
+            max-width: min(95vw, 960px) !important;
+            max-height: min(86dvh, 860px);
+        }
+
+        .settings-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 420px;
+        }
+
+        .settings-sidebar {
+            border-right: 1px solid rgba(var(--line-rgb), 0.45);
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(var(--bg-rgb), 0.24);
+            overflow-y: auto;
+        }
+
+        .tab-side-btn {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid rgba(var(--line-rgb), 0.5);
+            border-radius: 10px;
+            background: rgba(var(--panel-rgb), 0.58);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 10px;
+            text-align: left;
+        }
+
+        .tab-side-btn.active {
+            border-color: rgba(var(--primary-rgb), 0.45);
+            background: rgba(var(--primary-rgb), 0.18);
+        }
+
+        .settings-content {
+            padding: 14px;
+            overflow-y: auto;
+            max-height: 74vh;
+        }
+
+        .settings-tab-content {
+            display: none;
+        }
+
+        .settings-tab-content.active {
+            display: block;
+        }
+
+        .modern-user-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(var(--bg-rgb), 0.35);
+            border: 1px solid rgba(var(--line-rgb), 0.4);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modern-user-card .who {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .modern-user-card .who img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .inline-edit-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(var(--bg-rgb), 0.35);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.4);
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .inline-edit-form > * {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .inline-edit-form button {
+            flex: 0 0 auto;
+            min-height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: var(--line);
+            color: var(--text);
+            font-weight: 600;
+            padding: 0 14px;
+        }
+
+        .perm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            background: rgba(var(--bg-rgb), 0.3);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(var(--line-rgb), 0.3);
+            margin-bottom: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .perm-grid label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.88rem;
+            color: var(--text);
+        }
+
+        @media (min-width: 980px) {
+            .server-main {
+                grid-template-columns: 300px 1fr;
+                align-items: start;
             }
-            
-            /* UI İyileştirmeleri */
-            .server-sidebar-header { height: 64px; padding: 0 20px; }
-            .server-sidebar-header h2 { font-size: 1.15rem; }
-            .cat-title { font-size: 0.85rem; padding: 8px 12px; }
-            .chan-link { padding: 10px 12px; font-size: 1.05rem; border-radius: 8px; }
-            .chan-link i { font-size: 1.2rem; }
-            
-            .server-info h1 { font-size: 1.4rem; }
-            .server-content-header h3 { font-size: 1.2rem; }
 
-            .settings-layout { flex-direction: column; min-height: auto; }
-            .settings-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(var(--line-rgb), 0.5); padding: 15px 10px; flex-direction: row; overflow-x: auto; }
-            .tab-side-btn { white-space: nowrap; padding: 10px 15px; }
-            .settings-content { padding: 20px; max-height: 50vh; }
-            .ambient-orb { filter: blur(60px); }
+            .server-sidebar {
+                max-height: calc(100dvh - 145px);
+                min-height: 520px;
+                position: sticky;
+                top: 12px;
+            }
+
+            .server-content {
+                min-height: calc(100dvh - 145px);
+            }
+
+            .server-content-body {
+                padding: 20px;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .server-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+                width: min(86vw, 320px);
+                max-height: none;
+                min-height: auto;
+                border-radius: 0 14px 14px 0;
+                z-index: 1200;
+                transform: translateX(-105%);
+                transition: transform .22s ease;
+                box-shadow: 0 18px 46px rgba(0,0,0,0.42);
+            }
+            .server-main.drawer-open .server-sidebar { transform: translateX(0); }
+            .sidebar-scrim {
+                display: block;
+                position: fixed;
+                inset: 0 0 calc(86px + env(safe-area-inset-bottom, 0px)) 0;
+                background: rgba(0, 0, 0, 0.45);
+                opacity: 0;
+                pointer-events: none;
+                z-index: 1190;
+                border: 0;
+            }
+            .server-main.drawer-open .sidebar-scrim {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            #serverSettingsModal .modal-content {
+                width: 96vw !important;
+                max-width: 96vw !important;
+                max-height: 85dvh;
+            }
+
+            .settings-layout {
+                grid-template-columns: 1fr;
+                min-height: 0;
+            }
+
+            .settings-sidebar {
+                border-right: 0;
+                border-bottom: 1px solid rgba(var(--line-rgb), 0.45);
+                padding: 10px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .tab-side-btn {
+                min-width: 0;
+                justify-content: flex-start;
+                font-size: 0.84rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .settings-content {
+                max-height: calc(85dvh - 130px);
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .server-main {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .settings-sidebar {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-side-btn {
+                justify-content: flex-start;
+            }
+
+            .perm-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            #createChanModal .modal-content,
+            #editChanModal .modal-content,
+            #createCatModal .modal-content,
+            #editCatModal .modal-content {
+                width: 94vw !important;
+                max-width: 94vw !important;
+            }
+
+            #createChanModal .form-row,
+            #editChanModal .form-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            #createChanModal .modal-body,
+            #editChanModal .modal-body {
+                padding: 10px;
+            }
         }
     </style>
-
-    <style id="cx-mobile-hardening">
-      :root{
-        --cx-safe-top: env(safe-area-inset-top, 0px);
-        --cx-safe-right: env(safe-area-inset-right, 0px);
-        --cx-safe-bottom: env(safe-area-inset-bottom, 0px);
-        --cx-safe-left: env(safe-area-inset-left, 0px);
-        --cx-app-height: 100dvh;
-        --cx-vv-height: 100dvh;
-      }
-
-      html{
-        height:100%;
-        width:100%;
-        overflow-x:hidden !important;
-        background: var(--bg, #0f172a);
-        -webkit-text-size-adjust:100%;
-      }
-      body{
-        min-height: var(--cx-app-height) !important;
-        width:100%;
-        max-width:100vw;
-        overflow-x:hidden !important;
-        overscroll-behavior-x:none;
-        overscroll-behavior-y:none;
-        padding-left:max(0px,var(--cx-safe-left));
-        padding-right:max(0px,var(--cx-safe-right));
-      }
-      *, *::before, *::after{
-        box-sizing:border-box;
-      }
-      img, video, canvas, svg, iframe{
-        max-width:100%;
-      }
-
-      /* Common app containers */
-      .app-shell, .cx-shell, .server-shell, .voice-shell, .settings-shell, .page-shell {
-        width:100%;
-        min-height: var(--cx-app-height);
-        max-width:100vw;
-      }
-
-      /* Fixed bars hardening */
-      .topbar, .cx-header, .mobile-header, .header, .navbar {
-        padding-top: max(0px, calc(var(--cx-safe-top) * 0.35));
-        left:0; right:0;
-        max-width:100vw;
-      }
-      .bottombar, .bottom-nav, .mobile-bottom-nav, .cx-bottom-nav {
-        padding-bottom: max(6px, calc(var(--cx-safe-bottom) + 6px)) !important;
-        left:0; right:0;
-        max-width:100vw;
-      }
-
-      /* Scroll containers */
-      .content, .main-content, .page-content, .chat-list, .dm-list, .server-content, .server-sidebar,
-      .sidebar-content, .settings-content, .panel-body, .scroll-area, .messages-wrap {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-      }
-
-      /* Modals / sheets */
-      .modal, .modal-overlay, .sheet, .dialog {
-        max-width:100vw;
-      }
-      .modal-content, .sheet-content, .dialog-content {
-        max-width:min(680px, calc(100vw - 20px)) !important;
-        max-height: min(88dvh, calc(var(--cx-vv-height) - 16px)) !important;
-        margin-bottom: max(0px, var(--cx-safe-bottom));
-      }
-
-      input, select, textarea {
-        font-size: 16px !important; /* prevent iOS zoom */
-        max-width:100%;
-      }
-
-      /* Mobile polish */
-      @media (max-width: 768px) {
-        html, body{
-          min-height: var(--cx-app-height) !important;
-        }
-
-        .ambient-orb, .cx-orb {
-          filter: blur(56px) !important;
-          opacity: .2 !important;
-        }
-
-        .topbar, .cx-header {
-          backdrop-filter: blur(12px) !important;
-          -webkit-backdrop-filter: blur(12px) !important;
-        }
-
-        .modal-content {
-          border-radius: 16px !important;
-        }
-
-        /* Better spacing for common fixed topbar layouts */
-        body.has-topbar main,
-        body.has-topbar .main-content,
-        body.has-topbar .page-content {
-          padding-top: calc(60px + var(--cx-safe-top)) !important;
-        }
-
-        /* Avoid horizontal clipping caused by transforms */
-        [style*="translate"], .animated, .card, .panel, .server-card, .dm-card {
-          max-width: 100%;
-        }
-      }
-
-      /* Keyboard-aware tweaks */
-      body.cx-keyboard-open .bottombar,
-      body.cx-keyboard-open .bottom-nav,
-      body.cx-keyboard-open .mobile-bottom-nav,
-      body.cx-keyboard-open .cx-bottom-nav {
-        transform: translateY(100%);
-        pointer-events:none;
-      }
-      body.cx-keyboard-open .modal-content{
-        max-height: min(80dvh, calc(var(--cx-vv-height) - 8px)) !important;
-      }
-    </style>
-
-
-    <script id="cx-mobile-hardening-js">
-    (function(){
-      var d = document, de = d.documentElement, b;
-      function setVars(){
-        var vh = window.innerHeight || de.clientHeight || 0;
-        de.style.setProperty('--cx-app-height', vh + 'px');
-        if (window.visualViewport) {
-          de.style.setProperty('--cx-vv-height', Math.round(window.visualViewport.height) + 'px');
-        } else {
-          de.style.setProperty('--cx-vv-height', vh + 'px');
-        }
-      }
-      function markTopbar(){
-        b = d.body || b;
-        if(!b) return;
-        var hasTopbar = d.querySelector('.topbar, .cx-header, .mobile-header');
-        b.classList.toggle('has-topbar', !!hasTopbar);
-      }
-      function keyboardState(){
-        b = d.body || b;
-        if(!b || !window.visualViewport) return;
-        var delta = (window.innerHeight || de.clientHeight) - window.visualViewport.height;
-        b.classList.toggle('cx-keyboard-open', delta > 140);
-      }
-      function hardenOverflow(){
-        b = d.body || b;
-        if(!b) return;
-        de.style.overflowX = 'hidden';
-        b.style.overflowX = 'hidden';
-      }
-      var raf;
-      function onResize(){
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(function(){
-          setVars(); markTopbar(); keyboardState(); hardenOverflow();
-        });
-      }
-      d.addEventListener('DOMContentLoaded', function(){ onResize(); setTimeout(onResize, 60); setTimeout(onResize, 350); });
-      window.addEventListener('load', onResize, {passive:true});
-      window.addEventListener('resize', onResize, {passive:true});
-      window.addEventListener('orientationchange', onResize, {passive:true});
-      window.addEventListener('pageshow', onResize, {passive:true});
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', onResize, {passive:true});
-        window.visualViewport.addEventListener('scroll', onResize, {passive:true});
-      }
-    })();
-    </script>
-
 </head>
-<body class="">
-    <div class="bg-texture"></div>
-    <div class="ambient-orb orb-1"></div>
-    <div class="ambient-orb orb-2"></div>
-
+<body>
     {% set can_manage_channels = 'true' if canmanagechannels else 'false' %}
     
     <div class="server-shell">
         <aside class="server-rail"></aside>
 
         <main class="server-main" oncontextmenu="window.showGeneralCtx(event, this)" data-canmanage="{{ can_manage_channels }}">
+            <button type="button" class="sidebar-scrim" data-drawer-scrim onclick="window.closeServerDrawer()"></button>
             
             <aside class="server-sidebar">
                 <div class="server-sidebar-header" onclick="window.toggleServerDropdown(event)">
                     <h2>{{ server[2] }}</h2>
-                    <i class="fa-solid fa-chevron-down" style="font-size:0.9rem; color:var(--muted); transition: 0.2s;" id="serverHeaderIcon"></i>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.8rem; color:var(--muted); transition: 0.2s;" id="serverHeaderIcon"></i>
+                        <button type="button" class="drawer-close-btn" onclick="event.stopPropagation(); window.closeServerDrawer();"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
                 
                 <div id="serverDropdown" class="server-dropdown">
                     <div class="ctx-item" onclick="window.showInvite()" style="color: var(--primary);">
-                        <i class="fa-solid fa-user-plus"></i> İnsanları Davet Et
+                        <i class="fa-solid fa-user-plus"></i> Ä°nsanlarÄ± Davet Et
                     </div>
                     {% if canmanageroles or canmanagechannels or pending %}
                     <div class="ctx-item" onclick="window.openServerSettings()">
-                        <i class="fa-solid fa-gear"></i> Sunucu Ayarları
+                        <i class="fa-solid fa-gear"></i> Sunucu AyarlarÄ±
                     </div>
                     {% endif %}
                     {% if canmanagechannels %}
                     <div class="ctx-item" onclick="window.openCreateCat()">
-                        <i class="fa-solid fa-folder-plus"></i> Kategori Oluştur
+                        <i class="fa-solid fa-folder-plus"></i> Kategori OluÅŸtur
                     </div>
                     <div class="ctx-item" onclick="window.openCreateChan('')">
-                        <i class="fa-solid fa-hashtag"></i> Kanal Oluştur
+                        <i class="fa-solid fa-hashtag"></i> Kanal OluÅŸtur
                     </div>
                     {% endif %}
                     
                     {% if server[1] != myid %}
                     <div style="height: 1px; background: rgba(var(--line-rgb), 0.5); margin: 4px 0;"></div>
                     <form method="post" action="/servers/{{ server[0] }}/leave" data-nav="soft" style="margin:0; padding:0; display:block;">
-                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('Ayrılmak istediğinize emin misiniz?');">
-                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan Ayrıl
+                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('AyrÄ±lmak istediÄŸinize emin misiniz');">
+                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan AyrÄ±l
                         </button>
                     </form>
                     {% endif %}
@@ -362,7 +550,7 @@
                     {% for c in categories %}
                         <div class="cat-group" data-id="{{ c[0] }}" data-name="{{ c[1] }}" data-kind="{{ c[2] }}" data-canmanage="{{ can_manage_channels }}" oncontextmenu="window.showCatCtx(event, this)">
                             <div class="cat-title">
-                                <i class="fa-solid fa-chevron-right" style="font-size:0.7rem; margin-right:6px;"></i> {{ c[1] }}
+                                <i class="fa-solid fa-chevron-right" style="font-size:0.6rem; margin-right:5px;"></i> {{ c[1] }}
                             </div>
                             {% for ch in channels %}
                                 {% if ch[1] == c[0] %}
@@ -383,7 +571,8 @@
 
             <div class="server-content">
                 <div class="server-content-header">
-                    <h3><i class="fa-solid fa-compass" style="color:var(--muted);"></i> Sunucu Özeti</h3>
+                    <button type="button" class="drawer-open-btn" onclick="window.toggleServerDrawer()"><i class="fa-solid fa-bars"></i></button>
+                    <h3><i class="fa-solid fa-compass" style="color:var(--muted);"></i> Sunucu Ã–zeti</h3>
                 </div>
                 
                 <div class="server-content-body">
@@ -392,15 +581,15 @@
                         <div class="server-info">
                             <img src="{{ '/media/' + server[3] if server[3] else '/mobile/avatar.svg' }}" alt="avatar">
                             <h1 style="margin: 15px 0 5px 0;">{{ server[2] }}</h1>
-                            <p style="margin:0; color:var(--muted);">Sunucu portalına hoş geldiniz. Aşağıdaki menüden sohbete katılın.</p>
+                            <p style="margin:0; color:var(--muted);">Sunucu portalÄ±na hoÅŸ geldiniz. Sol menÃ¼den sohbete katÄ±lÄ±n.</p>
                         </div>
                     </div>
                     
                     <div class="welcome-box">
-                        <h3 style="color:var(--primary); margin-top:0;"><i class="fa-solid fa-hand-wave"></i> Başlamak İçin</h3>
+                        <h3 style="color:var(--primary); margin-top:0;"><i class="fa-solid fa-hand-wave"></i> BaÅŸlamak Ä°Ã§in</h3>
                         <p style="margin:0; color:var(--text); font-size:0.95rem; line-height:1.6;">
-                            Bir sohbete katılmak için alttaki kanallardan birini seçin. 
-                            {% if canmanagechannels %}<br><br><strong>İpucu:</strong> Boş bir alana sağ tıklayarak yeni kategori oluşturabilir, kategorilere sağ tıklayarak içine kanal ekleyebilirsiniz.{% endif %}
+                            Bir sohbete katÄ±lmak iÃ§in Ã¼stteki kanallardan birini seÃ§in. 
+                            {% if canmanagechannels %}<br><br><strong>Ä°pucu:</strong> BoÅŸ bir alana saÄŸ tÄ±klayarak yeni kategori oluÅŸturabilir, kategorilere saÄŸ tÄ±klayarak iÃ§ine kanal ekleyebilirsiniz.{% endif %}
                         </p>
                     </div>
                 </div>
@@ -417,18 +606,18 @@
         <div class="modal" id="serverSettingsModal">
             <div class="modal-content" style="max-width: 900px; width: 90%;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu Ayarları</h2>
+                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu AyarlarÄ±</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('serverSettingsModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 
                 <div class="settings-layout">
                     <div class="settings-sidebar">
                         {% if pending %}
-                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> Katılım İstekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
+                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> KatÄ±lÄ±m Ä°stekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
                         {% endif %}
                         {% if canmanageroles %}
-                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol Yönetimi</button>
-                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Üyeler</button>
+                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol YÃ¶netimi</button>
+                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Ãœyeler</button>
                         {% endif %}
                     </div>
                     
@@ -440,38 +629,38 @@
                             <div class="modern-user-card">
                                 <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
                                 <div style="display:flex; gap:10px;">
-                                    <form method="post" action="/servers/accept/{{ p.joinid }}" data-nav="soft"><button class="pickbtn" style="padding:10px 15px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Kabul Et</button></form>
-                                    <form method="post" action="/servers/reject/{{ p.joinid }}" data-nav="soft"><button class="linkbtn" style="padding:10px 15px; border-color:#ef4444; color:#ef4444; touch-action: manipulation;"><i class="fa-solid fa-xmark"></i> Reddet</button></form>
+                                    <form method="post" action="/servers/accept/{{ p.joinid }}" data-nav="soft"><button class="pickbtn" style="padding:10px 15px;"><i class="fa-solid fa-check"></i> Kabul Et</button></form>
+                                    <form method="post" action="/servers/reject/{{ p.joinid }}" data-nav="soft"><button class="linkbtn" style="padding:10px 15px; border-color:#ef4444; color:#ef4444;"><i class="fa-solid fa-xmark"></i> Reddet</button></form>
                                 </div>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>İstek bulunmuyor.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>Ä°stek bulunmuyor.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
 
                         {% if canmanageroles %}
                         <div id="tab-roles" class="settings-tab-content {% if not pending %}active{% endif %}">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol Oluştur</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol OluÅŸtur</h3>
                             <form method="post" action="/servers/{{ server[0] }}/roles/create" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.4); padding: 20px; border-radius: 12px; border: 1px dashed rgba(var(--line-rgb), 0.8); margin-bottom: 25px;">
                                 <div class="form-group">
-                                    <input name="name" type="text" placeholder="Rol adı" required>
+                                    <input name="name" type="text" placeholder="Rol adÄ±" required>
                                 </div>
                                 <div class="perm-grid">
-                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluşturma</label>
-                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yönetimi</label>
-                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> Başkasının mesajını silme</label>
+                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluÅŸturma</label>
+                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yÃ¶netimi</label>
+                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> BaÅŸkasÄ±nÄ±n mesajÄ±nÄ± silme</label>
                                     <label><input type="checkbox" name="perm_kick" value="1"> Sunucudan At (Kick)</label>
                                     <label><input type="checkbox" name="perm_ban" value="1"> Yasakla (Ban)</label>
                                     <label><input type="checkbox" name="perm_timeout" value="1"> Sustur (Timeout)</label>
-                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasağı</label>
+                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasaÄŸÄ±</label>
                                     <label><input type="checkbox" name="perm_voicetimeout" value="1"> Sesli timeout</label>
-                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldır</label>
-                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldır</label>
-                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldır</label>
-                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yönetimi</label>
+                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yÃ¶netimi</label>
                                 </div>
-                                <button class="pickbtn" type="submit" style="width:100%; touch-action: manipulation;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
+                                <button class="pickbtn" type="submit" style="width:100%;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
                             </form>
 
                             <h3><i class="fa-solid fa-tags"></i> Mevcut Roller</h3>
@@ -479,28 +668,28 @@
                             <form method="post" action="/servers/{{ server[0] }}/roles/{{ r[0] }}/edit" data-nav="soft" class="inline-edit-form">
                                 <span style="font-weight:bold; color:var(--primary); width:30px; text-align:center;"><i class="fa-solid fa-circle" style="font-size:0.6rem;"></i></span>
                                 <input name="name" type="text" value="{{ r[1] }}" style="margin-bottom:0; background:transparent; border:none; padding:5px;">
-                                <button type="submit" style="touch-action: manipulation;">Güncelle</button>
+                                <button type="submit">GÃ¼ncelle</button>
                             </form>
                             {% endfor %}
                         </div>
 
                         <div id="tab-members" class="settings-tab-content">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Üye Yetkilendirme</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Ãœye Yetkilendirme</h3>
                             {% for m in members %}
                             <div class="modern-user-card">
                                 <div class="who"><img src="{{ m.avatar }}" alt="a"> {{ m.username }}</div>
                                 <form method="post" action="/servers/{{ server[0] }}/members/{{ m.id }}/role" data-nav="soft" style="display:flex; gap:10px; align-items:center;">
                                     <select name="roleid" style="margin-bottom:0; min-width:180px;">
-                                        <option value="0">Varsayılan Üye</option>
+                                        <option value="0">VarsayÄ±lan Ãœye</option>
                                         {% for r in roles %}
                                         <option value="{{ r[0] }}" {% if m.roleid == r[0] %}selected{% endif %}>{{ r[1] }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="pickbtn" style="padding:12px 20px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Ata</button>
+                                    <button type="submit" class="pickbtn" style="padding:12px 20px;"><i class="fa-solid fa-check"></i> Ata</button>
                                 </form>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>Henüz üye yok.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>HenÃ¼z Ã¼ye yok.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
@@ -513,23 +702,23 @@
         <div class="modal" id="createCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori Oluştur</h2>
+                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori OluÅŸtur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/create" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori Adı</label>
+                            <label>Kategori AdÄ±</label>
                             <input name="name" type="text" placeholder="Yeni kategori..." required>
                         </div>
                         <div class="form-group">
-                            <label>Tür</label>
+                            <label>TÃ¼r</label>
                             <select name="kind">
-                                <option value="text">Mesajlaşma</option>
+                                <option value="text">MesajlaÅŸma</option>
                                 <option value="voice">Sesli</option>
                             </select>
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
                     </form>
                 </div>
             </div>
@@ -538,23 +727,23 @@
         <div class="modal" id="editCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi Düzenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi DÃ¼zenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/0/edit" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori Adı</label>
+                            <label>Kategori AdÄ±</label>
                             <input name="name" type="text" required>
                         </div>
                         <div class="form-group">
-                            <label>Tür</label>
+                            <label>TÃ¼r</label>
                             <select name="kind">
                                 <option value="text">Mesaj</option>
                                 <option value="voice">Sesli</option>
                             </select>
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
                     </form>
                 </div>
             </div>
@@ -563,14 +752,14 @@
         <div class="modal" id="createChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal Oluştur</h2>
+                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal OluÅŸtur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/create" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Adı</label>
+                                <label>Kanal AdÄ±</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -583,17 +772,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Türü</label>
+                                <label>Kanal TÃ¼rÃ¼</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>İçerik Kısıtlaması</label>
+                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
                                 <select name="contentmode">
-                                    <option value="all">Tümü</option>
-                                    <option value="image">Sadece görsel</option>
+                                    <option value="all">TÃ¼mÃ¼</option>
+                                    <option value="image">Sadece gÃ¶rsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -601,14 +790,14 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller (Boş = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller (BoÅŸ = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (Boş = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (BoÅŸ = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
                     </form>
                 </div>
             </div>
@@ -617,14 +806,14 @@
         <div class="modal" id="editChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kanalı Düzenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> KanalÄ± DÃ¼zenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/0/edit" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Adı</label>
+                                <label>Kanal AdÄ±</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -637,17 +826,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Türü</label>
+                                <label>Kanal TÃ¼rÃ¼</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>İçerik Kısıtlaması</label>
+                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
                                 <select name="contentmode">
-                                    <option value="all">Tümü</option>
-                                    <option value="image">Sadece görsel</option>
+                                    <option value="all">TÃ¼mÃ¼</option>
+                                    <option value="image">Sadece gÃ¶rsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -655,7 +844,7 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
@@ -663,10 +852,10 @@
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya Paylaşabilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya PaylaÅŸabilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="shareperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
                     </form>
                 </div>
             </div>
@@ -675,16 +864,16 @@
         <div class="modal" id="inviteModal">
             <div class="modal-content" style="max-width: 480px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> Arkadaşlarını Davet Et</h2>
+                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> ArkadaÅŸlarÄ±nÄ± Davet Et</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('inviteModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body" style="text-align: left;">
-                    <p style="color:var(--muted); margin-bottom: 20px;">Arkadaşlarınızı bu sunucuya davet etmek için aşağıdaki linki veya kodu paylaşabilirsiniz.</p>
+                    <p style="color:var(--muted); margin-bottom: 20px;">ArkadaÅŸlarÄ±nÄ±zÄ± bu sunucuya davet etmek iÃ§in aÅŸaÄŸÄ±daki linki veya kodu paylaÅŸabilirsiniz.</p>
                     
                     <label style="display:block; font-weight:600; color:var(--muted); font-size:0.85rem; margin-bottom:5px; text-transform:uppercase;">Davet Linki</label>
                     <div style="background: rgba(var(--bg-rgb), 0.8); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(var(--primary-rgb), 0.4); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
                         <span class="invite-link-span" data-code="{{ server[6] }}" style="font-family: monospace; font-size: 0.95rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;"></span>
-                        <button type="button" class="pickbtn" style="padding: 8px 12px; font-size: 0.85rem; border-radius: 10px; touch-action: manipulation;" onclick="window.copyInviteCode(document.querySelector('#inviteModal .invite-link-span').innerText, this)">
+                        <button type="button" class="pickbtn" style="padding: 8px 12px; font-size: 0.85rem;" onclick="window.copyInviteCode(document.querySelector('#inviteModal .invite-link-span').innerText, this)">
                             <i class="fa-solid fa-copy"></i> Kopyala
                         </button>
                     </div>
@@ -694,12 +883,12 @@
                         <span style="font-family: monospace; font-size: 1.2rem; font-weight: bold; color: var(--text); letter-spacing: 2px;">
                             {{ server[6] }}
                         </span>
-                        <button type="button" class="linkbtn" style="padding: 8px 12px; font-size: 0.85rem; border-radius: 10px; border-color: rgba(var(--primary-rgb), 0.3); color: var(--text); touch-action: manipulation;" onclick="window.copyInviteCode('{{ server[6] }}', this)">
+                        <button type="button" class="linkbtn" style="padding: 8px 12px; font-size: 0.85rem; border-color: rgba(var(--primary-rgb), 0.3); color: var(--text);" onclick="window.copyInviteCode('{{ server[6] }}', this)">
                             <i class="fa-solid fa-copy"></i> Kopyala
                         </button>
                     </div>
                     
-                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kısmından girilerek de kullanılabilir.</p>
+                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kÄ±smÄ±ndan girilerek de kullanÄ±labilir.</p>
                 </div>
             </div>
         </div>
@@ -707,28 +896,9 @@
     </div>
 
     <script src="/mobile/js/app.js"></script>
-
-    <nav class="mobile-bottom-nav">
-        <a href="/home" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="/dm" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>DM</span>
-        </a>
-        <a href="/servers" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-server"></i>
-            <span>Sunucular</span>
-        </a>
-        <a href="/friends" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Arkadaş</span>
-        </a>
-        <a href="/settings" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-gear"></i>
-            <span>Ayarlar</span>
-        </a>
-    </nav>
 </body>
 </html>
+
+
+
+

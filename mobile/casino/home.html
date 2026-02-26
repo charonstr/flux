@@ -5,178 +5,252 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ t.get("casino", "Casino") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        html, body {
-            height: auto !important;
-        }
-
-        body {
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Genişlik ve merkez hizalama */
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <style>
         .casino-wrap {
-            width: min(100%, 1320px);
+            width: min(100%, 1440px);
             margin: 0 auto;
-            padding: 20px clamp(12px, 2vw, 24px) calc(var(--bottom-nav-height) + var(--safe-bottom) + 28px);
+            padding: clamp(12px, 3.2vw, 24px);
+            padding-bottom: calc(var(--bottom-nav-height, 78px) + env(safe-area-inset-bottom, 0px) + 14px);
         }
-        
-        /* 3 sütunlu ana grid */
-        .casino-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-        
-        .box { background: linear-gradient(145deg, rgba(var(--panel-rgb), 0.9), rgba(var(--panel-rgb), 0.6)); border: 1px solid rgba(var(--primary-rgb), 0.2); border-radius: 20px; padding: 24px; min-height: 220px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(10px); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .box:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); border-color: rgba(var(--primary-rgb), 0.4); }
-        
-        /* Grid yerleşim sınıfları */
-        .box-stats { grid-column: span 1; }
-        .box-games { grid-column: span 2; display: flex; flex-direction: column; }
-        .box-leaders { grid-column: span 1; }
-        .box-wide { grid-column: 1 / -1; min-height: auto; }
-        
-        .box h2 { margin: 0 0 20px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; }
-        .box h2 i { color: var(--primary); font-size: 1.4rem; }
+        .casino-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: clamp(10px, 2.2vw, 22px);
+        }
+        .box {
+            grid-column: 1 / -1;
+            background: linear-gradient(145deg, rgba(var(--panel-rgb), 0.9), rgba(var(--panel-rgb), 0.64));
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            border-radius: clamp(14px, 2.6vw, 20px);
+            padding: clamp(12px, 3vw, 24px);
+            min-height: 0;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        .box h2 {
+            margin: 0 0 clamp(10px, 2.4vw, 18px) 0;
+            font-size: clamp(0.95rem, 2.8vw, 1.18rem);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .box h2 i { color: var(--primary); font-size: 1.1em; }
         .muted { color: var(--muted); }
-        
-        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
-        .stat { background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.4); border-radius: 16px; padding: 16px; text-align: center; transition: background 0.2s ease; }
-        .stat:hover { background: rgba(var(--bg-rgb), 0.8); }
-        .stat .label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat .value { font-size: 1.4rem; font-weight: 800; margin-top: 8px; color: var(--text); }
-        
-        .leader-tabs { display: flex; gap: 10px; margin-bottom: 16px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 999px; width: fit-content; }
-        .leader-tabs button { background: transparent; border: none; color: var(--muted); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
-        .leader-tabs button.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4); }
-        
-        .row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(var(--line-rgb), 0.2); transition: padding 0.2s ease; }
-        .row:hover { padding-left: 8px; padding-right: 8px; background: rgba(var(--line-rgb), 0.1); border-radius: 8px; border-bottom-color: transparent; }
+        .box-stats { grid-column: span 12; }
+        .box-games { grid-column: span 12; display: flex; flex-direction: column; }
+        .box-leaders { grid-column: span 12; }
+        .box-wide { grid-column: span 12; }
+        .profile-head {
+            display: flex;
+            align-items: center;
+            gap: clamp(10px, 2.8vw, 16px);
+            margin-bottom: clamp(12px, 3vw, 20px);
+            background: rgba(0, 0, 0, 0.17);
+            padding: clamp(10px, 2.8vw, 16px);
+            border-radius: clamp(12px, 2.8vw, 16px);
+        }
+        .profile-avatar {
+            width: clamp(52px, 14vw, 64px);
+            height: clamp(52px, 14vw, 64px);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3);
+            flex: 0 0 auto;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+            gap: clamp(8px, 2vw, 14px);
+            margin-top: clamp(8px, 2vw, 16px);
+        }
+        .stat {
+            background: rgba(var(--bg-rgb), 0.52);
+            border: 1px solid rgba(var(--line-rgb), 0.4);
+            border-radius: 14px;
+            padding: clamp(10px, 2.4vw, 16px);
+            text-align: center;
+        }
+        .stat .label {
+            color: var(--muted);
+            font-size: clamp(0.7rem, 2.1vw, 0.82rem);
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+        }
+        .stat .value {
+            font-size: clamp(1.05rem, 3.8vw, 1.35rem);
+            font-weight: 800;
+            margin-top: 8px;
+            color: var(--text);
+            word-break: break-word;
+        }
+        .xp-track {
+            margin-top: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s ease; }
+        .game-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+            gap: clamp(10px, 2.3vw, 16px);
+            flex: 1;
+        }
+        .game-links a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: clamp(14px, 4vw, 24px);
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 700;
+            font-size: clamp(0.92rem, 2.8vw, 1.12rem);
+            border: 1px solid rgba(var(--line-rgb), 0.25);
+            min-height: clamp(110px, 24vw, 145px);
+        }
+        .game-links a i {
+            font-size: clamp(1.5rem, 6vw, 2.1rem);
+            color: var(--primary);
+        }
+        .leader-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px;
+            border-radius: 12px;
+        }
+        .leader-tabs button {
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            border-radius: 9px;
+            padding: 8px 6px;
+            cursor: pointer;
+            font-weight: 650;
+            font-size: clamp(0.75rem, 2.4vw, 0.92rem);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .leader-tabs button.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.22);
+        }
         .row:last-child { border-bottom: 0; }
-        .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-        
-        .profile-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; background: rgba(0,0,0,0.15); padding: 16px; border-radius: 16px; }
-        .profile-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
-        
-        .xp-track { margin-top: 12px; height: 12px; border-radius: 999px; background: rgba(0,0,0,0.3); overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
-        .xp-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .rank-icon { width: 24px; text-align: center; }
+        .name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .amt { flex-shrink: 0; }
+        .rank-icon { width: 22px; text-align: center; }
         .win { color: #10b981; }
         .lose { color: #ef4444; }
-        .empty { color: var(--muted); padding: 20px 0; text-align: center; font-style: italic; }
-        
-        .rewards-steps { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
-        .step { border: 2px solid rgba(var(--line-rgb), 0.3); border-radius: 16px; padding: 12px; text-align: center; background: rgba(0,0,0,0.2); transition: all 0.3s ease; }
-        .step .day { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-        .step .amt { font-weight: 800; margin-top: 8px; font-size: 1.1rem; color: #f59e0b; }
-        .step.today { border-color: #10b981; background: rgba(16, 185, 129, 0.1); transform: scale(1.05); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2); }
-        .step.claimed { border-color: rgba(var(--line-rgb), 0.1); background: rgba(0,0,0,0.4); opacity: 0.5; }
-        .reward-actions { margin-top: 20px; display: flex; gap: 16px; align-items: center; justify-content: center; }
-        
-        .claim-pop { position: fixed; right: 30px; bottom: 30px; background: #10b981; color: #fff; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); font-weight: 700; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 9999; }
-        .claim-pop.show { opacity: 1; transform: translateY(0); }
-        
-        /* Oyunlar bölümü 4 kolon */
-        .game-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; flex: 1; }
-        .game-links a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; border-radius: 16px; background: rgba(0,0,0,0.3); text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.2rem; border: 1px solid rgba(var(--line-rgb), 0.2); transition: all 0.3s ease; height: 100%; }
-        .game-links a i { font-size: 2.5rem; color: var(--primary); transition: transform 0.3s ease; }
-        .game-links a:hover { background: rgba(var(--primary-rgb), 0.15); border-color: var(--primary); transform: translateY(-4px); }
-        .game-links a:hover i { transform: scale(1.1) rotate(5deg); }
-        
-        /* Responsive tasarım ayarları */
-        @media (max-width: 1100px) { 
-            .casino-grid { grid-template-columns: repeat(2, 1fr); } 
-            .box-games { grid-column: 1 / -1; } 
-            .game-links { grid-template-columns: repeat(2, 1fr); } 
+        .empty { color: var(--muted); padding: 18px 0; text-align: center; font-style: italic; }
+        .rewards-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(108px, 100%), 1fr));
+            gap: clamp(8px, 2vw, 12px);
+            margin-top: 14px;
         }
-        @media (max-width: 768px) { 
-            .casino-grid { grid-template-columns: 1fr; } 
-            .box-stats, .box-games, .box-leaders { grid-column: 1 / -1; }
-            .summary-grid { grid-template-columns: 1fr; } 
-            .rewards-steps { grid-template-columns: repeat(3, 1fr); } 
-            .game-links { grid-template-columns: 1fr; } 
+        .step {
+            border: 2px solid rgba(var(--line-rgb), 0.3);
+            border-radius: 14px;
+            padding: 10px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
         }
-        @media (max-width: 480px) { 
-            .rewards-steps { grid-template-columns: repeat(2, 1fr); } 
+        .step .day { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+        .step .amt { font-weight: 800; margin-top: 6px; font-size: clamp(0.88rem, 2.8vw, 1.03rem); color: #f59e0b; }
+        .step.today {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+        }
+        .step.claimed {
+            border-color: rgba(var(--line-rgb), 0.1);
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0.55;
+        }
+        .reward-actions {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .reward-msg { min-height: 22px; font-size: clamp(0.8rem, 2.3vw, 0.95rem); }
+        .claim-pop {
+            position: fixed;
+            left: 50%;
+            transform: translate(-50%, 12px);
+            bottom: calc(var(--bottom-nav-height, 78px) + env(safe-area-inset-bottom, 0px) + 12px);
+            max-width: min(88vw, 420px);
+            background: #10b981;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            font-weight: 700;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.28s ease, transform 0.28s ease;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .claim-pop.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+        @media (max-width: 380px) {
+            .game-links { grid-template-columns: 1fr; }
+            .leader-tabs button { padding-inline: 4px; }
+            .reward-actions { justify-content: center; }
+        }
+        @media (min-width: 720px) {
+            .box-stats { grid-column: span 6; }
+            .box-games { grid-column: span 6; }
+            .box-leaders { grid-column: span 6; }
+            .box-wide { grid-column: span 12; }
+            .game-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1080px) {
+            .box-stats { grid-column: span 4; }
+            .box-games { grid-column: span 8; }
+            .box-leaders { grid-column: span 4; }
+            .game-links { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         }
     </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --app-vh: 100dvh;
-}
-html{
-  width:100%;
-  max-width:100%;
-  overflow-x: clip;
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-}
-body{
-  width:100%;
-  max-width:100%;
-  min-height:100vh;
-  min-height:100svh;
-  min-height:100dvh;
-  min-height:var(--app-vh);
-  overflow-x: clip !important;
-  padding-left:max(0px, var(--safe-left));
-  padding-right:max(0px, var(--safe-right));
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-}
-*,*::before,*::after{ box-sizing:border-box; min-width:0; }
-img,video,canvas,svg,iframe{ max-width:100%; }
-input,textarea,select,button{ font:inherit; }
-textarea{ max-width:100%; }
-
-.app-header,.topbar,.header,[data-fixed="top"]{
-  padding-top:max(0px, var(--safe-top));
-}
-.mobile-bottom-nav,.bottom-nav,.bottombar,.tabbar,[data-fixed="bottom"]{
-  padding-bottom:max(0px, var(--safe-bottom));
-}
-.app-shell{
-  min-height: var(--app-vh);
-  height: var(--app-vh);
-}
-.app-content{
-  min-height:0;
-  overflow-x:hidden !important;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-.modal,.popup,.sheet,.drawer,dialog,[role="dialog"]{
-  max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-  max-width: min(100%, calc(100vw - 12px));
-}
-[style*="position: fixed"], [style*="position:fixed"],
-[style*="position: sticky"], [style*="position:sticky"]{
-  max-width:100vw;
-}
-@media (max-width:768px){
-  html,body{ overflow-x:clip !important; }
-  .claim-pop{
-    right: 10px !important;
-    left: 10px !important;
-    bottom: calc(10px + var(--safe-bottom)) !important;
-    width: auto !important;
-  }
-  .mx-wrap,.casino-wrap,.case-wrap,.case-home,.table-wrap{
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-  }
-  .game-links a{ min-height: 92px; padding: 18px 12px !important; }
-  .bet-controls{ flex-wrap: wrap; }
-  .bet-controls .bet-input{ min-width: 100%; }
-}
-</style>
-
 </head>
 <body>
     <main class="casino-wrap">
@@ -195,8 +269,8 @@ textarea{ max-width:100%; }
                     </div>
                 </div>
                 <div class="summary-grid">
-                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanç") }}</div><div id="sumWin" class="value win">0</div></div>
-                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayıp") }}</div><div id="sumLose" class="value lose">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_win", "Toplam kazanc") }}</div><div id="sumWin" class="value win">0</div></div>
+                    <div class="stat"><div class="label">{{ t.get("casino_total_lose", "Toplam kayip") }}</div><div id="sumLose" class="value lose">0</div></div>
                     <div class="stat"><div class="label">{{ t.get("casino_ratio", "Win/Lose") }}</div><div id="sumRatio" class="value">0</div></div>
                 </div>
                 <div class="xp-track"><div id="xpFill" class="xp-fill" style="width:0%"></div></div>
@@ -207,24 +281,24 @@ textarea{ max-width:100%; }
                 <h2><i class="fa-solid fa-gamepad"></i> Oyunlar</h2>
                 <div class="game-links">
                     <a href="/casino/blackjack" data-nav="soft"><i class="fa-solid fa-clover"></i> Blackjack</a>
-                    <a href="/casino/roulette" data-nav="soft"><i class="fa-solid fa-bullseye"></i> Rulet</a>
-                    <a href="/casino/multiplier" data-nav="soft"><i class="fa-solid fa-chart-line"></i> Çarpan</a>
+                    <a href="/casino/roulette" data-nav="soft"><i class="fa-solid fa-bullseye"></i> Roulette</a>
+                    <a href="/casino/multiplier" data-nav="soft"><i class="fa-solid fa-chart-line"></i> Carpan</a>
                     <a href="/casino/case" data-nav="soft"><i class="fa-solid fa-box-open"></i> Kasalar</a>
                 </div>
             </section>
 
             <section class="box box-leaders">
-                <h2><i class="fa-solid fa-crown"></i> {{ t.get("casino_leaderboard", "En çok kazananlar") }}</h2>
+                <h2><i class="fa-solid fa-crown"></i> {{ t.get("casino_leaderboard", "En cok kazananlar") }}</h2>
                 <div class="leader-tabs">
-                    <button id="tabDaily" class="active" type="button">Günlük</button>
-                    <button id="tabWeekly" type="button">Haftalık</button>
-                    <button id="tabMonthly" type="button">Aylık</button>
+                    <button id="tabDaily" class="active" type="button">Gunluk</button>
+                    <button id="tabWeekly" type="button">Haftalik</button>
+                    <button id="tabMonthly" type="button">Aylik</button>
                 </div>
                 <div id="leaderRows" class="muted">Kimse yok</div>
             </section>
 
             <section class="box box-leaders">
-                <h2><i class="fa-solid fa-gem"></i> {{ t.get("casino_richest", "Güncel en zenginler") }}</h2>
+                <h2><i class="fa-solid fa-gem"></i> {{ t.get("casino_richest", "Guncel en zenginler") }}</h2>
                 <div id="richRows" class="muted">Kimse yok</div>
             </section>
 
@@ -234,40 +308,17 @@ textarea{ max-width:100%; }
             </section>
 
             <section class="box box-wide">
-                <h2><i class="fa-solid fa-gift"></i> Günlük Ödül</h2>
+                <h2><i class="fa-solid fa-gift"></i> Gunluk Odul</h2>
                 <div id="rewardSteps" class="rewards-steps"></div>
                 <div class="reward-actions">
-                    <button id="claimBtn" class="pickbtn" type="button" disabled style="padding: 12px 32px; font-size: 1.1rem; border-radius: 999px;">Ödülü Al</button>
-                    <div id="rewardMsg" class="reward-msg">Yükleniyor...</div>
+                    <button id="claimBtn" class="pickbtn" type="button" disabled style="padding: 12px 32px; font-size: 1.1rem; border-radius: 999px;">Odulu Al</button>
+                    <div id="rewardMsg" class="reward-msg">Yukleniyor...</div>
                 </div>
             </section>
 
         </div>
     </main>
     <div id="claimPop" class="claim-pop">+0 gold</div>
-
-    <nav class="mobile-bottom-nav">
-        <a href="/home" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="/dm" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>DM</span>
-        </a>
-        <a href="/servers" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-server"></i>
-            <span>Sunucular</span>
-        </a>
-        <a href="/friends" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Arkadaş</span>
-        </a>
-        <a href="/settings" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-gear"></i>
-            <span>Ayarlar</span>
-        </a>
-    </nav>
     
     <script src="/mobile/js/app.js"></script>
     <script>
@@ -292,7 +343,7 @@ textarea{ max-width:100%; }
                 if(!wrap) return;
                 if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
                 wrap.innerHTML = rows.map((r, i) => {
-                    let icon = '<i class="fa-solid fa-circle rank-icon" style="color:rgba(var(--line-rgb),0.8);"></i>';
+                    let icon = '<i class="fa-solid fa-circle rank-icon" style="color:var(--line-rgb);"></i>';
                     if (i === 0) icon = '<i class="fa-solid fa-gem rank-icon" style="color:#60a5fa;font-size:1.2rem;text-shadow:0 0 10px rgba(96,165,250,0.5);"></i>';
                     if (i === 1) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#fcd34d;font-size:1.1rem;"></i>';
                     if (i === 2) icon = '<i class="fa-solid fa-medal rank-icon" style="color:#b45309;font-size:1rem;"></i>';
@@ -306,10 +357,10 @@ textarea{ max-width:100%; }
                 if (!rows || !rows.length) { wrap.innerHTML = '<div class="empty">Kimse yok</div>'; return; }
                 wrap.innerHTML = rows.map(g => {
                     const d = Number(g.delta_amount || 0);
-                    const cls = d >= 0 ? "win" : "lose";
-                    const sign = d >= 0 ? "+" : "";
+                    const cls = d >= 0  "win" : "lose";
+                    const sign = d >= 0  "+" : "";
                     const low = String(g.game_name || "").toLowerCase();
-                    const icon = low.includes("blackjack") ? "fa-clover" : (low.includes("multiplier") || low.includes("carpan") ? "fa-chart-line" : (low.includes("case") ? "fa-box-open" : "fa-bullseye"));
+                    const icon = low.includes("blackjack")  "fa-clover" : (low.includes("multiplier") || low.includes("carpan")  "fa-chart-line" : (low.includes("case")  "fa-box-open" : "fa-bullseye"));
                     return '<div class="row"><div class="name"><i class="fa-solid ' + icon + '"></i> ' + esc(g.game_name || "Game") + '</div><div class="amt ' + cls + '">' + sign + d + '</div></div>';
                 }).join("");
             }
@@ -319,20 +370,20 @@ textarea{ max-width:100%; }
                     const res = await fetch("/api/casino/profile", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
                     if (!data || !data.ok) return;
-                    if(document.getElementById("profileName")) document.getElementById("profileName").textContent = data.profile?.username || "";
-                    if(document.getElementById("profileAvatar")) document.getElementById("profileAvatar").src = data.profile?.avatar || "";
-                    if(document.getElementById("profileLevel")) document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level?.level || 1);
-                    if(document.getElementById("profileBalance")) document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile?.balance || 0);
+                    if(document.getElementById("profileName")) document.getElementById("profileName").textContent = data.profile.username || "";
+                    if(document.getElementById("profileAvatar")) document.getElementById("profileAvatar").src = data.profile.avatar || "";
+                    if(document.getElementById("profileLevel")) document.getElementById("profileLevel").textContent = "Seviye " + Number(data.level.level || 1);
+                    if(document.getElementById("profileBalance")) document.getElementById("profileBalance").innerHTML = '<i class="fa-solid fa-coins"></i> ' + Number(data.profile.balance || 0);
                     if(document.getElementById("sumWin")) document.getElementById("sumWin").textContent = Number(data.total_win_amount || 0);
                     if(document.getElementById("sumLose")) document.getElementById("sumLose").textContent = Number(data.total_lose_amount || 0);
                     if(document.getElementById("sumRatio")) document.getElementById("sumRatio").textContent = Number(data.win_lose_ratio || 0);
                     
                     if(document.getElementById("xpFill") && document.getElementById("xpText")) {
-                        const xp = Number(data.level?.xp || 0);
-                        const next = Number(data.level?.next_level_xp || 0);
-                        const pct = next > 0 ? Math.min(100, Math.floor((xp * 100) / next)) : 100;
+                        const xp = Number(data.level.xp || 0);
+                        const next = Number(data.level.next_level_xp || 0);
+                        const pct = next > 0  Math.min(100, Math.floor((xp * 100) / next)) : 100;
                         document.getElementById("xpFill").style.width = pct + "%";
-                        document.getElementById("xpText").textContent = next > 0 ? (xp + " / " + next + " XP") : "MAKSİMUM SEVİYE";
+                        document.getElementById("xpText").textContent = next > 0  (xp + " / " + next + " XP") : "MAKSIMUM SEVIYE";
                     }
 
                     leaders = { daily_top5: data.daily_top5 || [], weekly_top5: data.weekly_top5 || [], monthly_top5: data.monthly_top5 || [] };
@@ -353,24 +404,24 @@ textarea{ max-width:100%; }
                     btn.disabled = true; msg.textContent = "Veri yok"; return;
                 }
                 wrap.innerHTML = state.days.map(d => {
-                    const cls = [d.state === "today" ? "today" : "", d.claimed ? "claimed" : ""].join(" ").trim();
+                    const cls = [d.state === "today"  "today" : "", d.claimed  "claimed" : ""].join(" ").trim();
                     let icon = '<i class="fa-solid fa-circle-check" style="color:#10b981; margin-top:4px;"></i>';
                     if(!d.claimed && d.state !== "today") icon = '<i class="fa-solid fa-lock" style="color:var(--muted); margin-top:4px; font-size:0.8rem;"></i>';
                     if(d.state === "today" && !d.claimed) icon = '<i class="fa-solid fa-gift" style="color:#10b981; margin-top:4px;"></i>';
-                    return '<div class="step ' + cls + '"><div class="day">Gün ' + d.day + '</div><div class="amt"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(d.amount || 0) + '</div><div>' + icon + '</div></div>';
+                    return '<div class="step ' + cls + '"><div class="day">Gun ' + d.day + '</div><div class="amt"><i class="fa-solid fa-coins" style="font-size:0.8rem;"></i> ' + Number(d.amount || 0) + '</div><div>' + icon + '</div></div>';
                 }).join("");
                 if (state.days[6] && wrap.children[6]) wrap.children[6].innerHTML += '<div class="day" style="color:#f59e0b; margin-top:4px;">+ bonus ' + Number(state.bonus_day7 || 0) + '</div>';
                 btn.disabled = !state.can_claim_today;
-                msg.textContent = state.can_claim_today ? "Bugünün ödülü hazır" : "Bugünün ödülü zaten alındı";
+                msg.textContent = state.can_claim_today  "Bugunun odulu hazir" : "Bugunun odulu zaten alindi";
             }
 
             async function loadReward() {
                 const msg = document.getElementById("rewardMsg");
-                if(msg) msg.textContent = "Yükleniyor...";
+                if(msg) msg.textContent = "Yukleniyor...";
                 try {
                     const res = await fetch("/rewards/daily", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
                     const data = await res.json();
-                    if (!data || !data.ok) { if(msg) msg.textContent = "Yüklenemedi"; return; }
+                    if (!data || !data.ok) { if(msg) msg.textContent = "Yuklenemedi"; return; }
                     renderReward(data);
                 } catch (err) {}
             }
@@ -379,25 +430,25 @@ textarea{ max-width:100%; }
                 const btn = document.getElementById("claimBtn");
                 const msg = document.getElementById("rewardMsg");
                 if(btn) btn.disabled = true;
-                if(msg) msg.textContent = "Alınıyor...";
+                if(msg) msg.textContent = "Aliniyor...";
                 try {
                     const res = await fetch("/rewards/daily/claim", { method: "POST", headers: { "X-Requested-With": "fetch" } });
                     const data = await res.json();
                     if (!res.ok || !data.ok) {
-                        if(msg) msg.textContent = "İşlem başarısız";
+                        if(msg) msg.textContent = "Islem basarisiz";
                         await loadReward(); return;
                     }
                     renderReward(data);
                     const pop = document.getElementById("claimPop");
                     if(pop) {
-                        pop.innerHTML = '<i class="fa-solid fa-coins"></i> +' + Number(data.claimed_amount || 0) + " altın kazandın!";
+                        pop.innerHTML = '<i class="fa-solid fa-coins"></i> +' + Number(data.claimed_amount || 0) + " altin kazandin!";
                         pop.classList.add("show");
                         setTimeout(() => pop.classList.remove("show"), 2500);
                     }
                     await loadCasinoProfile();
-                    if(msg) msg.textContent = "Başarıyla alındı";
+                    if(msg) msg.textContent = "Basariyla alindi";
                 } catch (err) {
-                    if(msg) msg.textContent = "Hata oluştu";
+                    if(msg) msg.textContent = "Hata olustu";
                     await loadReward();
                 }
             }
@@ -420,62 +471,13 @@ textarea{ max-width:100%; }
             loadCasinoProfile();
             loadReward();
         };
-
-        // Otomatik olarak başlat (Hem F5 hem SPA geçişleri için)
+        // Otomatik Olarak Baslat (Hem F5 hem SPA gecisleri icin)
         window.initCasinoHome();
         window.addEventListener('spa-loaded', window.initCasinoHome);
     </script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function(){
-  const root = document.documentElement;
-  let maxVh = 0, raf = 0;
-  function getVh(){
-    return Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight || root.clientHeight || 0);
-  }
-  function apply(){
-    const vh = getVh();
-    if (!maxVh || vh > maxVh) maxVh = vh;
-    root.style.setProperty('--app-vh', vh + 'px');
-    root.classList.toggle('keyboard-open', (maxVh - vh) > 120);
-  }
-  function tick(){
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(apply);
-  }
-  function clampWide(){
-    const vw = Math.max(root.clientWidth, window.innerWidth || 0);
-    if (!document.body) return;
-    document.body.querySelectorAll('*').forEach(function(el){
-      if (!el.getBoundingClientRect) return;
-      const r = el.getBoundingClientRect();
-      if (r.width > vw + 2 && !el.dataset.mobileClamp){
-        el.style.maxWidth = '100%';
-        if (!el.style.overflowWrap) el.style.overflowWrap = 'anywhere';
-        el.dataset.mobileClamp = '1';
-      }
-    });
-  }
-  ['resize','orientationchange'].forEach(function(ev){ window.addEventListener(ev, tick, {passive:true}); });
-  if (window.visualViewport){
-    window.visualViewport.addEventListener('resize', tick, {passive:true});
-    window.visualViewport.addEventListener('scroll', tick, {passive:true});
-  }
-  document.addEventListener('focusin', tick, true);
-  document.addEventListener('focusout', tick, true);
-  window.addEventListener('load', function(){
-    tick();
-    requestAnimationFrame(clampWide);
-  }, {once:true});
-  new MutationObserver(function(){
-    tick();
-    requestAnimationFrame(clampWide);
-  }).observe(document.documentElement, {childList:true, subtree:true});
-  apply();
-})();
-</script>
-
 </body>
 </html>
+
+
+
 

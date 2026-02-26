@@ -31,7 +31,6 @@
     let isInitialized = false;
     let phaseTimer = 0;
     let isSpinningLocal = false;
-    const ballRadiusPx = 100;
 
     const FALLBACK_WHEEL = ["0", "32", "15", "19", "4", "21", "2", "25", "17", "34", "6", "27", "13", "36", "11", "30", "8", "23", "10", "5", "24", "16", "33", "1", "20", "14", "31", "9", "22", "18", "29", "7", "28", "12", "35", "3", "26"];
     const FALLBACK_CHIPS = [10, 50, 100, 500, 1000, 5000];
@@ -44,6 +43,13 @@
             max_bet: 10000,
             betting_timer_seconds: 20
         };
+    }
+
+    function getBallRadii() {
+      const size = Number(wheel.getBoundingClientRect().width || 320);
+      const end = Math.max(58, Math.round(size * 0.3125));
+      const start = Math.max(end + 16, Math.round(size * 0.40625));
+      return { start, end };
     }
 
     function idem(prefix) { return prefix + '_' + Date.now() + '_' + Math.random().toString(16).slice(2, 10); }
@@ -67,22 +73,22 @@
     function colorClass(num) {
       if (String(num) === '0' || String(num) === '00') return 'green';
       const redNums = ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"];
-      return redNums.includes(String(num)) ? 'red' : 'black';
+      return redNums.includes(String(num))  'red' : 'black';
     }
 
     function getSpotSum(type, sel) {
       const key = type + ':' + sel.join(',');
       let sum = 0;
-      (state?.bets || []).forEach(b => { if (b.bet_type + ':' + (b.selection || []).join(',') === key) sum += Number(b.amount || 0); });
+      (state.bets || []).forEach(b => { if (b.bet_type + ':' + (b.selection || []).join(',') === key) sum += Number(b.amount || 0); });
       return sum;
     }
 
     function buildTable() {
       const grid = [[3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36],[2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35],[1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34]];
-      let html = '<div class="table-layout"><div class="numbers-section"><div class="zero-wrap"><div class="num-cell green" data-type="straight" data-selection="0">0</div></div><div style="flex:1;"><div class="table-grid">';
+      let html = '<div class="table-layout"><div class="numbers-section"><div class="zero-wrap"><div class="num-cell green" data-type="straight" data-selection="0">0</div></div><div class="grid-wrap"><div class="table-grid">';
       grid.forEach(row => row.forEach(n => html += `<div class="num-cell ${colorClass(n)}" data-type="straight" data-selection="${n}">${n}</div>`));
       html += '</div></div></div><div class="outside-grid">';
-      [['even', 'ÇİFT'], ['odd', 'TEK'], ['red', 'KIRMIZI'], ['black', 'SİYAH']].forEach(x => html += `<div class="bet-cell" data-type="${x[0]}" data-selection="${x[0]}">${x[1]}</div>`);
+      [['even', 'CIFT'], ['odd', 'TEK'], ['red', 'KIRMIZI'], ['black', 'SIYAH']].forEach(x => html += `<div class="bet-cell" data-type="${x[0]}" data-selection="${x[0]}">${x[1]}</div>`);
       html += '</div></div>';
       tableWrap.innerHTML = html;
 
@@ -124,7 +130,7 @@
       chipBar.innerHTML = '';
       arr.forEach(v => {
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'chip-btn' + (Number(v) === Number(selectedChip) ? ' active' : '');
+        b.type = 'button'; b.className = 'chip-btn' + (Number(v) === Number(selectedChip)  ' active' : '');
         b.textContent = String(v); b.setAttribute('data-val', String(v));
         b.onclick = function () { selectedChip = Number(v); updateChips(); };
         chipBar.appendChild(b);
@@ -147,7 +153,7 @@
         const seg = document.createElement('div');
         seg.className = 'pocket'; seg.setAttribute('data-num', String(n));
         seg.style.transform = `rotate(${(360 / total) * idx}deg)`;
-        seg.style.background = colorClass(n) === 'red' ? '#dc2626' : (colorClass(n) === 'green' ? '#059669' : '#111827');
+        seg.style.background = colorClass(n) === 'red'  '#dc2626' : (colorClass(n) === 'green'  '#059669' : '#111827');
         wheelTrack.appendChild(seg);
       });
     }
@@ -159,25 +165,34 @@
       const idx = arr.indexOf(String(pocket));
       if (idx < 0) return;
       const angle = (360 / arr.length) * idx;
+      const radii = getBallRadii();
+      ball.style.setProperty('--ball-start', `${radii.start}px`);
+      ball.style.setProperty('--ball-end', `${radii.end}px`);
       ball.style.animation = 'none';
-      ball.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateX(${ballRadiusPx}px) rotate(${-angle}deg)`;
+      ball.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateX(${radii.end}px) rotate(${-angle}deg)`;
     }
 
     function resetBallPosition() {
       if (!ball) return;
       if (ball.getAnimations) ball.getAnimations().forEach(function(a) { a.cancel(); });
+      const radii = getBallRadii();
+      ball.style.setProperty('--ball-start', `${radii.start}px`);
+      ball.style.setProperty('--ball-end', `${radii.end}px`);
       ball.style.animation = 'none';
-      ball.style.transform = 'translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg)';
+      ball.style.transform = `translate(-50%, -50%) rotate(0deg) translateX(${radii.start}px) rotate(0deg)`;
     }
 
     function animateBallToPocket(targetAngle, durationMs) {
       if (!ball) return;
       if (ball.getAnimations) ball.getAnimations().forEach(function(a) { a.cancel(); });
       const endRot = -2160 + targetAngle;
+      const radii = getBallRadii();
+      ball.style.setProperty('--ball-start', `${radii.start}px`);
+      ball.style.setProperty('--ball-end', `${radii.end}px`);
       ball.animate(
         [
-          { transform: 'translate(-50%, -50%) rotate(0deg) translateX(130px) rotate(0deg)' },
-          { transform: `translate(-50%, -50%) rotate(${endRot}deg) translateX(${ballRadiusPx}px) rotate(${-endRot}deg)` }
+          { transform: `translate(-50%, -50%) rotate(0deg) translateX(${radii.start}px) rotate(0deg)` },
+          { transform: `translate(-50%, -50%) rotate(${endRot}deg) translateX(${radii.end}px) rotate(${-endRot}deg)` }
         ],
         { duration: durationMs, easing: 'cubic-bezier(0.1, 0.7, 0.1, 1)', fill: 'forwards' }
       );
@@ -187,12 +202,12 @@
       if (!state) return;
       if(balanceText) balanceText.textContent = String(Number(liveBalance || getSafeConstants().balance || 0));
       
-      const stMap = { 'betting_open': 'BAHİSLER AÇIK', 'betting_locked': 'BAHİSLER KAPALI', 'spinning': 'ÇEVRİLİYOR', 'result_revealed': 'SONUÇLANDI', 'settling': 'SONUÇLANDI', 'finished': 'SONUÇLANDI' };
-      if (stateText && !stateText.textContent.includes("BAŞLIYOR") && !stateText.textContent.includes("BEKLENİYOR")) stateText.textContent = stMap[state.state] || state.state;
+      const stMap = { 'betting_open': 'BAHISLER ACIK', 'betting_locked': 'BAHISLER KAPALI', 'spinning': 'CEVRILIYOR', 'result_revealed': 'SONUCLANDI', 'settling': 'SONUCLANDI', 'finished': 'SONUCLANDI' };
+      if (stateText && !stateText.textContent.includes("BASLIYOR") && !stateText.textContent.includes("BEKLENIYOR")) stateText.textContent = stMap[state.state] || state.state;
       if(timerText) timerText.textContent = String(phaseTimer);
       
-      let resColorTr = state.result_color === 'red' ? 'KIRMIZI' : (state.result_color === 'black' ? 'SİYAH' : (state.result_color === 'green' ? 'YEŞİL' : ''));
-      if(resultText) resultText.textContent = state.result_pocket ? (String(state.result_pocket) + ' ' + resColorTr) : '-';
+      let resColorTr = state.result_color === 'red'  'KIRMIZI' : (state.result_color === 'black'  'SIYAH' : (state.result_color === 'green'  'YESIL' : ''));
+      if(resultText) resultText.textContent = state.result_pocket  (String(state.result_pocket) + ' ' + resColorTr) : '-';
       if(totalBetText) totalBetText.textContent = String(Number(state.total_bet || 0));
       
       if (!isInitialized) { buildChips(); buildTable(); buildWheel(); isInitialized = true; }
@@ -210,14 +225,14 @@
     async function runSpinFlow() {
       if (!state || isSpinningLocal) return;
       isSpinningLocal = true;
-      if(stateText) stateText.textContent = "BAHİSLER KAPALI";
+      if(stateText) stateText.textContent = "BAHISLER KAPALI";
       render();
       
       const locked = await api('/api/casino/roulette/lock', 'POST', { idempotency_key: idem('lock') });
       if (locked) state = locked.state;
       render();
 
-      if(stateText) stateText.textContent = "ÇEVRİLİYOR";
+      if(stateText) stateText.textContent = "CEVRILIYOR";
       const spun = await api('/api/casino/roulette/spin', 'POST', { idempotency_key: idem('spin') });
       if (!spun) { isSpinningLocal = false; return; }
       state = spun.state;
@@ -246,7 +261,7 @@
         if (settled) state = settled.state;
         isSpinningLocal = false;
         phaseTimer = 6;
-        if(stateText) stateText.textContent = "SONUÇLANDI";
+        if(stateText) stateText.textContent = "SONUCLANDI";
         if (state && state.result_pocket) placeBallOnPocket(state.result_pocket);
         render();
       }, 5100);
@@ -256,7 +271,7 @@
       if (isSpinningLocal) return;
 
       if (!state) {
-          if(stateText) stateText.textContent = "YENİ TUR BAŞLIYOR...";
+          if(stateText) stateText.textContent = "YENI TUR BASLIYOR...";
           const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
           if (res) {
             state = res.state;
@@ -270,10 +285,10 @@
       if (['settled', 'finished', 'result_revealed'].includes(state.state)) {
         if (phaseTimer > 0) {
           phaseTimer--;
-          if(stateText) stateText.textContent = "YENİ TUR BEKLENİYOR...";
+          if(stateText) stateText.textContent = "YENI TUR BEKLENIYOR...";
           render();
         } else {
-          if(stateText) stateText.textContent = "YENİ TUR BAŞLIYOR...";
+          if(stateText) stateText.textContent = "YENI TUR BASLIYOR...";
           const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
           if (res) {
             state = res.state;
@@ -285,14 +300,14 @@
       } else if (state.state === 'betting_open') {
         if (phaseTimer > 0) {
           phaseTimer--;
-          if(stateText) stateText.textContent = "BAHİSLER AÇIK";
+          if(stateText) stateText.textContent = "BAHISLER ACIK";
           render(); 
         } else {
           render(); 
           if (Number(state.total_bet || 0) > 0) {
             runSpinFlow();
           } else {
-            if(stateText) stateText.textContent = "YENİ TUR BAŞLIYOR...";
+            if(stateText) stateText.textContent = "YENI TUR BASLIYOR...";
             const res = await api('/api/casino/roulette/start', 'POST', { idempotency_key: idem('start') });
             if (res) {
               state = res.state;
@@ -321,7 +336,7 @@
     api('/api/casino/roulette/state', 'GET').then(res => {
         if (res) {
             state = res.state;
-            phaseTimer = state.state === 'betting_open' ? Math.max(0, Number(state.remaining_seconds || getSafeConstants().betting_timer_seconds)) : 0;
+            phaseTimer = state.state === 'betting_open'  Math.max(0, Number(state.remaining_seconds || getSafeConstants().betting_timer_seconds)) : 0;
             render(); 
         }
     });
@@ -332,7 +347,7 @@
 
   window.initRoulettePage = function () { initRoulettePage('.roulette-root'); };
   
-  // SPA güvenli entegrasyon
+  // SPA guvenli entegrasyon
   window.addEventListener('spa-loaded', window.initRoulettePage);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.initRoulettePage);
   else window.initRoulettePage();

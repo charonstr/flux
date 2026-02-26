@@ -2,80 +2,98 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <script>
-        (function(){
-            try {
-                var t = localStorage.getItem("theme");
-                var l = t === "light";
-                document.documentElement.style.backgroundColor = l ? "#f4f7fa" : "#1a202c";
-                document.documentElement.style.colorScheme = l ? "light" : "dark";
-            } catch(e) {
-                document.documentElement.style.backgroundColor = "#1a202c";
-            }
-        })();
-    </script>
-    <style>html{background:#1a202c}</style>
-    <title>{{ channel[2] }} - {{ server[2] }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ t.get("servers", "Servers") }} - Euphorium</title>
     <link rel="stylesheet" href="/mobile/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* === Premium Sunucu Kanal Arayüzü === */
+        .server-main {
+            padding: 10px 10px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+            max-width: none !important;
+            display: grid !important;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto minmax(0, 1fr);
+            gap: 10px;
+            height: calc(100dvh - 86px - env(safe-area-inset-bottom, 0px)) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            position: relative;
+        }
         
-        body { position: relative; background-color: var(--bg); overflow-x: hidden; min-height: 100dvh; padding-top: 0; margin: 0; }
-        
-        /* Arka Plan Dokusu ve Işıklar */
-        .bg-texture { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"); pointer-events: none; z-index: -1; opacity: 0.5; }
-        
-        .ambient-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -2; opacity: 0.3; will-change: transform; transform: translateZ(0); }
-        .orb-1 { width: 55vw; height: 55vw; background: var(--primary); top: -10%; left: -10%; animation: pulseActive 8s ease-in-out infinite alternate; }
-        .orb-2 { width: 45vw; height: 45vw; background: #818cf8; bottom: -10%; right: -10%; animation: pulseActive 10s ease-in-out infinite alternate-reverse; }
-        @keyframes pulseActive { 0% { transform: scale(0.9) translateZ(0); opacity:0.2; } 100% { transform: scale(1.1) translateZ(0); opacity:0.4; } }
-
-        .server-main { padding: 0 !important; max-width: none !important; display: flex !important; flex-direction: row !important; height: 100dvh !important; overflow: hidden !important; }
-        
-        /* SOL SÜTUN: SUNUCU MENÜSÜ */
-        .server-sidebar { position: relative; width: 260px; background: rgba(var(--panel-rgb), 0.4); border-right: 1px solid rgba(var(--line-rgb), 0.3); display: flex; flex-direction: column; z-index: 10; flex-shrink: 0; }
-        .server-sidebar-header { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--bg-rgb), 0.4); cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); touch-action: manipulation; }
+        .server-sidebar {
+            position: relative;
+            width: 100%;
+            max-height: min(30dvh, 230px);
+            min-height: 128px;
+            background: rgba(var(--panel-rgb), 0.4);
+            border-right: 0;
+            border: 1px solid rgba(var(--line-rgb), 0.3);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        .server-sidebar-header { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--bg-rgb), 0.4); cursor: pointer; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .server-sidebar-header h2 { margin: 0; font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
         .server-sidebar-header:hover { background: rgba(var(--line-rgb), 0.3); }
         
         .server-dropdown { position: absolute; top: 60px; left: 10px; width: 240px; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); padding: 8px; z-index: 1000; display: none; flex-direction: column; gap: 4px; animation: dropFade 0.2s ease; }
-        @keyframes dropFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .drawer-open-btn, .drawer-close-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.6);
+            background: rgba(var(--bg-rgb), 0.35);
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .chat-header .drawer-open-btn { margin-right: 10px; }
+        .sidebar-scrim { display: none; }
 
         .sidebar-channels { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 12px; }
         .sidebar-channels::-webkit-scrollbar { width: 4px; }
         .sidebar-channels::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.1); border-radius: 4px; }
         
         .cat-group { display: flex; flex-direction: column; gap: 2px; }
-        .cat-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; padding: 4px 8px; margin-bottom: 2px; cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s; touch-action: manipulation; }
+        .cat-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; display: flex; align-items: center; padding: 4px 8px; margin-bottom: 2px; cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s; }
         .cat-title:hover { color: var(--text); }
         
-        .chan-link { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: all 0.1s; touch-action: manipulation; }
+        .chan-link { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.95rem; transition: all 0.1s; }
         .chan-link:hover { background: rgba(var(--text-rgb), 0.05); color: var(--text); }
         .chan-link.active { background: rgba(var(--primary-rgb), 0.2); color: var(--text); }
         .chan-link i { font-size: 1.1rem; opacity: 0.7; }
         .chan-link.active i { color: var(--primary); opacity: 1; }
 
-        /* SAĞ SÜTUN: MESAJLAŞMA ALANI */
-        .chat-content { flex: 1; display: flex; flex-direction: column; position: relative; background: rgba(var(--bg-rgb), 0.6); backdrop-filter: blur(12px); }
-        .chat-header { height: 56px; padding: 0 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--panel-rgb), 0.2); z-index: 5; flex-shrink: 0; }
+        .chat-content {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: rgba(var(--bg-rgb), 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(var(--line-rgb), 0.3);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .chat-header { height: 52px; padding: 0 14px; display: flex; align-items: center; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); background: rgba(var(--panel-rgb), 0.2); z-index: 5; }
         .chat-header h3 { margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; font-weight: 600; }
         .chat-desc { color: var(--muted); font-size: 0.85rem; padding-left: 12px; margin-left: 12px; border-left: 1px solid rgba(var(--line-rgb), 0.8); }
 
-        .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
         .chat-messages::-webkit-scrollbar { width: 6px; }
         .chat-messages::-webkit-scrollbar-thumb { background: rgba(var(--text-rgb), 0.15); border-radius: 10px; }
 
-        .chat-welcome { padding: 40px 0; margin-bottom: 20px; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); }
-        .welcome-icon { width: 68px; height: 68px; border-radius: 50%; background: var(--primary); color: white; font-size: 2rem; display: grid; place-items: center; margin-bottom: 15px; }
-        .chat-welcome h2 { font-size: 2rem; margin: 0 0 10px 0; }
-        .chat-welcome p { margin: 0; color: var(--muted); font-size: 1.05rem; }
-
-        /* Sidebar kapatma (sunucu görünümü tam genişlik) */
-        .server-sidebar { display: none !important; }
-        .server-main { flex-direction: column !important; }
-        .chat-content { width: 100% !important; }
+        .chat-welcome { padding: 20px 0; margin-bottom: 12px; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); }
+        .welcome-icon { width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; font-size: 1.4rem; display: grid; place-items: center; margin-bottom: 10px; }
+        .chat-welcome h2 { font-size: 1.45rem; margin: 0 0 8px 0; }
+        .chat-welcome p { margin: 0; color: var(--muted); font-size: 0.95rem; }
 
         .msg-row { display: flex; gap: 16px; margin-top: 4px; border-radius: 8px; padding: 4px 10px 4px 0; transition: background 0.2s; }
         .msg-row:hover { background: rgba(var(--text-rgb), 0.03); }
@@ -90,210 +108,108 @@
         .chatimg { max-width: 400px; max-height: 300px; border-radius: 8px; margin-top: 8px; cursor: pointer; border: 1px solid rgba(var(--line-rgb), 0.3); }
         .chatvid { max-width: 400px; max-height: 300px; border-radius: 8px; margin-top: 8px; }
 
-        /* Mesaj Giriş Alanı */
-        .chat-input-wrapper { padding: 0 24px 24px 24px; }
-        .chat-input-box { background: rgba(var(--panel-rgb), 0.8); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 12px; display: flex; align-items: center; padding: 10px 16px; gap: 12px; transition: border 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .chat-input-wrapper { padding: 10px 12px 12px 12px; }
+        .chat-input-box { background: rgba(var(--panel-rgb), 0.8); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 8px; display: flex; align-items: center; padding: 10px 16px; gap: 12px; transition: border 0.3s; }
         .chat-input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
-        
-        /* iOS Zoom Engeli */
-        .chat-input-box input[type="text"] { flex: 1; background: transparent; border: none; box-shadow: none; padding: 0; color: var(--text); font-size: 16px !important; font-family: inherit; }
+        .chat-input-box input[type="text"] { flex: 1; background: transparent; border: none; box-shadow: none; padding: 0; color: var(--text); font-size: 1rem; font-family: inherit; }
         .chat-input-box input[type="text"]:focus { outline: none; }
-        
-        .btn-attach { background: transparent; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; position: relative; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; transition: 0.2s; touch-action: manipulation; }
+        .btn-attach { background: transparent; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; transition: 0.2s; }
         .btn-attach:hover { color: var(--text); background: rgba(var(--line-rgb), 0.5); }
         .btn-attach input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-        .btn-send { background: transparent; border: none; color: var(--primary); font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; touch-action: manipulation; }
+        .btn-send { background: transparent; border: none; color: var(--primary); font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; }
         .btn-send:hover { background: rgba(var(--primary-rgb), 0.2); }
 
-        /* Modallar (Evrensel tasarım) */
-        .modal-content { background: var(--panel) !important; border-radius: 16px !important; padding: 0 !important; overflow: hidden; border: 1px solid rgba(var(--line-rgb), 0.5) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important; display: flex; flex-direction: column; }
-        .modal-header { padding: 20px 25px; background: rgba(var(--bg-rgb), 0.5); border-bottom: 1px solid rgba(var(--line-rgb), 0.5); display: flex; justify-content: space-between; align-items: center; user-select: none; }
-        .modal-header h2 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; }
-        .modal-body { padding: 25px; }
-        .modal-close-btn { background: transparent; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s; padding: 5px; display: flex; align-items: center; justify-content: center; border-radius: 8px; touch-action: manipulation; }
-        .modal-close-btn:hover { background: rgba(var(--text-rgb), 0.1); color: #ef4444; }
-        .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 15px; }
-        .form-group { flex: 1; min-width: 150px; margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--muted); font-size: 0.9rem; }
-        .form-group input, .form-group select { width: 100%; background: rgba(var(--bg-rgb), 0.5); border: 1px solid rgba(var(--line-rgb), 0.8); border-radius: 10px; padding: 12px 15px; color: var(--text); outline: none; transition: all 0.3s; font-family: inherit; font-size: 16px !important; box-sizing: border-box; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
-        .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; background: rgba(var(--bg-rgb), 0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.3); margin-bottom: 15px; max-height: 200px; overflow-y: auto;}
-        .perm-grid label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text); padding: 5px 0;}
-        .perm-grid input[type="checkbox"] { accent-color: var(--primary); width: 18px; height: 18px; }
-
-        .context-menu { position: fixed; background: rgba(var(--panel-rgb), 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(var(--primary-rgb), 0.3); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); padding: 8px; min-width: 200px; z-index: 999999; display: none; flex-direction: column; gap: 4px; }
-        .ctx-item { padding: 10px 15px; color: var(--text); cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 12px; font-size: 0.95rem; font-weight: 500; transition: 0.2s; touch-action: manipulation; }
-        .ctx-item i { width: 16px; text-align: center; color: var(--primary); transition: 0.2s; }
-        .ctx-item:hover { background: var(--primary); color: #fff; }
-        .ctx-item:hover i { color: #fff; }
-
-        .settings-layout { display: flex; min-height: 500px; }
-        .settings-sidebar { width: 220px; border-right: 1px solid rgba(var(--line-rgb), 0.5); padding: 20px 10px; display: flex; flex-direction: column; gap: 8px; background: rgba(var(--bg-rgb), 0.2); }
-        .tab-side-btn { background: transparent; border: none; padding: 12px 15px; color: var(--muted); font-size: 1rem; font-weight: 600; text-align: left; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 10px; touch-action: manipulation; }
-        .tab-side-btn:hover { background: rgba(var(--line-rgb), 0.5); color: var(--text); }
-        .tab-side-btn.active { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
-        .settings-content { flex: 1; padding: 30px; overflow-y: auto; max-height: 70vh; }
-        .settings-tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .settings-tab-content.active { display: block; }
-        
-        .modern-user-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 14px; margin-bottom: 10px; transition: 0.2s;}
-        .modern-user-card:hover { border-color: var(--primary); }
-        .modern-user-card .who { display: flex; align-items: center; gap: 12px; font-weight: 600; }
-        .modern-user-card .who img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
-        
-        .inline-edit-form { display: flex; gap: 10px; align-items: center; background: rgba(var(--bg-rgb), 0.5); padding: 12px; border-radius: 12px; border: 1px solid rgba(var(--line-rgb), 0.5); margin-bottom: 10px; flex-wrap: wrap; }
-        .inline-edit-form > * { flex: 1; min-width: 120px; }
-        .inline-edit-form button { flex: 0 0 auto; padding: 12px 20px; border-radius: 10px; border: none; background: var(--line); color: var(--text); font-weight: 600; cursor: pointer; transition: 0.2s; touch-action: manipulation; }
-        .inline-edit-form button:hover { background: var(--primary); color: #fff; }
-
-        /* MOBİL UYUMLULUK KODLARI */
-        @media (max-width: 768px) {
-            .server-main { flex-direction: column !important; height: 100dvh !important; }
-            .server-sidebar { width: 100%; height: 35dvh; border-right: none; border-bottom: 1px solid rgba(var(--line-rgb), 0.3); flex-shrink: 0; }
-            .chat-content { height: 65dvh; }
-            .chat-messages { padding: 15px; }
-            .chat-input-wrapper { padding: 0 15px 15px 15px; }
-            .settings-layout { flex-direction: column; min-height: auto; }
-            .settings-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(var(--line-rgb), 0.5); padding: 15px 10px; flex-direction: row; overflow-x: auto; }
-            .tab-side-btn { white-space: nowrap; }
-            .settings-content { padding: 20px; max-height: 50vh; }
-            .ambient-orb { filter: blur(60px); }
+        @media (max-width: 900px) {
+            .server-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+                width: min(86vw, 320px);
+                max-height: none;
+                min-height: auto;
+                border-radius: 0 14px 14px 0;
+                z-index: 1200;
+                transform: translateX(-105%);
+                transition: transform .22s ease;
+                box-shadow: 0 18px 46px rgba(0,0,0,0.42);
+            }
+            .server-main.drawer-open .server-sidebar { transform: translateX(0); }
+            .sidebar-scrim {
+                display: block;
+                position: fixed;
+                inset: 0 0 calc(86px + env(safe-area-inset-bottom, 0px)) 0;
+                background: rgba(0, 0, 0, 0.45);
+                opacity: 0;
+                pointer-events: none;
+                z-index: 1190;
+                border: 0;
+            }
+            .server-main.drawer-open .sidebar-scrim {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            #createChanModal .modal-content,
+            #editChanModal .modal-content,
+            #createCatModal .modal-content,
+            #editCatModal .modal-content {
+                width: 94vw !important;
+                max-width: 94vw !important;
+            }
+            #createChanModal .form-row,
+            #editChanModal .form-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            #createChanModal .modal-body,
+            #editChanModal .modal-body {
+                padding: 10px;
+            }
         }
     </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-  :root{
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --app-vh: 100dvh;
-  }
-
-  html{
-    width:100%;
-    max-width:100%;
-    overflow-x: clip;
-    -webkit-text-size-adjust:100%;
-    text-size-adjust:100%;
-    background: var(--bg, #0b0b0b);
-  }
-
-  body{
-    width:100%;
-    max-width:100%;
-    min-height:100vh;
-    min-height:100svh;
-    min-height:100dvh;
-    min-height:var(--app-vh);
-    overflow-x: clip !important;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    padding-left:max(0px, var(--safe-left));
-    padding-right:max(0px, var(--safe-right));
-  }
-
-  *, *::before, *::after{
-    box-sizing:border-box;
-    min-width:0;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  img, video, canvas, svg, iframe{
-    max-width:100%;
-  }
-
-  input, textarea, select, button{
-    font: inherit;
-  }
-
-  textarea{
-    max-width:100%;
-  }
-
-  /* Common mobile app-shell helpers (safe, generic) */
-  .topbar, .header, .app-header, nav.top, [data-fixed="top"]{
-    padding-top: max(0px, var(--safe-top));
-  }
-
-  .bottombar, .bottom-nav, .tabbar, .app-bottom, [data-fixed="bottom"]{
-    padding-bottom: max(0px, var(--safe-bottom));
-  }
-
-  /* Modals / drawers / popups often overflow on mobile */
-  .modal, .popup, .sheet, .drawer, dialog, [role="dialog"]{
-    max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-    max-width: min(100%, calc(100vw - 12px));
-  }
-
-  /* Prevent fixed/sticky elements from creating horizontal overflow */
-  [style*="position: fixed"], [style*="position:fixed"],
-  [style*="position: sticky"], [style*="position:sticky"]{
-    max-width:100vw;
-  }
-
-  /* Keyboard open state: reduce jank on mobile */
-  html.keyboard-open,
-  html.keyboard-open body{
-    overscroll-behavior-y: none;
-  }
-
-  @media (max-width: 768px){
-    html, body{
-      overflow-x: clip !important;
-    }
-    /* Blur effects can stutter on some devices */
-    .glass, .blur, .frosted,
-    [class*="glass"], [class*="blur"]{
-      backdrop-filter: saturate(120%) blur(10px);
-      -webkit-backdrop-filter: saturate(120%) blur(10px);
-    }
-  }
-</style>
-
 </head>
 <body>
-    <div class="bg-texture"></div>
-    <div class="ambient-orb orb-1"></div>
-    <div class="ambient-orb orb-2"></div>
-
     {% set can_manage_channels = 'true' if canmanagechannels else 'false' %}
     
     <div class="server-shell">
         <aside class="server-rail"></aside>
 
         <main class="server-main" oncontextmenu="window.showGeneralCtx(event, this)" data-canmanage="{{ can_manage_channels }}">
+            <button type="button" class="sidebar-scrim" data-drawer-scrim onclick="window.closeServerDrawer()"></button>
             
             <aside class="server-sidebar">
                 <div class="server-sidebar-header" onclick="window.toggleServerDropdown(event)">
                     <h2>{{ server[2] }}</h2>
-                    <i class="fa-solid fa-chevron-down" style="font-size:0.8rem; color:var(--muted); transition: 0.2s;" id="serverHeaderIcon"></i>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.8rem; color:var(--muted); transition: 0.2s;" id="serverHeaderIcon"></i>
+                        <button type="button" class="drawer-close-btn" onclick="event.stopPropagation(); window.closeServerDrawer();"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
                 
                 <div id="serverDropdown" class="server-dropdown">
                     <div class="ctx-item" onclick="window.showInvite()" style="color: var(--primary);">
-                        <i class="fa-solid fa-user-plus"></i> İnsanları Davet Et
+                        <i class="fa-solid fa-user-plus"></i> Ä°nsanlarÄ± Davet Et
                     </div>
                     {% if canmanageroles or canmanagechannels or pending %}
                     <div class="ctx-item" onclick="window.openServerSettings()">
-                        <i class="fa-solid fa-gear"></i> Sunucu Ayarları
+                        <i class="fa-solid fa-gear"></i> Sunucu AyarlarÄ±
                     </div>
                     {% endif %}
                     {% if canmanagechannels %}
                     <div class="ctx-item" onclick="window.openCreateCat()">
-                        <i class="fa-solid fa-folder-plus"></i> Kategori Oluştur
+                        <i class="fa-solid fa-folder-plus"></i> Kategori OluÅŸtur
                     </div>
                     <div class="ctx-item" onclick="window.openCreateChan('')">
-                        <i class="fa-solid fa-hashtag"></i> Kanal Oluştur
+                        <i class="fa-solid fa-hashtag"></i> Kanal OluÅŸtur
                     </div>
                     {% endif %}
                     
                     {% if server[1] != myid %}
                     <div style="height: 1px; background: rgba(var(--line-rgb), 0.5); margin: 4px 0;"></div>
                     <form method="post" action="/servers/{{ server[0] }}/leave" data-nav="soft" style="margin:0; padding:0; display:block;">
-                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('Ayrılmak istediğinize emin misiniz?');">
-                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan Ayrıl
+                        <button type="submit" class="ctx-item" style="width: 100%; border: none; background: transparent; text-align: left; color: #ef4444; font-family: inherit; font-size: inherit;" onclick="return confirm('AyrÄ±lmak istediÄŸinize emin misiniz');">
+                            <i class="fa-solid fa-person-walking-arrow-right" style="color: #ef4444;"></i> Sunucudan AyrÄ±l
                         </button>
                     </form>
                     {% endif %}
@@ -324,6 +240,7 @@
 
             <section class="chat-content">
                 <div class="chat-header">
+                    <button type="button" class="drawer-open-btn" onclick="window.toggleServerDrawer()"><i class="fa-solid fa-bars"></i></button>
                     <h3><i class="fa-solid fa-hashtag" style="color:var(--muted);"></i> {{ channel[2] }}</h3>
                     {% if channel[4] != 'all' %}
                         <span class="chat-desc"><i class="fa-solid fa-shield-halved"></i> {{ channel[4] }}</span>
@@ -335,8 +252,8 @@
                 <div class="chat-messages chatbox">
                     <div class="chat-welcome">
                         <div class="welcome-icon"><i class="fa-solid fa-hashtag"></i></div>
-                        <h2>{{ channel[2] }} kanalına hoş geldin!</h2>
-                        <p>Burası <strong>{{ channel[2] }}</strong> kanalının başlangıcı.</p>
+                        <h2>{{ channel[2] }} kanalÄ±na hoÅŸ geldin!</h2>
+                        <p>BurasÄ± <strong>{{ channel[2] }}</strong> kanalÄ±nÄ±n baÅŸlangÄ±cÄ±.</p>
                     </div>
                     
                     {% for e in entries %}
@@ -351,7 +268,7 @@
                             {% elif e[2]=='image' %}<img src="/media/{{ e[4] }}" class="chatimg" alt="image">
                             {% elif e[2]=='video' %}<video controls class="chatvid" src="/media/{{ e[4] }}"></video>
                             {% elif e[2]=='audio' %}<audio controls src="/media/{{ e[4] }}" style="margin-top:8px;"></audio>
-                            {% else %}<a href="/media/{{ e[4] }}" target="_blank" style="color:var(--primary); font-weight:600; margin-top:8px; display:inline-block;"><i class="fa-solid fa-file"></i> Dosya İndir</a>
+                            {% else %}<a href="/media/{{ e[4] }}" target="_blank" style="color:var(--primary); font-weight:600; margin-top:8px; display:inline-block;"><i class="fa-solid fa-file"></i> Dosya Ä°ndir</a>
                             {% endif %}
                         </div>
                     </div>
@@ -367,14 +284,14 @@
                             <input name="file" type="file">
                         </button>
                         {% endif %}
-                        <input name="text" type="text" placeholder="#{{ channel[2] }} kanalına mesaj gönder" autocomplete="off">
+                        <input name="text" type="text" placeholder="#{{ channel[2] }} kanalÄ±na mesaj gÃ¶nder" autocomplete="off">
                         <button class="btn-send" type="submit"><i class="fa-solid fa-paper-plane"></i></button>
                     </form>
                 </div>
                 {% else %}
                 <div class="chat-input-wrapper">
                     <div class="chat-input-box" style="justify-content:center; opacity:0.7; background: rgba(var(--bg-rgb), 0.4);">
-                        <span style="color:var(--muted); font-weight:500;"><i class="fa-solid fa-lock"></i> Bu kanala mesaj gönderme izniniz yok.</span>
+                        <span style="color:var(--muted); font-weight:500;"><i class="fa-solid fa-lock"></i> Bu kanala mesaj gÃ¶nderme izniniz yok.</span>
                     </div>
                 </div>
                 {% endif %}
@@ -392,18 +309,18 @@
         <div class="modal" id="serverSettingsModal">
             <div class="modal-content" style="max-width: 900px; width: 90%;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu Ayarları</h2>
+                    <h2><i class="fa-solid fa-gear" style="color:var(--primary);"></i> Sunucu AyarlarÄ±</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('serverSettingsModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 
                 <div class="settings-layout">
                     <div class="settings-sidebar">
                         {% if pending %}
-                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> Katılım İstekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
+                        <button type="button" class="tab-side-btn active" onclick="window.switchSettingsTab('tab-req')"><i class="fa-solid fa-user-clock"></i> KatÄ±lÄ±m Ä°stekleri <span class="badge primary" style="margin-left:auto;">{{ pending|length }}</span></button>
                         {% endif %}
                         {% if canmanageroles %}
-                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol Yönetimi</button>
-                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Üyeler</button>
+                        <button type="button" class="tab-side-btn {% if not pending %}active{% endif %}" onclick="window.switchSettingsTab('tab-roles')"><i class="fa-solid fa-tags"></i> Rol YÃ¶netimi</button>
+                        <button type="button" class="tab-side-btn" onclick="window.switchSettingsTab('tab-members')"><i class="fa-solid fa-users-gear"></i> Ãœyeler</button>
                         {% endif %}
                     </div>
                     
@@ -415,38 +332,38 @@
                             <div class="modern-user-card">
                                 <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
                                 <div style="display:flex; gap:10px;">
-                                    <form method="post" action="/servers/accept/{{ p.joinid }}" data-nav="soft"><button class="pickbtn" style="padding:10px 15px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Kabul Et</button></form>
-                                    <form method="post" action="/servers/reject/{{ p.joinid }}" data-nav="soft"><button class="linkbtn" style="padding:10px 15px; border-color:#ef4444; color:#ef4444; touch-action: manipulation;"><i class="fa-solid fa-xmark"></i> Reddet</button></form>
+                                    <form method="post" action="/servers/accept/{{ p.joinid }}" data-nav="soft"><button class="pickbtn" style="padding:10px 15px;"><i class="fa-solid fa-check"></i> Kabul Et</button></form>
+                                    <form method="post" action="/servers/reject/{{ p.joinid }}" data-nav="soft"><button class="linkbtn" style="padding:10px 15px; border-color:#ef4444; color:#ef4444;"><i class="fa-solid fa-xmark"></i> Reddet</button></form>
                                 </div>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>İstek bulunmuyor.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-inbox"></i><span>Ä°stek bulunmuyor.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
 
                         {% if canmanageroles %}
                         <div id="tab-roles" class="settings-tab-content {% if not pending %}active{% endif %}">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol Oluştur</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-shield-plus"></i> Yeni Rol OluÅŸtur</h3>
                             <form method="post" action="/servers/{{ server[0] }}/roles/create" data-nav="soft" style="background: rgba(var(--bg-rgb), 0.4); padding: 20px; border-radius: 12px; border: 1px dashed rgba(var(--line-rgb), 0.8); margin-bottom: 25px;">
                                 <div class="form-group">
-                                    <input name="name" type="text" placeholder="Rol adı" required>
+                                    <input name="name" type="text" placeholder="Rol adÄ±" required>
                                 </div>
                                 <div class="perm-grid">
-                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluşturma</label>
-                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yönetimi</label>
-                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> Başkasının mesajını silme</label>
+                                    <label><input type="checkbox" name="perm_invitelink" value="1"> Davet linki oluÅŸturma</label>
+                                    <label><input type="checkbox" name="perm_managechannels" value="1"> Kanal/kategori yÃ¶netimi</label>
+                                    <label><input type="checkbox" name="perm_deleteothers" value="1"> BaÅŸkasÄ±nÄ±n mesajÄ±nÄ± silme</label>
                                     <label><input type="checkbox" name="perm_kick" value="1"> Sunucudan At (Kick)</label>
                                     <label><input type="checkbox" name="perm_ban" value="1"> Yasakla (Ban)</label>
                                     <label><input type="checkbox" name="perm_timeout" value="1"> Sustur (Timeout)</label>
-                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasağı</label>
+                                    <label><input type="checkbox" name="perm_voiceban" value="1"> Sesli kanal yasaÄŸÄ±</label>
                                     <label><input type="checkbox" name="perm_voicetimeout" value="1"> Sesli timeout</label>
-                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldır</label>
-                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldır</label>
-                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldır</label>
-                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yönetimi</label>
+                                    <label><input type="checkbox" name="perm_unkick" value="1"> Kick kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_unban" value="1"> Ban kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_untimeout" value="1"> Timeout kaldÄ±r</label>
+                                    <label><input type="checkbox" name="perm_manageroles" value="1"> Rol yÃ¶netimi</label>
                                 </div>
-                                <button class="pickbtn" type="submit" style="width:100%; touch-action: manipulation;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
+                                <button class="pickbtn" type="submit" style="width:100%;"><i class="fa-solid fa-plus"></i> Rol Kaydet</button>
                             </form>
 
                             <h3><i class="fa-solid fa-tags"></i> Mevcut Roller</h3>
@@ -454,28 +371,28 @@
                             <form method="post" action="/servers/{{ server[0] }}/roles/{{ r[0] }}/edit" data-nav="soft" class="inline-edit-form">
                                 <span style="font-weight:bold; color:var(--primary); width:30px; text-align:center;"><i class="fa-solid fa-circle" style="font-size:0.6rem;"></i></span>
                                 <input name="name" type="text" value="{{ r[1] }}" style="margin-bottom:0; background:transparent; border:none; padding:5px;">
-                                <button type="submit" style="touch-action: manipulation;">Güncelle</button>
+                                <button type="submit">GÃ¼ncelle</button>
                             </form>
                             {% endfor %}
                         </div>
 
                         <div id="tab-members" class="settings-tab-content">
-                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Üye Yetkilendirme</h3>
+                            <h3 style="margin-top:0;"><i class="fa-solid fa-users-gear"></i> Ãœye Yetkilendirme</h3>
                             {% for m in members %}
                             <div class="modern-user-card">
                                 <div class="who"><img src="{{ m.avatar }}" alt="a"> {{ m.username }}</div>
                                 <form method="post" action="/servers/{{ server[0] }}/members/{{ m.id }}/role" data-nav="soft" style="display:flex; gap:10px; align-items:center;">
                                     <select name="roleid" style="margin-bottom:0; min-width:180px;">
-                                        <option value="0">Varsayılan Üye</option>
+                                        <option value="0">VarsayÄ±lan Ãœye</option>
                                         {% for r in roles %}
                                         <option value="{{ r[0] }}" {% if m.roleid == r[0] %}selected{% endif %}>{{ r[1] }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="pickbtn" style="padding:12px 20px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Ata</button>
+                                    <button type="submit" class="pickbtn" style="padding:12px 20px;"><i class="fa-solid fa-check"></i> Ata</button>
                                 </form>
                             </div>
                             {% else %}
-                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>Henüz üye yok.</span></div>
+                            <div class="empty-state"><i class="fa-solid fa-users-slash"></i><span>HenÃ¼z Ã¼ye yok.</span></div>
                             {% endfor %}
                         </div>
                         {% endif %}
@@ -488,23 +405,23 @@
         <div class="modal" id="createCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori Oluştur</h2>
+                    <h2><i class="fa-solid fa-folder-plus" style="color:var(--primary);"></i> Kategori OluÅŸtur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/create" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori Adı</label>
+                            <label>Kategori AdÄ±</label>
                             <input name="name" type="text" placeholder="Yeni kategori..." required>
                         </div>
                         <div class="form-group">
-                            <label>Tür</label>
+                            <label>TÃ¼r</label>
                             <select name="kind">
-                                <option value="text">Mesajlaşma</option>
+                                <option value="text">MesajlaÅŸma</option>
                                 <option value="voice">Sesli</option>
                             </select>
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
                     </form>
                 </div>
             </div>
@@ -513,23 +430,23 @@
         <div class="modal" id="editCatModal">
             <div class="modal-content" style="max-width: 450px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi Düzenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kategoriyi DÃ¼zenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editCatModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/categories/0/edit" data-nav="soft">
                         <div class="form-group">
-                            <label>Kategori Adı</label>
+                            <label>Kategori AdÄ±</label>
                             <input name="name" type="text" required>
                         </div>
                         <div class="form-group">
-                            <label>Tür</label>
+                            <label>TÃ¼r</label>
                             <select name="kind">
                                 <option value="text">Mesaj</option>
                                 <option value="voice">Sesli</option>
                             </select>
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
                     </form>
                 </div>
             </div>
@@ -538,14 +455,14 @@
         <div class="modal" id="createChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal Oluştur</h2>
+                    <h2><i class="fa-solid fa-hashtag" style="color:var(--primary);"></i> Kanal OluÅŸtur</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('createChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/create" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Adı</label>
+                                <label>Kanal AdÄ±</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -558,17 +475,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Türü</label>
+                                <label>Kanal TÃ¼rÃ¼</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>İçerik Kısıtlaması</label>
+                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
                                 <select name="contentmode">
-                                    <option value="all">Tümü</option>
-                                    <option value="image">Sadece görsel</option>
+                                    <option value="all">TÃ¼mÃ¼</option>
+                                    <option value="image">Sadece gÃ¶rsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -576,14 +493,14 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller (Boş = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller (BoÅŸ = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (Boş = Herkes)</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Yazabilecek Roller (BoÅŸ = Herkes)</div>
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-check"></i> Oluştur</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-check"></i> OluÅŸtur</button>
                     </form>
                 </div>
             </div>
@@ -592,14 +509,14 @@
         <div class="modal" id="editChanModal">
             <div class="modal-content" style="max-width: 550px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> Kanalı Düzenle</h2>
+                    <h2><i class="fa-solid fa-pen" style="color:var(--primary);"></i> KanalÄ± DÃ¼zenle</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('editChanModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body">
                     <form method="post" action="/servers/{{ server[0] }}/channels/0/edit" data-nav="soft">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Adı</label>
+                                <label>Kanal AdÄ±</label>
                                 <input name="name" type="text" required>
                             </div>
                             <div class="form-group">
@@ -612,17 +529,17 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Kanal Türü</label>
+                                <label>Kanal TÃ¼rÃ¼</label>
                                 <select name="kind">
                                     <option value="text">Mesaj</option>
                                     <option value="voice">Sesli</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>İçerik Kısıtlaması</label>
+                                <label>Ä°Ã§erik KÄ±sÄ±tlamasÄ±</label>
                                 <select name="contentmode">
-                                    <option value="all">Tümü</option>
-                                    <option value="image">Sadece görsel</option>
+                                    <option value="all">TÃ¼mÃ¼</option>
+                                    <option value="image">Sadece gÃ¶rsel</option>
                                     <option value="video">Sadece video</option>
                                     <option value="audio">Sadece ses</option>
                                 </select>
@@ -630,7 +547,7 @@
                         </div>
                         
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Görebilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">GÃ¶rebilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="visibleperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
@@ -638,10 +555,10 @@
                             {% for r in roles %}<label><input type="checkbox" name="writeperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
                         <div class="perm-grid">
-                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya Paylaşabilecek Roller</div>
+                            <div style="font-weight:600; grid-column:1/-1; color:var(--primary);">Medya PaylaÅŸabilecek Roller</div>
                             {% for r in roles %}<label><input type="checkbox" name="shareperms" value="{{ r[0] }}"> {{ r[1] }}</label>{% endfor %}
                         </div>
-                        <button class="pickbtn" style="width:100%; margin-top:10px; touch-action: manipulation;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
+                        <button class="pickbtn" style="width:100%; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
                     </form>
                 </div>
             </div>
@@ -650,16 +567,16 @@
         <div class="modal" id="inviteModal">
             <div class="modal-content" style="max-width: 480px;">
                 <div class="modal-header">
-                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> Arkadaşlarını Davet Et</h2>
+                    <h2><i class="fa-solid fa-envelope-open-text" style="color:var(--primary);"></i> ArkadaÅŸlarÄ±nÄ± Davet Et</h2>
                     <button type="button" class="modal-close-btn" onclick="window.closeSpecificModal('inviteModal')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="modal-body" style="text-align: left;">
-                    <p style="color:var(--muted); margin-bottom: 20px;">Arkadaşlarınızı bu sunucuya davet etmek için aşağıdaki linki veya kodu paylaşabilirsiniz.</p>
+                    <p style="color:var(--muted); margin-bottom: 20px;">ArkadaÅŸlarÄ±nÄ±zÄ± bu sunucuya davet etmek iÃ§in aÅŸaÄŸÄ±daki linki veya kodu paylaÅŸabilirsiniz.</p>
                     
                     <label style="display:block; font-weight:600; color:var(--muted); font-size:0.85rem; margin-bottom:5px; text-transform:uppercase;">Davet Linki</label>
                     <div style="background: rgba(var(--bg-rgb), 0.8); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(var(--primary-rgb), 0.4); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
                         <span class="invite-link-span" data-code="{{ server[6] }}" style="font-family: monospace; font-size: 0.95rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;"></span>
-                        <button type="button" class="pickbtn" style="padding: 8px 12px; font-size: 0.85rem; touch-action: manipulation;" onclick="window.copyInviteCode(document.querySelector('#inviteModal .invite-link-span').innerText, this)">
+                        <button type="button" class="pickbtn" style="padding: 8px 12px; font-size: 0.85rem;" onclick="window.copyInviteCode(document.querySelector('#inviteModal .invite-link-span').innerText, this)">
                             <i class="fa-solid fa-copy"></i> Kopyala
                         </button>
                     </div>
@@ -669,116 +586,21 @@
                         <span style="font-family: monospace; font-size: 1.2rem; font-weight: bold; color: var(--text); letter-spacing: 2px;">
                             {{ server[6] }}
                         </span>
-                        <button type="button" class="linkbtn" style="padding: 8px 12px; font-size: 0.85rem; border-color: rgba(var(--primary-rgb), 0.3); color: var(--text); touch-action: manipulation;" onclick="window.copyInviteCode('{{ server[6] }}', this)">
+                        <button type="button" class="linkbtn" style="padding: 8px 12px; font-size: 0.85rem; border-color: rgba(var(--primary-rgb), 0.3); color: var(--text);" onclick="window.copyInviteCode('{{ server[6] }}', this)">
                             <i class="fa-solid fa-copy"></i> Kopyala
                         </button>
                     </div>
                     
-                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kısmından girilerek de kullanılabilir.</p>
+                    <p style="font-size: 0.8rem; color: var(--muted); margin: 0; text-align: center;"><i class="fa-solid fa-circle-info"></i> Davet kodu sunucu arama kÄ±smÄ±ndan girilerek de kullanÄ±labilir.</p>
                 </div>
             </div>
         </div>
 
     </div>
     <script src="/mobile/js/app.js"></script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function () {
-  const docEl = document.documentElement;
-  let baseVVH = 0;
-  let rafId = 0;
-
-  function getViewportHeight() {
-    if (window.visualViewport && window.visualViewport.height) {
-      return window.visualViewport.height;
-    }
-    return window.innerHeight || docEl.clientHeight || 0;
-  }
-
-  function applyViewportVars() {
-    const vh = Math.round(getViewportHeight());
-    if (!baseVVH || vh > baseVVH) baseVVH = vh;
-    docEl.style.setProperty('--app-vh', vh + 'px');
-    const keyboardOpen = baseVVH - vh > 120;
-    docEl.classList.toggle('keyboard-open', keyboardOpen);
-  }
-
-  function scheduleApply() {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(applyViewportVars);
-  }
-
-  // Clamp accidental horizontal overflow caused by oversized elements
-  function clampWideElements() {
-    const viewportW = Math.max(docEl.clientWidth, window.innerWidth || 0);
-    const nodes = document.body ? document.body.querySelectorAll('*') : [];
-    for (const el of nodes) {
-      if (!el || !el.getBoundingClientRect) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.width > viewportW + 2) {
-        if (!el.dataset._mobileClamp) {
-          el.style.maxWidth = '100%';
-          el.style.overflowWrap = el.style.overflowWrap || 'anywhere';
-          el.dataset._mobileClamp = '1';
-        }
-      }
-    }
-  }
-
-  function scheduleClamp() {
-    requestAnimationFrame(() => {
-      try { clampWideElements(); } catch (e) {}
-    });
-  }
-
-  window.addEventListener('resize', scheduleApply, { passive: true });
-  window.addEventListener('orientationchange', scheduleApply, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scheduleApply, { passive: true });
-    window.visualViewport.addEventListener('scroll', scheduleApply, { passive: true });
-  }
-
-  document.addEventListener('focusin', scheduleApply, true);
-  document.addEventListener('focusout', scheduleApply, true);
-  window.addEventListener('load', () => { scheduleApply(); scheduleClamp(); }, { once: true });
-
-  // Observe dynamic UI changes (messages, modals, etc.)
-  const mo = new MutationObserver(() => {
-    scheduleApply();
-    scheduleClamp();
-  });
-  if (document.documentElement) {
-    mo.observe(document.documentElement, { childList: true, subtree: true, attributes: false });
-  }
-
-  applyViewportVars();
-  setTimeout(scheduleClamp, 120);
-})();
-</script>
-
-    <nav class="mobile-bottom-nav">
-        <a href="/home" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="/dm" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>DM</span>
-        </a>
-        <a href="/servers" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-server"></i>
-            <span>Sunucular</span>
-        </a>
-        <a href="/friends" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Arkadaş</span>
-        </a>
-        <a href="/settings" class="nav-item" data-nav="soft">
-            <i class="fa-solid fa-gear"></i>
-            <span>Ayarlar</span>
-        </a>
-    </nav>
-
 </body>
 </html>
+
+
+
+

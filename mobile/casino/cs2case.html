@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>CS2 Kasa Açılışı - Euphorium</title>
+  <title>{{ t.get("cs2_case", "CS2 Case") }} - Euphorium</title>
   <link rel="stylesheet" href="/mobile/css/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
       --cs-bg: #0b1220;
@@ -60,88 +60,11 @@
     .mx-row img { height: 30px; object-fit: contain; }
     .mx-hdr { color: #94a3b8; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 700; }
   </style>
-
-<!-- Mobile hardening patch -->
-<style id="mobile-hardening-patch">
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --app-vh: 100dvh;
-}
-html{
-  width:100%;
-  max-width:100%;
-  overflow-x: clip;
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-}
-body{
-  width:100%;
-  max-width:100%;
-  min-height:100vh;
-  min-height:100svh;
-  min-height:100dvh;
-  min-height:var(--app-vh);
-  overflow-x: clip !important;
-  padding-left:max(0px, var(--safe-left));
-  padding-right:max(0px, var(--safe-right));
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-}
-*,*::before,*::after{ box-sizing:border-box; min-width:0; }
-img,video,canvas,svg,iframe{ max-width:100%; }
-input,textarea,select,button{ font:inherit; }
-textarea{ max-width:100%; }
-
-.app-header,.topbar,.header,[data-fixed="top"]{
-  padding-top:max(0px, var(--safe-top));
-}
-.mobile-bottom-nav,.bottom-nav,.bottombar,.tabbar,[data-fixed="bottom"]{
-  padding-bottom:max(0px, var(--safe-bottom));
-}
-.app-shell{
-  min-height: var(--app-vh);
-  height: var(--app-vh);
-}
-.app-content{
-  min-height:0;
-  overflow-x:hidden !important;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-.modal,.popup,.sheet,.drawer,dialog,[role="dialog"]{
-  max-height: calc(var(--app-vh) - var(--safe-top) - var(--safe-bottom) - 12px);
-  max-width: min(100%, calc(100vw - 12px));
-}
-[style*="position: fixed"], [style*="position:fixed"],
-[style*="position: sticky"], [style*="position:sticky"]{
-  max-width:100vw;
-}
-@media (max-width:768px){
-  html,body{ overflow-x:clip !important; }
-  .claim-pop{
-    right: 10px !important;
-    left: 10px !important;
-    bottom: calc(10px + var(--safe-bottom)) !important;
-    width: auto !important;
-  }
-  .mx-wrap,.casino-wrap,.case-wrap,.case-home,.table-wrap{
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-  }
-  .game-links a{ min-height: 92px; padding: 18px 12px !important; }
-  .bet-controls{ flex-wrap: wrap; }
-  .bet-controls .bet-input{ min-width: 100%; }
-}
-</style>
-
 </head>
 <body>
   <main class="mx-wrap">
     <div class="mx-top">
-      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menü</a>
+      <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> MenÃ¼</a>
       <h1 class="mx-title"><i class="fa-solid fa-box-open"></i> CS2 Kasa</h1>
       <div class="mx-badge"><i class="fa-solid fa-coins"></i> <span id="csBalance">0</span></div>
     </div>
@@ -154,7 +77,7 @@ textarea{ max-width:100%; }
       </div>
       
       <button class="btn-open" id="btnOpen">
-        <i class="fa-solid fa-key"></i> KASA AÇ (250 Altın)
+        <i class="fa-solid fa-key"></i> KASA AÃ‡ (250 AltÄ±n)
       </button>
 
       <div class="win-popup" id="winPopup">
@@ -167,12 +90,12 @@ textarea{ max-width:100%; }
 
     <div class="info-grid">
       <div class="info-card">
-        <h4>Kasa İçeriği ve Oranlar</h4>
+        <h4>Kasa Ä°Ã§eriÄŸi ve Oranlar</h4>
         <div class="odds-list" id="oddsList">
           </div>
       </div>
       <div class="info-card">
-        <h4>Son Çıkanlar</h4>
+        <h4>Son Ã‡Ä±kanlar</h4>
         <div class="mx-history" id="historyWrap">
           </div>
       </div>
@@ -228,10 +151,10 @@ textarea{ max-width:100%; }
 
       function renderHistory(rows) {
         if (!rows || !rows.length) {
-            historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr" style="grid-column:1/-1">Oyun geçmişi yok</div></div>';
+            historyWrap.innerHTML = '<div class="mx-row"><div class="mx-hdr" style="grid-column:1/-1">Oyun geÃ§miÅŸi yok</div></div>';
             return;
         }
-        let html = '<div class="mx-row mx-hdr"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>';
+        let html = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>';
         rows.forEach(r => {
             html += `<div class="mx-row">
                 <div><img src="${r.item.img}" alt="img"></div>
@@ -251,7 +174,7 @@ textarea{ max-width:100%; }
                 const rand = constants.items[Math.floor(Math.random() * constants.items.length)];
                 html += renderItem(rand);
             } else {
-                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name">?</div></div>`;
+                html += `<div class="case-item" style="border-color:#4b69ff;"><div class="name"></div></div>`;
             }
         }
         caseTrack.innerHTML = html;
@@ -282,7 +205,7 @@ textarea{ max-width:100%; }
             if(data.balance !== undefined) updateBalance(data.balance);
 
             if (!res.ok || !data.ok) {
-                alert("Kasa açılamadı: " + (data.error || "Bilinmeyen hata"));
+                alert("Kasa aÃ§Ä±lamadÄ±: " + (data.error || "Bilinmeyen hata"));
                 isOpening = false;
                 btnOpen.disabled = false;
                 return;
@@ -338,8 +261,8 @@ textarea{ max-width:100%; }
                     <div style="color:${state.item.color}; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${state.item.name}</div>
                     <div style="color:#10b981; font-weight:800;">+${state.payout}</div>
                 </div>`;
-                if(currentHtml.includes("Oyun geçmişi yok")) {
-                    historyWrap.innerHTML = '<div class="mx-row mx-hdr"><div>Skin</div><div>Adı</div><div>Kazanç</div></div>' + newRow;
+                if(currentHtml.includes("Oyun geÃ§miÅŸi yok")) {
+                    historyWrap.innerHTML = '<div class="mx-row mx-hdr"><div>Skin</div><div>AdÄ±</div><div>KazanÃ§</div></div>' + newRow;
                 } else {
                     const parts = currentHtml.split('</div></div>');
                     // insert right after header
@@ -351,7 +274,7 @@ textarea{ max-width:100%; }
             }, 6100);
 
         } catch (err) {
-            alert("Ağ hatası oluştu.");
+            alert("AÄŸ hatasÄ± oluÅŸtu.");
             isOpening = false;
             btnOpen.disabled = false;
         }
@@ -375,7 +298,7 @@ textarea{ max-width:100%; }
             }
             if (data.balance !== undefined) updateBalance(data.balance);
             if (Array.isArray(data.history)) renderHistory(data.history);
-            btnOpen.innerHTML = `<i class="fa-solid fa-key"></i> KASA AÇ (${constants.case_price} Altın)`;
+            btnOpen.innerHTML = `<i class="fa-solid fa-key"></i> KASA AÃ‡ (${constants.case_price} AltÄ±n)`;
           } catch(e){
             console.log("cs2 state load error", e);
           }
@@ -383,59 +306,10 @@ textarea{ max-width:100%; }
 
     })();
   </script>
-
-<!-- Mobile hardening patch -->
-<script id="mobile-hardening-script">
-(function(){
-  const root = document.documentElement;
-  let maxVh = 0, raf = 0;
-  function getVh(){
-    return Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight || root.clientHeight || 0);
-  }
-  function apply(){
-    const vh = getVh();
-    if (!maxVh || vh > maxVh) maxVh = vh;
-    root.style.setProperty('--app-vh', vh + 'px');
-    root.classList.toggle('keyboard-open', (maxVh - vh) > 120);
-  }
-  function tick(){
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(apply);
-  }
-  function clampWide(){
-    const vw = Math.max(root.clientWidth, window.innerWidth || 0);
-    if (!document.body) return;
-    document.body.querySelectorAll('*').forEach(function(el){
-      if (!el.getBoundingClientRect) return;
-      const r = el.getBoundingClientRect();
-      if (r.width > vw + 2 && !el.dataset.mobileClamp){
-        el.style.maxWidth = '100%';
-        if (!el.style.overflowWrap) el.style.overflowWrap = 'anywhere';
-        el.dataset.mobileClamp = '1';
-      }
-    });
-  }
-  ['resize','orientationchange'].forEach(function(ev){ window.addEventListener(ev, tick, {passive:true}); });
-  if (window.visualViewport){
-    window.visualViewport.addEventListener('resize', tick, {passive:true});
-    window.visualViewport.addEventListener('scroll', tick, {passive:true});
-  }
-  document.addEventListener('focusin', tick, true);
-  document.addEventListener('focusout', tick, true);
-  window.addEventListener('load', function(){
-    tick();
-    requestAnimationFrame(clampWide);
-  }, {once:true});
-  new MutationObserver(function(){
-    tick();
-    requestAnimationFrame(clampWide);
-  }).observe(document.documentElement, {childList:true, subtree:true});
-  apply();
-})();
-</script>
-
 </body>
 </html>
+
+
 
 
 

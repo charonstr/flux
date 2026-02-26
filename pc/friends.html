@@ -2,7 +2,7 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l?"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l?"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- themeboot --><script>(function(){try{var t=localStorage.getItem("theme");var l=t==="light";document.documentElement.style.backgroundColor=l"#f4f7fa":"#1a202c";document.documentElement.style.colorScheme=l"light":"dark";}catch(e){document.documentElement.style.backgroundColor="#1a202c";}})();</script><style>html{background:#1a202c}</style>
     <title>{{ t.get("friends", "Friends") }}</title>
     <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -26,6 +26,8 @@
 
         .panel h1 { font-size: 1.8rem; margin: 0 0 5px 0; font-weight: 700; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(var(--text-rgb), 0.05); padding-bottom: 20px; margin-bottom: 20px; }
         .panel h1 i { color: var(--primary); }
+        .section-title { font-size: 1.05rem; margin: 0 0 12px 0; display:flex; align-items:center; gap:8px; color: var(--text); }
+        .section-title i { color: var(--primary); }
 
         .modern-card { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(var(--bg-rgb), 0.4); border: 1px solid rgba(var(--line-rgb), 0.5); border-radius: 16px; margin-bottom: 12px; transition: all 0.3s; }
         .modern-card:hover { transform: translateY(-3px); background: rgba(var(--bg-rgb), 0.8); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); border-color: var(--primary); }
@@ -56,6 +58,24 @@
 
     <main class="wrap friends-container">
         <section class="panel">
+            <h2 class="section-title"><i class="fa-solid fa-user-clock"></i> {{ t.get("requests", "Friend requests") }} ({{ pending|length }})</h2>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:22px;">
+                {% for p in pending %}
+                <div class="modern-card">
+                    <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn" title="Kabul Et"><i class="fa-solid fa-check"></i></button></form>
+                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn" title="Reddet"><i class="fa-solid fa-xmark"></i></button></form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <span>{{ t.get("norequests", "No friend requests.") }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
             <h1><i class="fa-solid fa-user-group"></i> {{ t.get("friends", "Friends") }} ({{ friends|length }})</h1>
             
             <div style="display:flex; flex-direction:column; gap:10px;">
