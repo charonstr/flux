@@ -56,6 +56,24 @@
 
     <main class="wrap friends-container">
         <section class="panel">
+            <h2 class="section-title" style="font-size:1.05rem; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-user-clock" style="color:var(--primary);"></i> {{ t.get("requests", "Friend requests") }} ({{ pending|length }})</h2>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:22px;">
+                {% for p in pending %}
+                <div class="modern-card">
+                    <div class="who"><img src="{{ p.avatar }}" alt="a"> {{ p.username }}</div>
+                    <div class="acts">
+                        <form method="post" action="/social/accept/{{ p.requestid }}" data-nav="soft"><button class="pickbtn" title="{{ t.get('accept', 'Accept') }}"><i class="fa-solid fa-check"></i></button></form>
+                        <form method="post" action="/social/reject/{{ p.requestid }}" data-nav="soft"><button class="linkbtn" title="{{ t.get('reject', 'Reject') }}"><i class="fa-solid fa-xmark"></i></button></form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <span>{{ t.get("norequests", "No friend requests.") }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
             <h1><i class="fa-solid fa-user-group"></i> {{ t.get("friends", "Friends") }} ({{ friends|length }})</h1>
             
             <div style="display:flex; flex-direction:column; gap:10px;">

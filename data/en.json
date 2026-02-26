@@ -1,4 +1,4 @@
-{
+﻿{
   "welcome": "Welcome",
   "subtitle": "Welcome to Euphorium",
   "choose": "Choose language",
@@ -273,5 +273,8 @@
   "lit_5cfecff1a3d8": "Sign Out",
   "lit_2b1d3a158db9": "Ex: Game Room, Study Group...",
   "lit_64115747727b": "Build Lv.${Number(st.upgrading_to || 1)}",
-  "foa_items": "Items"
+  "foa_items": "Items",
+  "foa_fullscreen_title": "Maximized Window Recommended",
+  "foa_fullscreen_message": "For proper alignment, maximize the browser window using the button next to X.",
+  "foa_fullscreen_button": "I Understand"
 }

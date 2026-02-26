@@ -952,29 +952,6 @@ def register_fearofabyss_backend(app, *,
                 """
             )
 
-    def _foa_ensure_ui_layout_table() -> None:
-        with _foa_connect() as db:
-            db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS foa_ui_layouts (
-                    user_id INTEGER NOT NULL,
-                    device TEXT NOT NULL,
-                    layout_json TEXT NOT NULL DEFAULT '{}',
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY(user_id, device)
-                )
-                """
-            )
-            db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS foa_ui_layout_defaults (
-                    device TEXT PRIMARY KEY,
-                    layout_json TEXT NOT NULL DEFAULT '{}',
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-                """
-            )
-
     
     def _foa_now() -> datetime:
         return datetime.now(timezone.utc)
@@ -1284,78 +1261,6 @@ def register_fearofabyss_backend(app, *,
                 )
         return {"ok": True, "device": device, "saved": len(trimmed)}
 
-    @app.route("/api/fear-of-abyss/ui-layout")
-    def fearofabyssuilayoutget():
-        me = currentaccount()
-        if not me:
-            return {"ok": False, "error": "unauthorized"}, 401
-        _foa_ensure_ui_layout_table()
-        device = str(request.args.get("device", "pc") or "pc").strip().lower()
-        if device not in {"pc", "mobile"}:
-            return {"ok": False, "error": "invalid_device"}, 400
-        with _foa_connect() as db:
-            row = db.execute(
-                "SELECT layout_json, updated_at FROM foa_ui_layouts WHERE user_id = ? AND device = ?",
-                (int(me[0]), device),
-            ).fetchone()
-            if not row:
-                row = db.execute(
-                    "SELECT layout_json, updated_at FROM foa_ui_layout_defaults WHERE device = ?",
-                    (device,),
-                ).fetchone()
-        if not row:
-            return {"ok": True, "device": device, "layout": {}, "updated_at": "", "source": "none"}
-        try:
-            layout = json.loads(str(row[0] or "{}"))
-            if not isinstance(layout, dict):
-                layout = {}
-        except Exception:
-            layout = {}
-        return {"ok": True, "device": device, "layout": layout, "updated_at": str(row[1] or ""), "source": "db"}
-
-    @app.route("/api/fear-of-abyss/ui-layout", methods=["POST"])
-    def fearofabyssuilayoutset():
-        me = currentaccount()
-        if not me:
-            return {"ok": False, "error": "unauthorized"}, 401
-        _foa_ensure_ui_layout_table()
-        payload = request.get_json(silent=True) or {}
-        device = str(payload.get("device", "pc") or "pc").strip().lower()
-        if device not in {"pc", "mobile"}:
-            return {"ok": False, "error": "invalid_device"}, 400
-        layout = payload.get("layout", {})
-        if not isinstance(layout, dict):
-            return {"ok": False, "error": "invalid_layout"}, 400
-        trimmed = {}
-        for key, val in layout.items():
-            if not isinstance(key, str) or not isinstance(val, dict):
-                continue
-            x = float(val.get("x", 0.0) or 0.0)
-            y = float(val.get("y", 0.0) or 0.0)
-            trimmed[key[:64]] = {"x": max(0.0, min(1.0, x)), "y": max(0.0, min(1.0, y))}
-        with _foa_connect() as db:
-            db.execute(
-                """
-                INSERT INTO foa_ui_layouts (user_id, device, layout_json, updated_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id, device)
-                DO UPDATE SET layout_json = excluded.layout_json, updated_at = CURRENT_TIMESTAMP
-                """,
-                (int(me[0]), device, json.dumps(trimmed, ensure_ascii=True)),
-            )
-            if bool(payload.get("set_default", False)):
-                db.execute(
-                    """
-                    INSERT INTO foa_ui_layout_defaults (device, layout_json, updated_at)
-                    VALUES (?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(device)
-                    DO UPDATE SET layout_json = excluded.layout_json, updated_at = CURRENT_TIMESTAMP
-                    """,
-                    (device, json.dumps(trimmed, ensure_ascii=True)),
-                )
-        return {"ok": True, "device": device, "saved": len(trimmed)}
-    
-    
     @app.route("/api/fear-of-abyss/build", methods=["POST"])
     def fearofabyssbuild():
         me = currentaccount()

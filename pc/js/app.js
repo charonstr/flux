@@ -1220,3 +1220,52 @@
   bind();
 })();
 
+(function () {
+  if (window.createActionEngine) return;
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function isRetryableError(err) {
+    const msg = String((err && err.message) || '').toLowerCase();
+    return msg.includes('failed to fetch') || msg.includes('network') || msg.includes('timeout');
+  }
+
+  window.createActionEngine = function createActionEngine(options) {
+    const cfg = options || {};
+    const retries = Number(cfg.retries ?? 2);
+    const delays = cfg.backoff_ms || [250, 700, 1400];
+    const inFlight = new Map();
+
+    async function run(key, task, hooks) {
+      const runKey = String(key || '');
+      if (!runKey) throw new Error('missing_action_key');
+      if (inFlight.has(runKey)) return inFlight.get(runKey);
+      const h = hooks || {};
+      const runner = (async function () {
+        if (typeof h.onPending === 'function') h.onPending();
+        let attempt = 0;
+        while (true) {
+          try {
+            const out = await task(attempt);
+            if (typeof h.onSettled === 'function') h.onSettled(out);
+            return out;
+          } catch (err) {
+            if (attempt >= retries || !isRetryableError(err)) {
+              if (typeof h.onError === 'function') h.onError(err);
+              throw err;
+            }
+            await wait(Number(delays[Math.min(attempt, delays.length - 1)] || 250));
+            attempt += 1;
+          }
+        }
+      })().finally(function () { inFlight.delete(runKey); });
+      inFlight.set(runKey, runner);
+      return runner;
+    }
+
+    return { run: run };
+  };
+})();
+

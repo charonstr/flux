@@ -23,9 +23,11 @@
 
     let limits = { min_bet: 100, max_bet: 500 };
     let reqSeq = 0;
+    const actionEngine = (window.createActionEngine ? window.createActionEngine({ retries: 2 }) : null);
     
     // SPA Bug Fix: Kapalı veya asılı kalan buton durumu sıfırlanıyor
     let pending = false;
+    function idem(prefix) { return prefix + '_' + Date.now() + '_' + Math.random().toString(16).slice(2, 10); }
 
     function suitChar(s) { if (s === 'H') return '♥'; if (s === 'D') return '♦'; if (s === 'C') return '♣'; return '♠'; }
     
@@ -130,18 +132,27 @@
       newBtn.disabled = false;
     }
 
-    async function req(url, method, body) {
+    async function req(url, method, body, actionName) {
       const seq = ++reqSeq;
       pending = true;
       setControlState();
       try {
-        const opts = { method: method || 'GET', headers: { 'X-Requested-With': 'fetch' } };
-        if (body) {
-          opts.headers['Content-Type'] = 'application/json';
-          opts.body = JSON.stringify(body);
-        }
-        const res = await fetch(url, opts);
-        const data = await res.json();
+        const runFetch = async function () {
+          const opts = { method: method || 'GET', headers: { 'X-Requested-With': 'fetch' } };
+          if (body) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+          }
+          const res = await fetch(url, opts);
+          return res.json();
+        };
+        const useEngine = actionEngine && String(method || 'GET').toUpperCase() === 'POST' && actionName && body && body.idempotency_key;
+        const data = useEngine
+          ? await actionEngine.run(
+              'blackjack:' + actionName + ':' + body.idempotency_key,
+              async function () { return runFetch(); }
+            )
+          : await runFetch();
         applyLimits(data.limits);
         if (seq !== reqSeq) return null;
         if (!data.ok) {
@@ -170,11 +181,11 @@
       betInput.value = String(bet);
       dealerWrap.innerHTML = '';
       playerWrap.innerHTML = '';
-      const state = await req('/api/casino/blackjack/new', 'POST', { bet: bet });
+      const state = await req('/api/casino/blackjack/new', 'POST', { bet: bet, idempotency_key: idem('bj_new') }, 'new');
       if (state) renderState(state);
     };
-    hitBtn.onclick = async function () { const state = await req('/api/casino/blackjack/hit', 'POST'); if (state) renderState(state); };
-    standBtn.onclick = async function () { const state = await req('/api/casino/blackjack/stand', 'POST'); if (state) renderState(state); };
+    hitBtn.onclick = async function () { const state = await req('/api/casino/blackjack/hit', 'POST', { idempotency_key: idem('bj_hit') }, 'hit'); if (state) renderState(state); };
+    standBtn.onclick = async function () { const state = await req('/api/casino/blackjack/stand', 'POST', { idempotency_key: idem('bj_stand') }, 'stand'); if (state) renderState(state); };
     if (betMinBtn) betMinBtn.onclick = function () { betInput.value = String(limits.min_bet || 100); };
     if (betMaxBtn) betMaxBtn.onclick = function () { betInput.value = String(limits.max_bet || 100); };
 

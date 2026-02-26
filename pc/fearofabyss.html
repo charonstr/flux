@@ -31,6 +31,12 @@
             background-color: #050608;
             overflow: hidden;
         }
+        .server-shell .server-main {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
         .foa-page { min-height: 100vh; }
         .foa-page-bg {
@@ -456,7 +462,6 @@
             <i class="fa-solid fa-warehouse"></i>
             <span id="depotText">{{ t.get("foa_depot", "Depot") }} Lv.1 | 100</span>
         </div>
-
         <div class="modal-overlay" id="modalOverlay"></div>
         <div class="modal" id="profileModal">
             <div class="modal-content">
@@ -569,33 +574,13 @@
 ];
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeItemsOrder(list) {
-const base = (Array.isArray(list) ? list : []).map((it, idx) => ({
-                idx,
-                item: {
-                    ...it,
-                    x: Number(it.x ?? 0),
-                    y: Number(it.y ?? 0),
-                    w: Number(it.w ?? 0.2),
-                    h: Number(it.h ?? 0.12),
-                },
+            return (Array.isArray(list) ? list : []).map((it) => ({
+                ...it,
+                x: Number(it?.x ?? 0),
+                y: Number(it?.y ?? 0),
+                w: Number(it?.w ?? 0.2),
+                h: Number(it?.h ?? 0.12),
             }));
-            base.sort((a, b) => (a.item.y - b.item.y) || (a.item.x - b.item.x) || (a.idx - b.idx));
-
-            const rowTolerance = 0.04;
-            const rows = [];
-            base.forEach((entry) => {
-                const y = entry.item.y;
-                let row = rows.find((r) => Math.abs(y - r.y) <= rowTolerance);
-                if (!row) {
-                    row = { y, items: [] };
-                    rows.push(row);
-                }
-                row.items.push(entry);
-            });
-
-            rows.sort((a, b) => a.y - b.y);
-            rows.forEach((r) => r.items.sort((a, b) => (a.item.x - b.item.x) || (a.item.y - b.item.y) || (a.idx - b.idx)));
-            return rows.flatMap((r) => r.items.map((x) => x.item));
         }
 
         function loadFrozenItems() {
@@ -1423,7 +1408,6 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
         depotNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderDepotPanel(); });
         setTimeout(queueRender, 60);
         setTimeout(queueRender, 220);
-
         window.__foaCleanup = function () {
             if (stateTimer) clearInterval(stateTimer);
             stateTimer = null;

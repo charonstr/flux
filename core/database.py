@@ -1,3 +1,4 @@
+import json
 import secrets
 import sqlite3
 import string
@@ -160,6 +161,21 @@ def setup() -> None:
                 game_name TEXT NOT NULL DEFAULT '',
                 delta_amount INTEGER NOT NULL,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS casino_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                game_name TEXT NOT NULL,
+                action_name TEXT NOT NULL,
+                idempotency_key TEXT NOT NULL,
+                status_code INTEGER NOT NULL DEFAULT 200,
+                response_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, game_name, action_name, idempotency_key)
             )
             """
         )
@@ -689,6 +705,43 @@ def recordcasinogame(user_id: int, game_name: str, delta_amount: int) -> None:
         db.execute(
             "INSERT INTO casino_games (user_id, game_name, delta_amount) VALUES (?, ?, ?)",
             (int(user_id), str(game_name), int(delta_amount)),
+        )
+
+
+def getcasinoaction(user_id: int, game_name: str, action_name: str, idempotency_key: str):
+    with connect("accounts") as db:
+        row = db.execute(
+            """
+            SELECT status_code, response_json
+            FROM casino_actions
+            WHERE user_id = ? AND game_name = ? AND action_name = ? AND idempotency_key = ?
+            LIMIT 1
+            """,
+            (int(user_id), str(game_name), str(action_name), str(idempotency_key)),
+        ).fetchone()
+    if not row:
+        return None
+    payload = {}
+    try:
+        payload = json.loads(row[1] or "{}")
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    return {"status_code": int(row[0]), "response": payload}
+
+
+def savecasinoaction(user_id: int, game_name: str, action_name: str, idempotency_key: str, status_code: int, response: dict) -> None:
+    if not idempotency_key:
+        return
+    body = response if isinstance(response, dict) else {}
+    with connect("accounts") as db:
+        db.execute(
+            """
+            INSERT OR IGNORE INTO casino_actions (user_id, game_name, action_name, idempotency_key, status_code, response_json)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (int(user_id), str(game_name), str(action_name), str(idempotency_key), int(status_code), json.dumps(body, ensure_ascii=True, separators=(",", ":"))),
         )
 
 

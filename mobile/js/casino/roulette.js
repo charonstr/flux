@@ -31,6 +31,7 @@
     let isInitialized = false;
     let phaseTimer = 0;
     let isSpinningLocal = false;
+    const actionEngine = (window.createActionEngine ? window.createActionEngine({ retries: 2 }) : null);
 
     const FALLBACK_WHEEL = ["0", "32", "15", "19", "4", "21", "2", "25", "17", "34", "6", "27", "13", "36", "11", "30", "8", "23", "10", "5", "24", "16", "33", "1", "20", "14", "31", "9", "22", "18", "29", "7", "28", "12", "35", "3", "26"];
     const FALLBACK_CHIPS = [10, 50, 100, 500, 1000, 5000];
@@ -56,13 +57,20 @@
 
     async function api(url, method, body) {
       try {
-        const opts = { method: method || 'GET', headers: { 'X-Requested-With': 'fetch' } };
-        if (body) {
-          opts.headers['Content-Type'] = 'application/json';
-          opts.body = JSON.stringify(body);
-        }
-        const res = await fetch(url, opts);
-        const data = await res.json();
+        const runFetch = async function () {
+          const opts = { method: method || 'GET', headers: { 'X-Requested-With': 'fetch' } };
+          if (body) {
+            opts.headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(body);
+          }
+          const res = await fetch(url, opts);
+          return res.json();
+        };
+        const action = String(url || '').split('/').pop();
+        const useEngine = actionEngine && String(method || 'GET').toUpperCase() === 'POST' && body && body.idempotency_key;
+        const data = useEngine
+          ? await actionEngine.run('roulette:' + action + ':' + body.idempotency_key, async function () { return runFetch(); })
+          : await runFetch();
         if (data.constants) constants = data.constants;
         if (typeof data.balance !== 'undefined') liveBalance = Number(data.balance || 0);
         if (!data.ok) return null;

@@ -1,4 +1,5 @@
 import json
+import shutil
 import sqlite3
 import time
 from collections import defaultdict
@@ -88,6 +89,8 @@ from core.database import (
     voiceparticipants,
     voiceping,
     getvoicesignals,
+    getcasinoaction,
+    savecasinoaction,
     setup,
     dailyrewardstate,
     unblockuser,
@@ -734,6 +737,24 @@ def _idem_from(payload: dict, fallback_prefix: str = "") -> str:
     return f"{fallback_prefix}:{int(time.time() * 1000)}:{uuid4().hex[:8]}" if fallback_prefix else ""
 
 
+def _casino_action_replay(userid: int, game: str, action: str, idem: str):
+    if not idem:
+        return None
+    replay = getcasinoaction(userid, game, action, idem)
+    if not replay:
+        return None
+    body = dict(replay.get("response") or {})
+    body["idempotent_replay"] = True
+    return body, int(replay.get("status_code", 200))
+
+
+def _casino_action_store(userid: int, game: str, action: str, idem: str, status_code: int, body: dict) -> None:
+    if not idem:
+        return
+    payload = dict(body or {})
+    savecasinoaction(userid, game, action, idem, int(status_code), payload)
+
+
 @app.route("/api/casino/roulette/state")
 def roulettestate():
     me = currentaccount()
@@ -804,6 +825,13 @@ def roulettestart():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "roulette", "start", idem)
+    if replay:
+        return replay
     initialize_user_economy(me[0])
     prev = ROULETTE.get_state(me[0])
     prev_total_bet = int(prev.get("total_bet", 0) or 0)
@@ -811,7 +839,9 @@ def roulettestart():
     prev_state = str(prev.get("state", "") or "")
     if prev_total_bet > 0 and prev_round_id and prev_state in {"betting_open", "betting_locked"}:
         applyledger(me[0], prev_total_bet, "roulette_refund", "roulette round cancelled refund", f"roulette:{prev_round_id}:cancel_refund")
-    return {"ok": True, "state": ROULETTE.start_round(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    response = {"ok": True, "state": ROULETTE.start_round(me[0]), "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    _casino_action_store(me[0], "roulette", "start", idem, 200, response)
+    return response
 
 
 @app.route("/casino/multiplier")
@@ -939,6 +969,13 @@ def rouletteundo():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "roulette", "undo", idem)
+    if replay:
+        return replay
     before = ROULETTE.get_state(me[0])
     before_total = int(before.get("total_bet", 0) or 0)
     round_id = str(before.get("round_id", "") or "")
@@ -947,9 +984,11 @@ def rouletteundo():
         after_total = int((data.get("state") or {}).get("total_bet", 0) or 0)
         refund = max(0, before_total - after_total)
         if refund > 0 and round_id:
-            applyledger(me[0], refund, "roulette_refund", "roulette undo refund", f"roulette:{round_id}:undo:{uuid4().hex[:8]}")
+            applyledger(me[0], refund, "roulette_refund", "roulette undo refund", f"roulette:{round_id}:undo:{idem}")
     code = 200 if ok else 400
-    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+    response = {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    _casino_action_store(me[0], "roulette", "undo", idem, code, response)
+    return response, code
 
 
 @app.route("/api/casino/roulette/clear", methods=["POST"])
@@ -957,14 +996,23 @@ def rouletteclear():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = _jsonpayload()
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "roulette", "clear", idem)
+    if replay:
+        return replay
     before = ROULETTE.get_state(me[0])
     refund = int(before.get("total_bet", 0) or 0)
     round_id = str(before.get("round_id", "") or "")
     ok, data = ROULETTE.clear(me[0])
     if ok and refund > 0 and round_id:
-        applyledger(me[0], refund, "roulette_refund", "roulette clear refund", f"roulette:{round_id}:clear:{uuid4().hex[:8]}")
+        applyledger(me[0], refund, "roulette_refund", "roulette clear refund", f"roulette:{round_id}:clear:{idem}")
     code = 200 if ok else 400
-    return {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, code
+    response = {"ok": ok, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    _casino_action_store(me[0], "roulette", "clear", idem, code, response)
+    return response, code
 
 
 @app.route("/api/casino/roulette/lock", methods=["POST"])
@@ -1009,9 +1057,14 @@ def roulettesettle():
     idem = _idem_from(payload)
     if not idem:
         return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "roulette", "settle", idem)
+    if replay:
+        return replay
     ok, data = ROULETTE.settle(me[0])
     if not ok:
-        return {"ok": False, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}, 400
+        response = {"ok": False, **data, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+        _casino_action_store(me[0], "roulette", "settle", idem, 400, response)
+        return response, 400
     state = data.get("state", {})
     round_id = str(state.get("round_id", "") or "")
     total_payout = int(data.get("total_payout", 0) or 0)
@@ -1028,7 +1081,9 @@ def roulettesettle():
         add_xp(me[0], xp_amount, "casino_roulette", f"roulette:{round_id}")
         
     state["settled"] = True
-    return {"ok": True, **data, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    response = {"ok": True, **data, "state": state, "constants": rouletteconstants(me[0]), "balance": int(get_balance(me[0]))}
+    _casino_action_store(me[0], "roulette", "settle", idem, 200, response)
+    return response
 
 
 def blackjacklimits(userid: int) -> dict:
@@ -1099,11 +1154,17 @@ def blackjacknew():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = request.get_json(silent=True) or {}
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "blackjack", "new", idem)
+    if replay:
+        return replay
     current = BLACKJACK.get_state(me[0]) or {}
     phase = str(current.get("phase", "idle") or "idle")
     if phase in {"player_turn", "dealer_turn"}:
         return {"ok": False, "error": "round_in_progress", "limits": blackjacklimits(me[0]), "state": current}, 409
-    payload = request.get_json(silent=True) or {}
     bet_raw = payload.get("bet", request.form.get("bet", "0"))
     try:
         bet = int(bet_raw or 0)
@@ -1111,17 +1172,27 @@ def blackjacknew():
         bet = 0
     limits = blackjacklimits(me[0])
     if bet < limits["min_bet"]:
-        return {"ok": False, "error": "invalid_bet_min", "limits": limits}, 400
+        response = {"ok": False, "error": "invalid_bet_min", "limits": limits}
+        _casino_action_store(me[0], "blackjack", "new", idem, 400, response)
+        return response, 400
     if bet > limits["max_bet"]:
-        return {"ok": False, "error": "invalid_bet_max", "limits": limits}, 400
-    if not applyledger(me[0], -bet, "blackjack_bet", "blackjack bet", f"blackjack:pre:{int(time.time() * 1000)}:{bet}"):
-        return {"ok": False, "error": "bet_failed", "limits": blackjacklimits(me[0])}, 400
+        response = {"ok": False, "error": "invalid_bet_max", "limits": limits}
+        _casino_action_store(me[0], "blackjack", "new", idem, 400, response)
+        return response, 400
+    if not applyledger(me[0], -bet, "blackjack_bet", "blackjack bet", f"blackjack:bet:{idem}"):
+        response = {"ok": False, "error": "bet_failed", "limits": blackjacklimits(me[0])}
+        _casino_action_store(me[0], "blackjack", "new", idem, 400, response)
+        return response, 400
     ok, state = BLACKJACK.start_round(me[0], bet)
     if not ok:
-        applyledger(me[0], bet, "blackjack_refund", "blackjack refund", f"blackjack:refund:{int(time.time() * 1000)}:{bet}")
-        return {"ok": False, **state, "limits": limits}, 400
+        applyledger(me[0], bet, "blackjack_refund", "blackjack refund", f"blackjack:refund:{idem}")
+        response = {"ok": False, **state, "limits": limits}
+        _casino_action_store(me[0], "blackjack", "new", idem, 400, response)
+        return response, 400
     state = blackjacksettle(me[0], state)
-    return {"ok": True, "state": state, "limits": blackjacklimits(me[0])}
+    response = {"ok": True, "state": state, "limits": blackjacklimits(me[0])}
+    _casino_action_store(me[0], "blackjack", "new", idem, 200, response)
+    return response
 
 
 @app.route("/api/casino/blackjack/hit", methods=["POST"])
@@ -1129,11 +1200,22 @@ def blackjackhit():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = request.get_json(silent=True) or {}
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "blackjack", "hit", idem)
+    if replay:
+        return replay
     ok, payload = BLACKJACK.hit(me[0])
     if not ok:
-        return {"ok": False, **payload, "limits": blackjacklimits(me[0])}, 400
+        response = {"ok": False, **payload, "limits": blackjacklimits(me[0])}
+        _casino_action_store(me[0], "blackjack", "hit", idem, 400, response)
+        return response, 400
     payload = blackjacksettle(me[0], payload)
-    return {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+    response = {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+    _casino_action_store(me[0], "blackjack", "hit", idem, 200, response)
+    return response
 
 
 @app.route("/api/casino/blackjack/stand", methods=["POST"])
@@ -1141,11 +1223,22 @@ def blackjackstand():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    payload = request.get_json(silent=True) or {}
+    idem = _idem_from(payload)
+    if not idem:
+        return {"ok": False, "error": "missing_idempotency"}, 400
+    replay = _casino_action_replay(me[0], "blackjack", "stand", idem)
+    if replay:
+        return replay
     ok, payload = BLACKJACK.stand(me[0])
     if not ok:
-        return {"ok": False, **payload, "limits": blackjacklimits(me[0])}, 400
+        response = {"ok": False, **payload, "limits": blackjacklimits(me[0])}
+        _casino_action_store(me[0], "blackjack", "stand", idem, 400, response)
+        return response, 400
     payload = blackjacksettle(me[0], payload)
-    return {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+    response = {"ok": True, "state": payload, "limits": blackjacklimits(me[0])}
+    _casino_action_store(me[0], "blackjack", "stand", idem, 200, response)
+    return response
 
 
 @app.route("/level")
@@ -1318,7 +1411,16 @@ def friends():
     content = texts(current)
     rows = accountsbasic(friendids(account[0]))
     items = [{"id": r[0], "username": r[1], "avatar": smallavatar(r[2])} for r in rows]
-    return render_template(viewfile("friends.html"), friends=items, **navcontext(content, current))
+    preq = pendingreceived(account[0])
+    sender_ids = [sid for _, sid in preq]
+    sender_rows = accountsbasic(sender_ids) if sender_ids else []
+    sender_map = {int(r[0]): r for r in sender_rows}
+    pending = []
+    for rid, sid in preq:
+        row = sender_map.get(int(sid))
+        if row:
+            pending.append({"requestid": rid, "id": row[0], "username": row[1], "avatar": smallavatar(row[2])})
+    return render_template(viewfile("friends.html"), friends=items, pending=pending, **navcontext(content, current))
 
 
 @app.route("/friendships")
@@ -1907,6 +2009,62 @@ def serverleave(serverid: int):
                 db.execute("DELETE FROM members WHERE serverid = ? AND userid = ?", (serverid, me[0]))
         emit(me[0])
         emit_server(serverid)
+    return redirect(url_for("servers"))
+
+
+@app.route("/servers/<int:serverid>/avatar", methods=["POST"])
+def serveravatarupdate(serverid: int):
+    me = currentaccount()
+    if not me:
+        return redirect(url_for("login"))
+    server = serverbyid(serverid)
+    if not server or int(server[1]) != int(me[0]):
+        return redirect(url_for("serverdetail", serverid=serverid))
+    file = request.files.get("avatar")
+    if file and file.filename:
+        try:
+            avatar = saveavatar(file, True)
+            with connect("servers") as db:
+                db.execute("UPDATE servers SET avatar = ? WHERE id = ? AND ownerid = ?", (avatar, serverid, me[0]))
+            emit(me[0])
+            emit_server(serverid)
+        except Exception:
+            pass
+    return redirect(url_for("serverdetail", serverid=serverid))
+
+
+@app.route("/servers/<int:serverid>/delete", methods=["POST"])
+def serverdelete(serverid: int):
+    me = currentaccount()
+    if not me:
+        return redirect(url_for("login"))
+    server = serverbyid(serverid)
+    if not server or int(server[1]) != int(me[0]):
+        return redirect(url_for("serverdetail", serverid=serverid))
+
+    avatar_path = str(server[3] or "").strip()
+    with connect("servers") as db:
+        db.execute("DELETE FROM voicesignals WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM voicepresence WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM entries WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM channels WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM categories WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM roles WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM joins WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM members WHERE serverid = ?", (serverid,))
+        db.execute("DELETE FROM servers WHERE id = ? AND ownerid = ?", (serverid, me[0]))
+
+    # Remove server media folder if present.
+    shutil.rmtree(MEDIA / "servers" / str(serverid), ignore_errors=True)
+    if avatar_path:
+        try:
+            avatar_file = MEDIA / avatar_path
+            if avatar_file.is_file():
+                avatar_file.unlink()
+        except Exception:
+            pass
+
+    emit(me[0])
     return redirect(url_for("servers"))
 
 
