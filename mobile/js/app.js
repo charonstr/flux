@@ -1374,6 +1374,7 @@
     if (typeof window.initVoicePage === 'function') window.initVoicePage();
     if (typeof window.initBlackjackPage === 'function') window.initBlackjackPage();
     if (typeof window.initRoulettePage === 'function') window.initRoulettePage();
+    if (typeof window.initCasinoAchievementsPage === 'function') window.initCasinoAchievementsPage();
   }
 
   function initTabs() {
@@ -1472,5 +1473,4 @@
   
   bind();
 })();
-
 

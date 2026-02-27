@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
@@ -8,7 +8,7 @@ from pathlib import Path
 
 TURKISH_RE = re.compile(r"[ÇĞİÖŞÜçğıöşü]")
 TPL_KEY_RE = re.compile(r"""\{\{\s*t\.get\(\s*["']([^"']+)["']""")
-JS_STR_RE = re.compile(r"""(['"`])((?:\\.|(?!\1).)*)\1""", re.S)
+JS_STR_RE = re.compile(r"""(['"`])((:\\.|(!\1).)*)\1""", re.S)
 
 
 def list_files(root: Path) -> list[Path]:
@@ -63,7 +63,7 @@ def audit(root: Path) -> dict:
     for lang in ("tr", "en", "es"):
         fp = data_dir / f"{lang}.json"
         if fp.exists():
-            catalogs[lang] = json.loads(fp.read_text(encoding="utf-8"))
+            catalogs[lang] = json.loads(fp.read_text(encoding="utf-8-sig"))
         else:
             catalogs[lang] = {}
 
@@ -98,3 +98,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

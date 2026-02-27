@@ -2,7 +2,7 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Blackjack - Euphorium</title>
     <link rel="stylesheet" href="/pc/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -71,23 +71,54 @@
         .balance-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 10px 24px; border-radius: 999px; border: 2px solid rgba(245,158,11,0.4); background: rgba(0,0,0,0.6); color: #fcd34d; font-weight: 800; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
         
         #msg { display: block; width: 100%; text-align: center; margin-top: 8px; color: rgba(255,255,255,0.4); font-style: italic; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; }
-        
-        @media (max-width: 900px) { 
-            .table { min-height: 75vh; padding: 20px; border-width: 12px; border-radius: 40px; } 
-            .card { width: 80px; height: 120px; margin-left: -40px; } 
-            .rank { font-size: 1.4rem; } 
-            .suit { font-size: 2rem; } 
-            .status { gap: 15px; font-size: 0.9rem; flex-wrap: wrap; text-align: center; }
-            .status b { font-size: 1rem; }
-            .action-btn { padding: 10px 18px; font-size: 0.9rem; }
-            .center-panel { top: 50%; }
+        @media (max-width: 900px) {
+            .table-wrap { padding: 0; }
+            .table { min-height: auto; padding: 16px 12px 20px; border-width: 10px; border-radius: 32px; gap: 10px; justify-content: flex-start; }
+            .table::after { top: 50%; font-size: 1.2rem; letter-spacing: 1.5px; opacity: 0.22; }
+
+            .top-links { margin-bottom: 12px; gap: 8px; }
+            .top-links .linkbtn { padding: 8px 12px; font-size: 0.9rem; }
+            .balance-badge { padding: 8px 12px; font-size: 1rem; gap: 8px; }
+
+            .zone { width: 100%; min-height: 130px; padding: 10px 8px 12px; }
+            .dealer-zone { width: 100%; margin: 0; border-radius: 0 0 120px 120px; }
+            .player-zone { margin-top: 0; padding-top: 0; }
+            .zone-head { position: static; margin-bottom: 8px; font-size: 0.95rem; padding: 6px 12px; }
+
+            .cards { min-height: 120px; margin-top: 0; }
+            .card { width: 78px; height: 116px; margin-left: -36px; }
+            .rank { font-size: 1.35rem; }
+            .suit { font-size: 1.95rem; }
+
+            .center-panel { position: relative; left: auto; top: auto; transform: none; width: 100%; margin: 4px 0 6px; gap: 10px; z-index: 40; pointer-events: auto; }
+            .status { width: 100%; display: grid; grid-template-columns: 1fr; gap: 6px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; background: rgba(0,0,0,0.28); font-size: 0.78rem; letter-spacing: 0.7px; }
+            .status span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+            .status b { font-size: 0.95rem; margin-left: 0; }
+
+            .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: stretch; width: 100%; }
+            .bet-group, #newBtn, #msg { grid-column: 1 / -1; }
+            .bet-group { width: 100%; border-radius: 14px; }
+            .bet-input { width: 100%; min-width: 0; font-size: 1rem; padding: 10px 8px; }
+            .bet-group button { min-width: 46px; }
+            .action-btn { width: 100%; justify-content: center; padding: 10px 12px; font-size: 0.82rem; letter-spacing: 0.8px; }
+            #msg { margin-top: 0; font-size: 0.78rem; letter-spacing: 0.2px; }
+        }
+
+        @media (max-width: 480px) {
+            .table { border-width: 8px; border-radius: 24px; padding: 12px 8px 16px; }
+            .zone { min-height: 112px; }
+            .cards { justify-content: flex-start; padding-left: 2px; min-height: 106px; }
+            .card { width: 68px; height: 102px; margin-left: -30px; }
+            .rank { font-size: 1.2rem; }
+            .suit { font-size: 1.65rem; }
+            .action-btn { font-size: 0.78rem; padding: 9px 8px; }
         }
     </style>
 </head>
 <body>
     <main class="table-wrap">
         <div class="top-links">
-            <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menü</a>
+            <a href="/casino" data-nav="soft" class="linkbtn"><i class="fa-solid fa-arrow-left"></i> Menu</a>
             <div id="balanceBadge" class="balance-badge"><i class="fa-solid fa-coins"></i><span id="balanceText">0</span></div>
         </div>
         <section class="table">
@@ -98,9 +129,9 @@
             
             <div class="center-panel">
                 <div class="status">
-                    <span>Durum: <b id="phase">BEKLİYOR</b></span>
+                    <span>Durum: <b id="phase">BEKLIYOR</b></span>
                     <span>Eliniz: <b id="playerTotal">0</b></span>
-                    <span>Sonuç: <b id="result">-</b></span>
+                    <span>Sonuc: <b id="result">-</b></span>
                 </div>
                 <div class="actions">
                     <div class="bet-group">
@@ -108,10 +139,10 @@
                         <input id="betInput" class="bet-input" type="number" min="100" step="1" value="100" />
                         <button id="betMaxBtn" type="button">MAX</button>
                     </div>
-                    <button id="newBtn" class="action-btn" type="button"><i class="fa-solid fa-play"></i> DAĞIT</button>
-                    <button id="hitBtn" class="action-btn" type="button" disabled><i class="fa-solid fa-plus"></i> KART İSTE</button>
+                    <button id="newBtn" class="action-btn" type="button"><i class="fa-solid fa-play"></i> DAGIT</button>
+                    <button id="hitBtn" class="action-btn" type="button" disabled><i class="fa-solid fa-plus"></i> KART ISTE</button>
                     <button id="standBtn" class="action-btn" type="button" disabled><i class="fa-solid fa-hand"></i> DUR</button>
-                    <span id="msg">Bahis yapın ve dağıt butonuna basın.</span>
+                    <span id="msg">Bahis yapin ve dagit butonuna basin.</span>
                 </div>
             </div>
 
@@ -122,7 +153,8 @@
         </section>
     </main>
     <script src="/pc/js/app.js"></script>
-    <script src="/pc/js/casino/blackjack.js"></script>
+    <script src="/pc/js/casino/blackjack.js?v=20260227b"></script>
 </body>
 </html>
+
 

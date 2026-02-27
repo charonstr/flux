@@ -135,6 +135,34 @@ app.template_folder = str(ROOT)
 app.secret_key = "changeme"
 app.permanent_session_lifetime = timedelta(days=30)
 
+
+def _compute_asset_version() -> str:
+    """Return a stable cache-busting token based on critical asset mtimes."""
+    candidates = [
+        ROOT / "pc" / "js" / "app.js",
+        ROOT / "mobile" / "js" / "app.js",
+        ROOT / "pc" / "css" / "style.css",
+        ROOT / "mobile" / "css" / "style.css",
+        ROOT / "pc" / "fearofabyss.html",
+        ROOT / "mobile" / "fearofabyss.html",
+    ]
+    latest = 0
+    for p in candidates:
+        try:
+            latest = max(latest, int(p.stat().st_mtime))
+        except OSError:
+            continue
+    return str(latest or int(time.time()))
+
+
+ASSET_VERSION = _compute_asset_version()
+
+
+@app.context_processor
+def inject_asset_version():
+    return {"asset_v": ASSET_VERSION}
+
+
 EVENT_LOCK = Lock()
 EVENT_VERSIONS: dict[int, int] = defaultdict(int)
 
@@ -597,6 +625,7 @@ def casinoblackjack():
     if not account:
         return redirect(url_for("login"))
     content = texts(current)
+    initialize_user_economy(account[0])
     return render_template(viewfile("casino/blackjack.html"), **navcontext(content, current))
 
 
@@ -624,6 +653,19 @@ def casinocasehome():
     content = texts(current)
     initialize_user_economy(account[0])
     return render_template(viewfile("casino/case_home.html"), **navcontext(content, current))
+
+
+@app.route("/casino/achievements")
+def casinoachievements():
+    current = userlanguage()
+    if not current:
+        return redirect(url_for("choose"))
+    account = currentaccount()
+    if not account:
+        return redirect(url_for("login"))
+    content = texts(current)
+    initialize_user_economy(account[0])
+    return render_template(viewfile("casino/achievements.html"), **navcontext(content, current))
 
 
 @app.route("/casino/case/<caseid>")
@@ -1145,6 +1187,7 @@ def blackjackstate():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
     state = blackjacksettle(me[0], BLACKJACK.get_state(me[0]))
     return {"ok": True, "state": state, "limits": blackjacklimits(me[0])}
 
@@ -1154,6 +1197,7 @@ def blackjacknew():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
     payload = request.get_json(silent=True) or {}
     idem = _idem_from(payload)
     if not idem:
@@ -1200,6 +1244,7 @@ def blackjackhit():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
     payload = request.get_json(silent=True) or {}
     idem = _idem_from(payload)
     if not idem:
@@ -1223,6 +1268,7 @@ def blackjackstand():
     me = currentaccount()
     if not me:
         return {"ok": False, "error": "unauthorized"}, 401
+    initialize_user_economy(me[0])
     payload = request.get_json(silent=True) or {}
     idem = _idem_from(payload)
     if not idem:

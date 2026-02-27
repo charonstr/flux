@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Casino Başarımlar - Euphorium</title>
+    <link rel="stylesheet" href="/pc/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .ach-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .ach-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .ach-head h1 { margin: 0; font-size: 1.4rem; display: flex; gap: 10px; align-items: center; }
+        .ach-head a { text-decoration: none; }
+        .ach-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .ach-card { border: 1px solid rgba(var(--line-rgb), 0.35); background: rgba(var(--panel-rgb), 0.7); border-radius: 14px; padding: 14px; }
+        .ach-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 800; }
+        .ach-state { font-size: 0.8rem; padding: 4px 8px; border-radius: 999px; }
+        .ach-state.done { background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.45); }
+        .ach-state.locked { background: rgba(239,68,68,0.16); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+        .ach-desc { color: var(--muted); margin-top: 8px; }
+        .ach-progress { margin-top: 10px; font-size: 0.86rem; color: var(--muted); }
+        .track { margin-top: 6px; height: 9px; background: rgba(0,0,0,0.35); border-radius: 999px; overflow: hidden; }
+        .fill { height: 100%; background: linear-gradient(90deg, #10b981, #22c55e); width: 0%; transition: width 0.35s ease; }
+        .stat-line { margin-top: 12px; color: var(--muted); font-size: 0.9rem; }
+        @media (max-width: 860px) { .ach-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <main class="ach-wrap">
+        <div class="ach-head">
+            <h1><i class="fa-solid fa-trophy"></i> Casino Başarımları</h1>
+            <a class="pickbtn" href="/casino" data-nav="soft">Casino Ana Sayfa</a>
+        </div>
+        <div class="ach-card">
+            <div class="ach-title">Genel Durum</div>
+            <div class="stat-line" id="summaryLine">Yükleniyor...</div>
+        </div>
+        <div id="achGrid" class="ach-grid" style="margin-top:14px;"></div>
+    </main>
+
+    <script src="/pc/js/app.js"></script>
+    <script>
+        window.initCasinoAchievementsPage = async function () {
+            if (!document.getElementById("achGrid")) return;
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+            function esc(v) { return String(v || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+            try {
+                const res = await fetch("/api/casino/profile", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+                const data = await res.json();
+                if (!data || !data.ok) return;
+                const level = Number(data.level?.level || 1);
+                const wins = Number(data.total_win_amount || 0);
+                const ratio = Number(data.win_lose_ratio || 0);
+                const balance = Number(data.profile?.balance || 0);
+                const games = Array.isArray(data.last10_games) ? data.last10_games.length : 0;
+
+                const achievements = [
+                    { icon: "fa-dice-one", title: "İlk Oyun", desc: "Casino'da en az 1 oyun oyna.", value: games, target: 1, suffix: " oyun" },
+                    { icon: "fa-coins", title: "Kazanç Toplayıcı", desc: "Toplam 1.000 kazanca ulaş.", value: wins, target: 1000, suffix: " kazanç" },
+                    { icon: "fa-star", title: "Seviye Avcısı", desc: "Casino seviyesi 10 ol.", value: level, target: 10, suffix: " seviye" },
+                    { icon: "fa-scale-balanced", title: "Oran Ustası", desc: "Win/Lose oranı 1.50 olsun.", value: ratio, target: 1.5, suffix: " oran", ratio: true },
+                    { icon: "fa-gem", title: "Servet", desc: "Bakiyen 10.000 olsun.", value: balance, target: 10000, suffix: " bakiye" },
+                ];
+
+                const wrap = document.getElementById("achGrid");
+                wrap.innerHTML = achievements.map(a => {
+                    const percent = clamp((Number(a.value || 0) * 100) / Number(a.target || 1), 0, 100);
+                    const done = Number(a.value || 0) >= Number(a.target || 0);
+                    const val = a.ratio ? Number(a.value || 0).toFixed(2) : Math.floor(Number(a.value || 0));
+                    const target = a.ratio ? Number(a.target || 0).toFixed(2) : Math.floor(Number(a.target || 0));
+                    return '<section class="ach-card">'
+                        + '<div class="ach-title"><span><i class="fa-solid ' + a.icon + '" style="margin-right:8px;color:var(--primary);"></i>' + esc(a.title) + '</span>'
+                        + '<span class="ach-state ' + (done ? "done" : "locked") + '">' + (done ? "Tamamlandı" : "Kilitli") + '</span></div>'
+                        + '<div class="ach-desc">' + esc(a.desc) + '</div>'
+                        + '<div class="ach-progress">' + esc(val + " / " + target + a.suffix) + '</div>'
+                        + '<div class="track"><div class="fill" style="width:' + percent + '%"></div></div>'
+                        + '</section>';
+                }).join("");
+
+                const doneCount = achievements.filter(a => Number(a.value || 0) >= Number(a.target || 0)).length;
+                const total = achievements.length;
+                const line = document.getElementById("summaryLine");
+                if (line) line.textContent = "Tamamlanan: " + doneCount + " / " + total + " | Seviye: " + level + " | Bakiye: " + balance;
+            } catch (_) {}
+        };
+
+        window.initCasinoAchievementsPage();
+        window.addEventListener("spa-loaded", window.initCasinoAchievementsPage);
+    </script>
+</body>
+</html>

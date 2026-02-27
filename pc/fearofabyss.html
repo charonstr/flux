@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Fear of Abyss</title>
-    <link rel="stylesheet" href="/pc/css/style.css">
+    <link rel="stylesheet" href="/pc/css/style.css?v={{ asset_v }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
         /* Genel Tipografi ve Renk Paleti */
@@ -31,11 +31,46 @@
             background-color: #050608;
             overflow: hidden;
         }
+        /* PC shell fallback: app.js stilleri yüklenmese de layout bozulmasın */
+        body.shell-active {
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0 !important;
+        }
+        .server-shell {
+            position: relative;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 85px 1fr;
+            grid-template-rows: 1fr;
+        }
+        .server-rail {
+            grid-row: 1;
+            grid-column: 1;
+            height: 100vh;
+        }
+        .server-main {
+            grid-row: 1;
+            grid-column: 2;
+            padding: 0 !important;
+            overflow: hidden !important;
+            max-width: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: 100vh !important;
+        }
         .server-shell .server-main {
             max-width: none !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+        }
+        @media (max-width: 900px) {
+            body.shell-active { overflow: auto; padding-bottom: 75px !important; }
+            .server-shell { display: block; height: auto; min-height: 100vh; }
+            .server-main { height: auto !important; min-height: 100vh !important; }
         }
 
         .foa-page { min-height: 100vh; }
@@ -44,7 +79,7 @@
             inset: 0;
             pointer-events: none;
             z-index: 0;
-            background: #050608 url("/assets/game/tower/towerback1.png") center center / contain no-repeat fixed;
+            background: #050608 url("/assets/game/tower/towerback1.png") center center / contain no-repeat;
             filter: contrast(1.1) brightness(0.85); /* Arka planı biraz daha dramatik yapar */
         }
 
@@ -567,11 +602,23 @@
         };
 
         const frozenDefaults = [
-            { id: 'g1', x: 0.18, y: 0.18, w: 0.20, h: 0.16 },
-            { id: 'g2', x: 0.42, y: 0.18, w: 0.20, h: 0.16 },
-            { id: 'g3', x: 0.18, y: 0.38, w: 0.20, h: 0.16 },
-            { id: 'g4', x: 0.42, y: 0.38, w: 0.20, h: 0.16 }
-];
+            { id: 'g1', x: 0.27270834922790527, y: 0.18870510580824384, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045755623', x: 0.39192705750465395, y: 0.18795432483304786, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045760289', x: 0.5096354226271311, y: 0.19013061166241352, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045766149', x: 0.6257812321186065, y: 0.19121871356787756, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045773521', x: 0.27317708134651186, y: 0.34573451807838557, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045778882', x: 0.39140627185503646, y: 0.3435581897398011, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045784659', x: 0.5096354226271311, y: 0.34355823124901985, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045796487', x: 0.6257813115914662, y: 0.34247006707972766, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045806259', x: 0.2731770813465118, y: 0.5013384244943576, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045811569', x: 0.3914062718550364, y: 0.5002502603250654, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045816566', x: 0.509635422627131, y: 0.5013384244943575, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045817721', x: 0.6263021369775136, y: 0.49916213766499185, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045818826', x: 0.27369790673255917, y: 0.6602067403997687, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045820112', x: 0.39192705750465395, y: 0.6623830687383531, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045821159', x: 0.5096354226271311, y: 0.66020669889055, w: 0.09947917064030966, h: 0.12409139184312304 },
+            { id: 'g1772045822030', x: 0.6263021369775136, y: 0.6612948630598421, w: 0.09947917064030966, h: 0.12409139184312304 }
+        ];
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeItemsOrder(list) {
             return (Array.isArray(list) ? list : []).map((it) => ({
@@ -593,6 +640,31 @@ function normalizeItemsOrder(list) {
             } catch {
                 return normalizeItemsOrder(frozenDefaults);
             }
+        }
+
+
+        function getBoardRect() {
+            const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+            const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+            const imgRatio = 1366 / 1024;
+            const viewRatio = vw / vh;
+
+            let width = vw;
+            let height = vh;
+            let left = 0;
+            let top = 0;
+
+            if (viewRatio > imgRatio) {
+                height = vh;
+                width = height * imgRatio;
+                left = (vw - width) / 2;
+            } else {
+                width = vw;
+                height = width / imgRatio;
+                top = (vh - height) / 2;
+            }
+
+            return { left, top, width, height };
         }
 
         function openCardMenu(force = false) {
@@ -719,14 +791,12 @@ return Array.isArray(parsed) ? parsed : [];
                 await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: localItems, set_default: true });
                 return;
             }
-            const fromDb = await api(`/api/fear-of-abyss/layout?device=${encodeURIComponent(deviceKind)}`, 'GET');
-            if (fromDb && fromDb.ok && Array.isArray(fromDb.items) && fromDb.items.length > 0) {
-                const normalized = normalizeItemsOrder(fromDb.items);
-                persistLocalItems(normalized);
-                queueRender();
-                return;
-            }
-            await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: normalizeItemsOrder(frozenDefaults), set_default: true });
+            // HTML icine gomulu varsayim her zaman kaynak kabul edilir.
+            // Hostta eski DB kaydi olsa bile ilk acilista bunu ezmesine izin vermeyiz.
+            const embedded = normalizeItemsOrder(frozenDefaults);
+            persistLocalItems(embedded);
+            queueRender();
+            await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: embedded, set_default: true });
 }
 function findCardBuilding(cardId) {
 if (!foaState || !Array.isArray(foaState.buildings)) return null;
@@ -1297,9 +1367,11 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
 
         function render() {
             const items = loadFrozenItems();
-            const r = canvas.getBoundingClientRect();
-            const w = Math.max(1, r.width);
-            const h = Math.max(1, r.height);
+            const boardRect = getBoardRect();
+            const boardLeft = boardRect.left;
+            const boardTop = boardRect.top;
+            const boardWidth = Math.max(1, boardRect.width);
+            const boardHeight = Math.max(1, boardRect.height);
             canvas.innerHTML = '';
 
             items.forEach((it, idx) => {
@@ -1310,10 +1382,10 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
 
                 const el = document.createElement('div');
                 el.className = 'foa-grid-item';
-                el.style.left = (x * w) + 'px';
-                el.style.top = (y * h) + 'px';
-                el.style.width = (iw * w) + 'px';
-                el.style.height = (ih * h) + 'px';
+                el.style.left = (boardLeft + (x * boardWidth)) + 'px';
+                el.style.top = (boardTop + (y * boardHeight)) + 'px';
+                el.style.width = (iw * boardWidth) + 'px';
+                el.style.height = (ih * boardHeight) + 'px';
                 el.dataset.cardId = `slot-${idx + 1}`;
                 
                 const st = findCardBuilding(el.dataset.cardId);
@@ -1421,6 +1493,6 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
     })();
     </script>
 
-    <script src="/pc/js/app.js"></script>
+    <script src="/pc/js/app.js?v={{ asset_v }}"></script>
 </body>
 </html>

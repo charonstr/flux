@@ -23,7 +23,10 @@
 
     let limits = { min_bet: 100, max_bet: 500 };
     let reqSeq = 0;
-    const actionEngine = (window.createActionEngine ? window.createActionEngine({ retries: 2 }) : null);
+    let actionEngine = null;
+    if (typeof window !== 'undefined' && window.createActionEngine) {
+      actionEngine = window.createActionEngine({ retries: 2 });
+    }
     
     // SPA Bug Fix: Kapalı veya asılı kalan buton durumu sıfırlanıyor
     let pending = false;
@@ -199,6 +202,5 @@
     window.initBlackjackPage();
   }
 })();
-
 
 

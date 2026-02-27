@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Fear of Abyss</title>
-    <link rel="stylesheet" href="/mobile/css/style.css">
+    <link rel="stylesheet" href="/mobile/css/style.css?v={{ asset_v }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -402,6 +402,7 @@
             try { window.__foaCleanup(); } catch (_) {}
         }
         const canvas = document.getElementById('foaGridCanvas');
+        const pageBg = document.querySelector('.foa-page-bg');
         const cardMenu = document.getElementById('foaCardMenu');
         const balanceText = document.getElementById('balanceText');
         const depotBadge = document.getElementById('depotBadge');
@@ -419,6 +420,7 @@
         let stateTimer = null;
         let menuMode = 'card';
         let lastChestTier = '';
+        const BOARD_ASPECT = 1366 / 1024;
         const uiDeviceKind = 'mobile';
         const uiStorageKey = 'foa_ui_layout_mobile_v1';
         const UI_LAYOUT_DEFAULT = {
@@ -486,22 +488,22 @@
         };
 
         const frozenDefaults = [
-            { id: 'g1772050398048', x: 0.025367152553405728, y: 0.3830788697461272, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050405527', x: 0.27231105785191745, y: 0.3818016769968384, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050408696', x: 0.5168096863330618, y: 0.3818016769968384, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050416883', x: 0.7637537315348909, y: 0.3830788697461272, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050363354', x: 0.025367339091162358, y: 0.47529548906335983, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050366376', x: 0.2698661074756241, y: 0.47657265745315225, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050377328', x: 0.5168098262363792, y: 0.4778497771239521, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050383942', x: 0.7637535449971342, y: 0.4778497771239521, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050279272', x: 0.02536733909116237, y: 0.5700664629932339, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050275541', x: 0.26986592093786754, y: 0.5713435339450413, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050271262', x: 0.5192547766126724, y: 0.5700664142742414, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772048679298', x: 0.762448715237044, y: 0.5719820937804413, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050315152', x: 0.02536733909116237, y: 0.6644952200235855, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050318148', x: 0.26986592093786754, y: 0.6632181490717782, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050318922', x: 0.5168096396986226, y: 0.665772388413378, w: 0.20965673399243503, h: 0.07272024248806723 },
-            { id: 'g1772050319504', x: 0.7637536382660125, y: 0.6657724371323707, w: 0.20965673399243503, h: 0.07272024248806723 }
+            { id: 'g1772050398048', x: 0.18451484941388305, y: 0.2253912992595082, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150957968', x: 0.3485301604893173, y: 0.22608804364967383, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150961757', x: 0.5135371897334473, y: 0.22735306400254796, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150972830', x: 0.6766476687877757, y: 0.22608799539224067, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150975625', x: 0.18352302271895404, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150981601', x: 0.3475817135612138, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150985156', x: 0.5125888875069882, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150988089', x: 0.6785443817669272, y: 0.3639773130538636, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150992894', x: 0.18352297749969015, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150997265', x: 0.3475818039997416, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151000865', x: 0.5125888875069882, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151008001', x: 0.6775960071896459, y: 0.5043967438073846, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151013332', x: 0.18447132494541313, y: 0.6473461670092207, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151019464', x: 0.3485300881384951, y: 0.6448160780460392, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151023457', x: 0.5135372259088584, y: 0.6460811466563465, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151027980', x: 0.6766476687877757, y: 0.6460811466563465, w: 0.13741185659295618, h: 0.10764586183987693 }
         ];
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeItemsOrder(list) {
@@ -514,7 +516,63 @@ function normalizeItemsOrder(list) {
             }));
         }
 
+        function getBoardRect() {
+            const host = pageBg ? pageBg.getBoundingClientRect() : canvas.getBoundingClientRect();
+            const hostW = Math.max(1, host.width);
+            const hostH = Math.max(1, host.height);
+            const sizeRaw = pageBg ? window.getComputedStyle(pageBg).backgroundSize : '150% auto';
+            const size = String(sizeRaw || '').trim().toLowerCase();
+
+            let width = hostW;
+            let height = hostH;
+            const parts = size.split(/\s+/).filter(Boolean);
+            const p0 = parts[0] || '150%';
+            const p1 = parts[1] || 'auto';
+
+            if (p0.endsWith('%') && (p1 === 'auto' || !p1)) {
+                const pct = Math.max(0.01, Number(p0.replace('%', '')) / 100);
+                width = hostW * pct;
+                height = width / BOARD_ASPECT;
+            } else {
+                const hostAspect = hostW / hostH;
+                if (hostAspect > BOARD_ASPECT) {
+                    height = hostH;
+                    width = height * BOARD_ASPECT;
+                } else {
+                    width = hostW;
+                    height = width / BOARD_ASPECT;
+                }
+            }
+
+            return {
+                left: host.left + ((hostW - width) / 2),
+                top: host.top + ((hostH - height) / 2),
+                width,
+                height
+            };
+        }
+
         let items = normalizeItemsOrder(frozenDefaults.map((it) => ({ ...it })));
+        let selectedGridIndex = -1;
+
+        function normalizeItem(item) {
+            const minW = 0.06;
+            const minH = 0.06;
+            const out = {
+                ...item,
+                id: String(item?.id || `g${Date.now()}`),
+                x: Number(item?.x ?? 0),
+                y: Number(item?.y ?? 0),
+                w: Number(item?.w ?? 0.2),
+                h: Number(item?.h ?? 0.12),
+            };
+            if (out.w <= 0 || out.h <= 0) return out;
+            out.w = clamp(out.w, minW, 1);
+            out.h = clamp(out.h, minH, 1);
+            out.x = clamp(out.x, 0, 1 - out.w);
+            out.y = clamp(out.y, 0, 1 - out.h);
+            return out;
+        }
 
 
         function openCardMenu(force = false) {
@@ -1163,21 +1221,27 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
         }
 
         function render() {
-            const r = canvas.getBoundingClientRect();
-            const w = Math.max(1, r.width);
-            const h = Math.max(1, r.height);
+            const boardRect = getBoardRect();
+            const boardLeft = boardRect.left;
+            const boardTop = boardRect.top;
+            const boardWidth = Math.max(1, boardRect.width);
+            const boardHeight = Math.max(1, boardRect.height);
             canvas.innerHTML = '';
             items.forEach((it, idx) => {
+                const current = normalizeItem(it);
+                items[idx] = current;
+                if (Number(current.w || 0) <= 0 || Number(current.h || 0) <= 0) return;
                 const el = document.createElement('div');
                 el.className = 'foa-grid-item';
-                const x = clamp(Number(it.x ?? 0), 0, 1);
-                const y = clamp(Number(it.y ?? 0), 0, 1);
-                const iw = clamp(Number(it.w ?? 0.2), 0.02, 1);
-                const ih = clamp(Number(it.h ?? 0.12), 0.02, 1);
-                el.style.left = (x * w) + 'px';
-                el.style.top = (y * h) + 'px';
-                el.style.width = (iw * w) + 'px';
-                el.style.height = (ih * h) + 'px';
+                const x = clamp(Number(current.x ?? 0), 0, 1);
+                const y = clamp(Number(current.y ?? 0), 0, 1);
+                const iw = clamp(Number(current.w ?? 0.2), 0.02, 1);
+                const ih = clamp(Number(current.h ?? 0.12), 0.02, 1);
+                el.style.left = (boardLeft + (x * boardWidth)) + 'px';
+                el.style.top = (boardTop + (y * boardHeight)) + 'px';
+                el.style.width = (iw * boardWidth) + 'px';
+                el.style.height = (ih * boardHeight) + 'px';
+                el.style.touchAction = 'none';
                 el.dataset.cardId = `slot-${idx + 1}`;
                 const st = findCardBuilding(el.dataset.cardId);
                 if (st) {
@@ -1210,6 +1274,7 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
                 }
                 el.addEventListener('click', (ev) => {
                     ev.stopPropagation();
+                    selectedGridIndex = idx;
                     selectedCardId = String(el.dataset.cardId || '');
                     menuMode = 'card';
                     openCardMenu(true);
@@ -1246,7 +1311,6 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
         // Initial draw + delayed redraws for server-shell reflow after full refresh.
         lastGridSignature = gridSignatureFromState(foaState);
         render();
-        api('/api/fear-of-abyss/layout', 'POST', { device: 'mobile', items, set_default: true }).catch(() => {});
         refreshState();
         stateTimer = setInterval(refreshState, 1000);
         initUiLayout();
@@ -1287,6 +1351,6 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `Ä
         </a>
     </nav>
 
-    <script src="/mobile/js/app.js"></script>
+    <script src="/mobile/js/app.js?v={{ asset_v }}"></script>
 </body>
 </html>

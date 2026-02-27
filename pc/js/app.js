@@ -965,6 +965,19 @@
         }
     });
 
+    // Ensure page-level initializers run after SPA swaps even if scripts load a bit later.
+    const triggerSpaInit = () => {
+      try { window.dispatchEvent(new Event('spa-loaded')); } catch (_) {}
+      if (typeof window.initVoicePage === 'function') window.initVoicePage();
+      if (typeof window.initBlackjackPage === 'function') window.initBlackjackPage();
+      if (typeof window.initRoulettePage === 'function') window.initRoulettePage();
+      if (typeof window.initCasinoAchievementsPage === 'function') window.initCasinoAchievementsPage();
+    };
+    triggerSpaInit();
+    setTimeout(triggerSpaInit, 60);
+    setTimeout(triggerSpaInit, 180);
+    setTimeout(triggerSpaInit, 420);
+
     const now = window.location.pathname + window.location.search;
     if (!replaceOnly && now !== tgt) history.pushState({}, '', tgt);
     
@@ -1268,4 +1281,3 @@
     return { run: run };
   };
 })();
-
