@@ -1,0 +1,1445 @@
+﻿<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Abyss Legacy</title>
+    <link rel="stylesheet" href="/pc/css/style.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-rgb: 139, 92, 246;
+            --secondary: #3b82f6;
+            --bg: #09090b;
+            --bg-rgb: 9, 9, 11;
+            --panel-rgb: 24, 24, 27;
+            --line-rgb: 63, 63, 70;
+            --text: #f8fafc;
+            --muted: #a1a1aa;
+            --accent-glow: rgba(139, 92, 246, 0.5);
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb), 0.15), transparent 60%), 
+                        radial-gradient(circle at 10% 90%, rgba(59, 130, 246, 0.1), transparent 50%), 
+                        var(--bg);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Arka plan animasyonlu partikÃ¼l efekti iÃ§in basit bir katman */
+        .ambient-light {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(var(--primary-rgb), 0.05) 0%, transparent 70%);
+            animation: pulseBg 8s infinite alternate ease-in-out;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .abyss-wrap {
+            position: relative;
+            min-height: calc(100vh - 40px);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .abyss-stage {
+            position: relative;
+            width: min(980px, 100%);
+            min-height: 620px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(var(--panel-rgb), 0.7), rgba(var(--bg-rgb), 0.8));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 28px;
+            animation: stageEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            overflow: hidden;
+        }
+
+        /* Sahne iÃ§i dekoratif Ã§izgi */
+        .abyss-stage::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.6;
+        }
+
+        .player-box {
+            position: absolute;
+            top: 32px;
+            left: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 30;
+        }
+
+        .player-profile {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px 8px 8px;
+            border-radius: 50px;
+            border: 1px solid rgba(var(--line-rgb), 0.7);
+            background: rgba(var(--bg-rgb), 0.6);
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .player-profile:hover {
+            border-color: rgba(var(--primary-rgb), 0.5);
+            background: rgba(var(--bg-rgb), 0.8);
+            transform: translateY(-2px);
+        }
+
+        .player-profile img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .player-rank {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(var(--line-rgb), 0.7);
+            background: rgba(var(--bg-rgb), 0.6);
+            color: #d97706; /* Bronz rengi iÃ§in Ã¶zel ayar */
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            align-self: flex-start;
+            cursor: pointer;
+        }
+
+        .player-rank i {
+            font-size: 1.1rem;
+        }
+
+        .player-rank:hover {
+            transform: translateY(-2px);
+            border-color: rgba(217, 119, 6, 0.5);
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.2);
+        }
+
+        .rank-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 4, 8, 0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            z-index: 1200;
+        }
+
+        .rank-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(760px, calc(100vw - 40px));
+            max-height: 82vh;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            border-radius: 18px;
+            background: linear-gradient(165deg, rgba(var(--panel-rgb), 0.95), rgba(var(--bg-rgb), 0.95));
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            display: none;
+            z-index: 1300;
+            overflow: hidden;
+        }
+
+        .rank-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.6);
+            background: rgba(var(--bg-rgb), 0.5);
+        }
+
+        .rank-modal-title {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.8px;
+        }
+
+        .rank-modal-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.6);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .rank-modal-body {
+            padding: 14px 16px 18px;
+            overflow-y: auto;
+            max-height: calc(82vh - 64px);
+            display: grid;
+            gap: 14px;
+        }
+
+        .rank-modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .rank-panel {
+            border: 1px solid rgba(var(--line-rgb), 0.65);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.35);
+            padding: 12px;
+        }
+
+        .rank-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.96rem;
+            color: var(--muted);
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+        }
+
+        .rank-list,
+        .rank-progression {
+            display: grid;
+            gap: 6px;
+        }
+
+        .rank-item,
+        .rank-step {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(var(--line-rgb), 0.45);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: rgba(var(--bg-rgb), 0.35);
+            font-size: 0.92rem;
+        }
+
+        .rank-item.active {
+            border-color: rgba(var(--primary-rgb), 0.6);
+            background: rgba(var(--primary-rgb), 0.16);
+        }
+
+        .rank-rule {
+            border: 1px solid rgba(var(--line-rgb), 0.65);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.35);
+            padding: 12px;
+        }
+
+        .rank-rule h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.96rem;
+            color: var(--muted);
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+        }
+
+        .rank-rule p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.35;
+            color: var(--text);
+        }
+
+        .profile-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 4, 8, 0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            z-index: 1200;
+        }
+
+        .profile-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(820px, calc(100vw - 40px));
+            max-height: 84vh;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            border-radius: 18px;
+            background: linear-gradient(165deg, rgba(var(--panel-rgb), 0.95), rgba(var(--bg-rgb), 0.95));
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            display: none;
+            z-index: 1300;
+            overflow: hidden;
+        }
+
+        .profile-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(var(--line-rgb), 0.6);
+            background: rgba(var(--bg-rgb), 0.5);
+        }
+
+        .profile-modal-title {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.8px;
+        }
+
+        .profile-modal-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.6);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .profile-modal-body {
+            padding: 14px 16px 18px;
+            overflow-y: auto;
+            max-height: calc(84vh - 64px);
+            display: grid;
+            gap: 12px;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .profile-card {
+            border: 1px solid rgba(var(--line-rgb), 0.65);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.35);
+            padding: 12px;
+        }
+
+        .profile-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.96rem;
+            color: var(--muted);
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+        }
+
+        .profile-stat-list {
+            display: grid;
+            gap: 7px;
+        }
+
+        .profile-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(var(--line-rgb), 0.45);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: rgba(var(--bg-rgb), 0.35);
+            font-size: 0.92rem;
+        }
+
+        .xp-wrap {
+            display: grid;
+            gap: 8px;
+        }
+
+        .xp-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .xp-bar {
+            position: relative;
+            width: 100%;
+            height: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(var(--line-rgb), 0.65);
+            background: rgba(var(--bg-rgb), 0.5);
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.9), rgba(59, 130, 246, 0.9));
+            width: 0%;
+        }
+
+        .search-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 4, 8, 0.72);
+            backdrop-filter: blur(4px);
+            display: none;
+            z-index: 1200;
+        }
+
+        .search-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(520px, calc(100vw - 40px));
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            border-radius: 18px;
+            background: linear-gradient(165deg, rgba(var(--panel-rgb), 0.95), rgba(var(--bg-rgb), 0.95));
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            display: none;
+            z-index: 1300;
+            overflow: hidden;
+        }
+
+        .search-modal-body {
+            padding: 18px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .search-title {
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        .search-sub {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .search-timer {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .search-cancel {
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.6);
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .arena-shell {
+            display: none;
+            position: relative;
+            width: min(1100px, 100%);
+            min-height: 640px;
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            border-radius: 16px;
+            padding: 12px;
+            background: rgba(var(--bg-rgb), 0.55);
+            z-index: 20;
+        }
+        .arena-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .arena-boards {
+            display: grid;
+            gap: 14px;
+            margin: 8px 0 12px;
+        }
+        .arena-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .arena-slot {
+            min-height: 120px;
+            border: 1px dashed rgba(var(--line-rgb), 0.7);
+            border-radius: 10px;
+            background: rgba(var(--panel-rgb), 0.45);
+            padding: 6px;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .arena-card {
+            width: 100%;
+            border: 1px solid rgba(var(--line-rgb), 0.7);
+            border-radius: 10px;
+            background: rgba(var(--bg-rgb), 0.68);
+            padding: 6px;
+            cursor: pointer;
+        }
+        .arena-card img { width: 100%; height: 72px; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
+        .card-cost { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; color: #facc15; font-weight: 700; }
+        .shop-wrap {
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            border-radius: 12px;
+            background: rgba(var(--panel-rgb), 0.45);
+            padding: 10px;
+        }
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .drop-sell {
+            margin-top: 8px;
+            border: 1px dashed rgba(var(--line-rgb), 0.8);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            color: var(--muted);
+        }
+        .battle-log-wrap {
+            margin-top: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            border-radius: 12px;
+            background: rgba(var(--panel-rgb), 0.45);
+            padding: 10px;
+        }
+        .battle-log-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .battle-log-list {
+            max-height: 140px;
+            overflow: auto;
+            display: grid;
+            gap: 5px;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .battle-log-item { padding: 5px 8px; border: 1px solid rgba(var(--line-rgb), 0.45); border-radius: 8px; background: rgba(var(--bg-rgb), 0.45); }
+        .speed-x2 { color: #f59e0b; font-weight: 800; }
+        .arena-hidden { display: none !important; }
+        .lobby-hidden { display: none !important; }
+        .skill-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            z-index: 1400;
+            background: rgba(5, 6, 10, 0.75);
+            align-items: center;
+            justify-content: center;
+        }
+        .skill-box {
+            width: min(520px, calc(100vw - 40px));
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.95);
+            padding: 12px;
+            display: grid;
+            gap: 8px;
+        }
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+        .leaderboard-trigger { margin-top: 8px; }
+        .leaderboard-modal-overlay {
+            position: fixed; inset: 0; background: rgba(5, 6, 10, 0.7); display: none; z-index: 1250;
+        }
+        .leaderboard-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(980px, calc(100vw - 40px));
+            max-height: 84vh;
+            overflow: auto;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            border-radius: 14px;
+            background: rgba(var(--bg-rgb), 0.96);
+            display: none;
+            z-index: 1260;
+            padding: 14px;
+        }
+        .lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .lb-card { border: 1px solid rgba(var(--line-rgb), 0.7); border-radius: 10px; background: rgba(var(--panel-rgb), 0.45); padding: 10px; }
+        .lb-list { display: grid; gap: 6px; max-height: 320px; overflow: auto; font-size: 0.86rem; }
+        .lb-row { display: grid; grid-template-columns: 48px 1fr 110px 90px; gap: 8px; padding: 6px; border: 1px solid rgba(var(--line-rgb), 0.45); border-radius: 8px; }
+        .lb-reward { font-size: 0.82rem; color: var(--muted); }
+        .finish-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            z-index: 1450;
+            background: rgba(5, 6, 10, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+        .finish-box {
+            width: min(420px, calc(100vw - 40px));
+            border: 1px solid rgba(var(--line-rgb), 0.75);
+            border-radius: 12px;
+            background: rgba(var(--bg-rgb), 0.96);
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+            text-align: center;
+        }
+        .finish-rp { font-size: 1.25rem; font-weight: 800; }
+        .finish-rp.win { color: #4ade80; }
+        .finish-rp.loss { color: #f87171; }
+
+        .center-actions {
+            min-height: 560px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .game-logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(var(--primary-rgb), 0.4);
+            animation: floatLogo 4s infinite ease-in-out;
+            text-align: center;
+        }
+
+        .abyss-btn {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 260px;
+            height: 56px;
+            border-radius: 16px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.7);
+            color: var(--text);
+            font-size: 1.15rem;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .abyss-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: all 0.5s ease;
+        }
+
+        .abyss-btn:hover::before {
+            left: 100%;
+        }
+
+        .abyss-btn:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .abyss-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Ana aksiyon butonu iÃ§in Ã¶zel stil */
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.8), rgba(var(--primary-rgb), 0.4));
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4);
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(var(--primary-rgb), 0.7);
+            border-color: #fff;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(var(--panel-rgb), 0.9);
+            color: var(--primary);
+        }
+
+        /* --- Animasyonlar --- */
+        @keyframes stageEnter {
+            0% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulseBg {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.4);
+            }
+            100% {
+                box-shadow: 0 0 25px rgba(var(--primary-rgb), 0.7), inset 0 0 10px rgba(var(--primary-rgb), 0.3);
+            }
+        }
+
+        @keyframes floatLogo {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-light"></div>
+    <div class="abyss-wrap {% if arena_match_id %}lobby-hidden{% endif %}" id="lobbyShell">
+        <section class="abyss-stage">
+            <div class="player-box">
+                <div class="player-profile" id="openProfileModal" role="button" tabindex="0" title="Profil detaylari">
+                    <img src="{{ avatar }}" alt="avatar" onerror="this.src='https://ui-avatars.com/api/?name={{ username or 'Oyuncu' }}&background=8b5cf6&color=fff'">
+                    <span>{{ username or "Oyuncu" }}</span>
+                </div>
+                <button type="button" class="player-rank" id="openRankModal" title="Rank detaylari">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>{{ abyss_rank_label }} | {{ abyss_rp }} RP</span>
+                </button>
+                <button type="button" class="search-cancel leaderboard-trigger" id="openLeaderboardModal">
+                    <i class="fa-solid fa-trophy"></i> Liderlik Tablosu
+                </button>
+            </div>
+
+            <div class="center-actions">
+                <div class="game-logo">Abyss Legacy</div>
+                <button type="button" class="abyss-btn btn-primary" id="startMatchBtn">
+                    <i class="fa-solid fa-play"></i> Ma&ccedil; Ba&#351;lat</button>
+                <button type="button" class="abyss-btn btn-secondary">
+                    <i class="fa-solid fa-khanda"></i> 1v1 Duello</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="rank-modal-overlay" id="rankModalOverlay"></div>
+    <section class="rank-modal" id="rankModal" aria-hidden="true">
+        <header class="rank-modal-head">
+            <h2 class="rank-modal-title">Rank Sistemi</h2>
+            <button type="button" class="rank-modal-close" id="closeRankModal" aria-label="Kapat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+        <div class="rank-modal-body">
+            <div class="rank-modal-grid">
+                <section class="rank-panel">
+                    <h3>Ranklar</h3>
+                    <div class="rank-list">
+                        {% for code in abyss_rank_list %}
+                        <div class="rank-item {% if code == abyss_rank_code %}active{% endif %}">
+                            <span>{{ abyss_rank_labels[code] }}</span>
+                            {% if code == abyss_rank_code %}
+                            <strong>Mevcut</strong>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                <section class="rank-panel">
+                    <h3>Rank Atlama RP</h3>
+                    <div class="rank-progression">
+                        {% for step in abyss_rank_progression %}
+                        <div class="rank-step">
+                            <span>{{ step.from_label }} -> {{ step.to_label }}</span>
+                            <strong>{{ step.required_rp }} RP</strong>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+            <section class="rank-rule">
+                <h3>Gelecek Savas RP Kurali (Plan)</h3>
+                <p>
+                    Kazaninca maksimum +{{ abyss_max_rp_win }} RP, kaybedince minimum {{ abyss_max_rp_loss }} RP olacak. RP degisimi; mac suresi ve rakip rankina gore hesaplanacak.
+                    Uzun maclarda kazanilan RP azalacak; uzun mac kaybinda kaybedilen RP azalacak.
+                    Dusuk rank rakibe karsi kazaninca RP dusuk, yuksek rank rakibe karsi kisa surede kazaninca RP daha yuksek olacak.
+                </p>
+            </section>
+        </div>
+    </section>
+    <div class="leaderboard-modal-overlay" id="leaderboardModalOverlay"></div>
+    <section class="leaderboard-modal" id="leaderboardModal" aria-hidden="true">
+        <header class="rank-modal-head">
+            <h2 class="rank-modal-title">Liderlik Tablosu</h2>
+            <button type="button" class="rank-modal-close" id="closeLeaderboardModal" aria-label="Kapat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+        <div class="lb-card">
+            <div class="lb-reward"><strong>Global Odul:</strong> #1 10000 para, #2 5000 para, #3 1500 para</div>
+            <div class="lb-reward"><strong>Rank Ici Odul:</strong> #1 2000 gold, #2 1000 gold</div>
+            <div class="lb-reward"><strong>Sonraki Dagitim:</strong> <span id="lbRewardTimer">--:--:--</span></div>
+        </div>
+        <div class="lb-grid" style="margin-top:10px;">
+            <section class="lb-card">
+                <h3 style="margin:0 0 8px;">Global Siralama</h3>
+                <div class="lb-list" id="globalLeaderboardList"></div>
+            </section>
+            <section class="lb-card">
+                <h3 style="margin:0 0 8px;">Kendi Rank Siralaman</h3>
+                <div class="lb-list" id="rankLeaderboardList"></div>
+            </section>
+        </div>
+    </section>
+
+    <div class="profile-modal-overlay" id="profileModalOverlay"></div>
+    <section class="profile-modal" id="profileModalAbyss" aria-hidden="true">
+        <header class="profile-modal-head">
+            <h2 class="profile-modal-title">Oyuncu Profili</h2>
+            <button type="button" class="profile-modal-close" id="closeProfileModalAbyss" aria-label="Kapat">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+        <div class="profile-modal-body">
+            <div class="profile-grid">
+                <section class="profile-card">
+                    <h3>Genel</h3>
+                    <div class="profile-stat-list">
+                        <div class="profile-stat-row"><span>Seviye numarasi</span><strong>{{ abyss_level_num }}</strong></div>
+                        <div class="profile-stat-row"><span>Global siralamasi</span><strong>#{{ abyss_global_position }}</strong></div>
+                        <div class="profile-stat-row"><span>Global rank</span><strong>{{ abyss_global_rank_label }}</strong></div>
+                        <div class="profile-stat-row"><span>Kendi rank grubundaki sira</span><strong>#{{ abyss_rank_group_position }}</strong></div>
+                    </div>
+                </section>
+                <section class="profile-card">
+                    <h3>Mac Istatisikleri</h3>
+                    <div class="profile-stat-list">
+                        <div class="profile-stat-row"><span>Toplam mac</span><strong>{{ abyss_total_matches }}</strong></div>
+                        <div class="profile-stat-row"><span>Galibiyet</span><strong>{{ abyss_wins }}</strong></div>
+                        <div class="profile-stat-row"><span>Maglubiyet</span><strong>{{ abyss_losses }}</strong></div>
+                        <div class="profile-stat-row"><span>Kazanma/Kaybetme orani</span><strong>{{ abyss_wins }} / {{ abyss_losses }}</strong></div>
+                        <div class="profile-stat-row"><span>Win rate %</span><strong>{{ abyss_win_rate }}%</strong></div>
+                    </div>
+                </section>
+            </div>
+            <section class="profile-card">
+                <h3>XP ve Seviye</h3>
+                <div class="xp-wrap">
+                    <div class="xp-top">
+                        <span>XP bar</span>
+                        <strong>%{{ abyss_xp_progress_percent }}</strong>
+                    </div>
+                    <div class="xp-bar">
+                        <div class="xp-fill" style="width: {{ abyss_xp_progress_percent }}%;"></div>
+                    </div>
+                    <div class="profile-stat-list">
+                        <div class="profile-stat-row"><span>Toplam XP</span><strong>{{ abyss_total_xp }}</strong></div>
+                        <div class="profile-stat-row"><span>Bir sonraki seviye icin gereken XP</span><strong>{{ abyss_next_level_xp - abyss_current_level_xp }}</strong></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <div class="search-modal-overlay" id="searchModalOverlay"></div>
+    <section class="search-modal" id="searchModal" aria-hidden="true">
+        <div class="search-modal-body">
+            <h2 class="search-title">Mac Araniyor</h2>
+            <p class="search-sub" id="searchStatusText">Rankina uygun oyuncu aranıyor...</p>
+            <div class="search-timer" id="searchTimerText">05:00</div>
+            <button type="button" class="search-cancel" id="cancelMatchBtn">Mac Aramayi Iptal Et</button>
+        </div>
+    </section>
+
+    <section class="arena-shell {% if not arena_match_id %}arena-hidden{% endif %}" id="arenaShell" data-match-id="{{ arena_match_id or 0 }}">
+        <div class="arena-top">
+            <div id="arenaPhase">Faz: -</div>
+            <div id="arenaTimer">00:00</div>
+            <div id="arenaTurn">Tur 1</div>
+        </div>
+        <div class="arena-top">
+            <div id="youInfo">Sen - Kule: 10 - Gold: 2</div>
+            <div id="oppInfo">Rakip - Kule: 10</div>
+        </div>
+        <div class="arena-boards">
+            <div class="arena-row" id="oppBoard"></div>
+            <div class="arena-row" id="youBoard"></div>
+        </div>
+        <div class="shop-wrap">
+            <div><strong>Shop</strong></div>
+            <div class="shop-grid" id="shopGrid"></div>
+            <div class="drop-sell" id="sellDrop">Kartı satmak için buraya bırak (iade %50)</div>
+        </div>
+        <div class="battle-log-wrap">
+            <div class="battle-log-head">
+                <span>Savas Logu</span>
+                <span id="speedHint">Hiz x1</span>
+            </div>
+            <div class="battle-log-list" id="battleLogList"></div>
+        </div>
+    </section>
+
+    <div class="skill-modal" id="skillModal">
+        <div class="skill-box">
+            <strong>Skill Sec</strong>
+            <div id="skillList"></div>
+            <strong>Hedef Sec (Opsiyonel)</strong>
+            <div class="target-grid" id="targetList"></div>
+            <button type="button" class="search-cancel" id="skillCloseBtn">Kapat</button>
+        </div>
+    </div>
+    <div class="finish-modal" id="finishModal">
+        <div class="finish-box">
+            <strong id="finishTitle">Mac Sonucu</strong>
+            <div class="finish-rp" id="finishRp">0 RP</div>
+            <button type="button" class="search-cancel" id="finishHomeBtn">Ana Ekrana Don</button>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const openBtn = document.getElementById("openRankModal");
+        const closeBtn = document.getElementById("closeRankModal");
+        const modal = document.getElementById("rankModal");
+        const overlay = document.getElementById("rankModalOverlay");
+        const openProfileBtn = document.getElementById("openProfileModal");
+        const closeProfileBtn = document.getElementById("closeProfileModalAbyss");
+        const profileModal = document.getElementById("profileModalAbyss");
+        const profileOverlay = document.getElementById("profileModalOverlay");
+        const startMatchBtn = document.getElementById("startMatchBtn");
+        const cancelMatchBtn = document.getElementById("cancelMatchBtn");
+        const searchModal = document.getElementById("searchModal");
+        const searchOverlay = document.getElementById("searchModalOverlay");
+        const searchTimerText = document.getElementById("searchTimerText");
+        const searchStatusText = document.getElementById("searchStatusText");
+        const openLbBtn = document.getElementById("openLeaderboardModal");
+        const closeLbBtn = document.getElementById("closeLeaderboardModal");
+        const lbModal = document.getElementById("leaderboardModal");
+        const lbOverlay = document.getElementById("leaderboardModalOverlay");
+        const globalLbList = document.getElementById("globalLeaderboardList");
+        const rankLbList = document.getElementById("rankLeaderboardList");
+        const lbRewardTimer = document.getElementById("lbRewardTimer");
+        if (!openBtn || !closeBtn || !modal || !overlay || !openProfileBtn || !closeProfileBtn || !profileModal || !profileOverlay || !startMatchBtn || !cancelMatchBtn || !searchModal || !searchOverlay || !searchTimerText || !searchStatusText || !openLbBtn || !closeLbBtn || !lbModal || !lbOverlay || !globalLbList || !rankLbList || !lbRewardTimer) return;
+
+        let statusTimer = null;
+        let countdownTimer = null;
+        let lbTimer = null;
+        let remainingSec = 300;
+
+        const openModal = () => {
+            modal.style.display = "block";
+            overlay.style.display = "block";
+            modal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeModal = () => {
+            modal.style.display = "none";
+            overlay.style.display = "none";
+            modal.setAttribute("aria-hidden", "true");
+        };
+
+        const openProfileModal = () => {
+            profileModal.style.display = "block";
+            profileOverlay.style.display = "block";
+            profileModal.setAttribute("aria-hidden", "false");
+        };
+
+        const closeProfileModal = () => {
+            profileModal.style.display = "none";
+            profileOverlay.style.display = "none";
+            profileModal.setAttribute("aria-hidden", "true");
+        };
+
+        const closeSearchModal = () => {
+            searchModal.style.display = "none";
+            searchOverlay.style.display = "none";
+            searchModal.setAttribute("aria-hidden", "true");
+            if (statusTimer) clearInterval(statusTimer);
+            if (countdownTimer) clearInterval(countdownTimer);
+            statusTimer = null;
+            countdownTimer = null;
+        };
+
+        const openSearchModal = () => {
+            searchModal.style.display = "block";
+            searchOverlay.style.display = "block";
+            searchModal.setAttribute("aria-hidden", "false");
+        };
+        const openLeaderboardModal = async () => {
+            lbModal.style.display = "block";
+            lbOverlay.style.display = "block";
+            lbModal.setAttribute("aria-hidden", "false");
+            globalLbList.innerHTML = "Yukleniyor...";
+            rankLbList.innerHTML = "Yukleniyor...";
+            lbRewardTimer.textContent = "--:--:--";
+            try {
+                const res = await fetch("/api/abyss-legacy/leaderboard", { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+                const data = await res.json();
+                if (!data || !data.ok) return;
+                const renderRows = (rows) => (rows || []).map((r) =>
+                    `<div class="lb-row"><strong>#${r.position}</strong><span>${r.username}${r.is_bot ? " [BOT]" : ""}</span><span>${r.rank_label}</span><strong>${r.rp} RP</strong></div>`
+                ).join("") || "<div class=\"lb-row\"><span>-</span><span>Veri yok</span><span>-</span><span>-</span></div>";
+                globalLbList.innerHTML = renderRows(data.global_rows);
+                rankLbList.innerHTML = renderRows(data.rank_rows);
+                let left = Number(data.reward_countdown_sec || 0);
+                lbRewardTimer.textContent = fmtHms(left);
+                if (lbTimer) clearInterval(lbTimer);
+                lbTimer = setInterval(() => {
+                    left = Math.max(0, left - 1);
+                    lbRewardTimer.textContent = fmtHms(left);
+                }, 1000);
+            } catch (_) {
+                globalLbList.innerHTML = "Yuklenemedi";
+                rankLbList.innerHTML = "Yuklenemedi";
+            }
+        };
+        const closeLeaderboardModal = () => {
+            lbModal.style.display = "none";
+            lbOverlay.style.display = "none";
+            lbModal.setAttribute("aria-hidden", "true");
+            if (lbTimer) clearInterval(lbTimer);
+            lbTimer = null;
+        };
+
+        const fmt = (v) => {
+            const sec = Math.max(0, Number(v || 0));
+            const m = String(Math.floor(sec / 60)).padStart(2, "0");
+            const s = String(sec % 60).padStart(2, "0");
+            return `${m}:${s}`;
+        };
+        const fmtHms = (v) => {
+            const sec = Math.max(0, Number(v || 0));
+            const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+            const m = String(Math.floor((sec % 3600) / 60)).padStart(2, "0");
+            const s = String(sec % 60).padStart(2, "0");
+            return `${h}:${m}:${s}`;
+        };
+
+        const refreshTimerText = () => {
+            searchTimerText.textContent = fmt(remainingSec);
+        };
+
+        const pollStatus = async () => {
+            try {
+                const res = await fetch("/api/abyss-legacy/matchmaking/status", {
+                    headers: { "X-Requested-With": "fetch" },
+                    cache: "no-store",
+                });
+                const data = await res.json();
+                if (!data || !data.ok) return;
+                if (data.state === "searching") {
+                    remainingSec = Number(data.remaining_sec || 0);
+                    searchStatusText.textContent = "Rankina uygun oyuncu aranıyor...";
+                    refreshTimerText();
+                    return;
+                }
+                if (data.state === "matched") {
+                    const name = data.opponent_name || "Rakip";
+                    const rank = data.opponent_rank || "";
+                    searchStatusText.textContent = `Eslesme bulundu: ${name} ${rank ? `(${rank})` : ""}`;
+                    setTimeout(() => {
+                        closeSearchModal();
+                        if (data.match_id) window.location.href = `/abyss-legacy/arena/${data.match_id}`;
+                    }, 1200);
+                    return;
+                }
+                if (data.state === "timeout") {
+                    searchStatusText.textContent = "Mac arama suresi doldu.";
+                    setTimeout(closeSearchModal, 1000);
+                    return;
+                }
+                if (data.state === "cancelled" || data.state === "idle") {
+                    closeSearchModal();
+                }
+            } catch (_) {}
+        };
+
+        const startPolling = () => {
+            if (statusTimer) clearInterval(statusTimer);
+            if (countdownTimer) clearInterval(countdownTimer);
+            statusTimer = setInterval(pollStatus, 2000);
+            countdownTimer = setInterval(() => {
+                if (remainingSec > 0) remainingSec -= 1;
+                refreshTimerText();
+            }, 1000);
+        };
+
+        openBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+        overlay.addEventListener("click", closeModal);
+        openLbBtn.addEventListener("click", openLeaderboardModal);
+        closeLbBtn.addEventListener("click", closeLeaderboardModal);
+        lbOverlay.addEventListener("click", closeLeaderboardModal);
+        openProfileBtn.addEventListener("click", openProfileModal);
+        openProfileBtn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openProfileModal();
+            }
+        });
+        closeProfileBtn.addEventListener("click", closeProfileModal);
+        profileOverlay.addEventListener("click", closeProfileModal);
+        searchOverlay.addEventListener("click", () => {});
+
+        startMatchBtn.addEventListener("click", async () => {
+            try {
+                const res = await fetch("/api/abyss-legacy/matchmaking/start", {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "fetch",
+                        "Content-Type": "application/json",
+                    },
+                    body: "{}",
+                });
+                const data = await res.json();
+                if (!data || !data.ok) return;
+                if (data.state === "matched") {
+                    const name = data.opponent_name || "Rakip";
+                    const rank = data.opponent_rank || "";
+                    searchStatusText.textContent = `Eslesme bulundu: ${name} ${rank ? `(${rank})` : ""}`;
+                    remainingSec = 0;
+                    refreshTimerText();
+                    openSearchModal();
+                    setTimeout(() => {
+                        closeSearchModal();
+                        if (data.match_id) window.location.href = `/abyss-legacy/arena/${data.match_id}`;
+                    }, 1200);
+                    return;
+                }
+                remainingSec = Number(data.remaining_sec || 300);
+                searchStatusText.textContent = "Rankina uygun oyuncu aranıyor...";
+                refreshTimerText();
+                openSearchModal();
+                startPolling();
+            } catch (_) {}
+        });
+
+        cancelMatchBtn.addEventListener("click", async () => {
+            try {
+                await fetch("/api/abyss-legacy/matchmaking/cancel", {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "fetch",
+                        "Content-Type": "application/json",
+                    },
+                    body: "{}",
+                });
+            } catch (_) {}
+            closeSearchModal();
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeModal();
+                closeProfileModal();
+                closeLeaderboardModal();
+                closeSearchModal();
+            }
+        });
+    })();
+
+    (function () {
+        const arena = document.getElementById("arenaShell");
+        if (!arena) return;
+        const matchId = Number(arena.getAttribute("data-match-id") || "0");
+        if (!matchId) return;
+        arena.classList.remove("arena-hidden");
+        arena.style.display = "block";
+        const oppBoard = document.getElementById("oppBoard");
+        const youBoard = document.getElementById("youBoard");
+        const shopGrid = document.getElementById("shopGrid");
+        const sellDrop = document.getElementById("sellDrop");
+        const phaseEl = document.getElementById("arenaPhase");
+        const timerEl = document.getElementById("arenaTimer");
+        const turnEl = document.getElementById("arenaTurn");
+        const youInfo = document.getElementById("youInfo");
+        const oppInfo = document.getElementById("oppInfo");
+        const speedHint = document.getElementById("speedHint");
+        const battleLogList = document.getElementById("battleLogList");
+        const skillModal = document.getElementById("skillModal");
+        const skillList = document.getElementById("skillList");
+        const targetList = document.getElementById("targetList");
+        const skillCloseBtn = document.getElementById("skillCloseBtn");
+        const finishModal = document.getElementById("finishModal");
+        const finishTitle = document.getElementById("finishTitle");
+        const finishRp = document.getElementById("finishRp");
+        const finishHomeBtn = document.getElementById("finishHomeBtn");
+        if (!oppBoard || !youBoard || !shopGrid || !sellDrop || !phaseEl || !timerEl || !turnEl || !youInfo || !oppInfo || !speedHint || !battleLogList || !skillModal || !skillList || !targetList || !skillCloseBtn || !finishModal || !finishTitle || !finishRp || !finishHomeBtn) return;
+
+        let state = null;
+        let countdown = null;
+        let poll = null;
+        let skillTargetBoardIndex = null;
+        let lastBattleTurn = 0;
+        let logPlayback = null;
+        let finishShown = false;
+
+        const fmt = (sec) => {
+            const s = Math.max(0, Number(sec || 0));
+            const m = String(Math.floor(s / 60)).padStart(2, "0");
+            const ss = String(Math.floor(s % 60)).padStart(2, "0");
+            return `${m}:${ss}`;
+        };
+
+        const makeCard = (c, opts = {}) => {
+            if (!c) return "";
+            const costLine = opts.showCost ? `<div class="card-cost"><i class="fa-solid fa-coins"></i><span>${c.cost}</span></div>` : "";
+            return `<div class="arena-card" draggable="${opts.draggable ? "true" : "false"}" data-board-index="${opts.boardIndex ?? ""}" data-shop-index="${opts.shopIndex ?? ""}">
+                <img src="${c.image}" alt="${c.name}">
+                <div><strong>${c.name}</strong></div>
+                <div>HP ${c.hp ?? c.base_hp} | ATK ${c.atk} | DEF ${c.def}</div>
+                <div>${c.rarity} | ${c.generation || "-"} | ⭐${c.star_level || 1}</div>
+                ${costLine}
+            </div>`;
+        };
+
+        const bindDnD = () => {
+            shopGrid.querySelectorAll(".arena-card").forEach((el) => {
+                el.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", JSON.stringify({ type: "shop", index: Number(el.getAttribute("data-shop-index")) }));
+                });
+            });
+            youBoard.querySelectorAll(".arena-slot").forEach((slot) => {
+                slot.addEventListener("dragover", (e) => e.preventDefault());
+                slot.addEventListener("drop", async (e) => {
+                    e.preventDefault();
+                    const raw = e.dataTransfer.getData("text/plain");
+                    if (!raw) return;
+                    const d = JSON.parse(raw);
+                    const toIdx = Number(slot.getAttribute("data-board-index"));
+                    if (d.type === "shop") {
+                        await apiPost("/api/abyss-legacy/arena/buy", { match_id: matchId, shop_index: d.index, board_index: toIdx });
+                    } else if (d.type === "board") {
+                        await apiPost("/api/abyss-legacy/arena/merge", { match_id: matchId, from_index: d.index, to_index: toIdx });
+                    } else {
+                        return;
+                    }
+                    await refresh();
+                });
+            });
+            youBoard.querySelectorAll(".arena-card").forEach((el) => {
+                el.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", JSON.stringify({ type: "board", index: Number(el.getAttribute("data-board-index")) }));
+                });
+                el.addEventListener("click", () => openSkillModal(Number(el.getAttribute("data-board-index"))));
+            });
+            sellDrop.addEventListener("dragover", (e) => e.preventDefault());
+            sellDrop.addEventListener("drop", async (e) => {
+                e.preventDefault();
+                const raw = e.dataTransfer.getData("text/plain");
+                if (!raw) return;
+                const d = JSON.parse(raw);
+                if (d.type !== "board") return;
+                await apiPost("/api/abyss-legacy/arena/sell", { match_id: matchId, board_index: d.index });
+                await refresh();
+            });
+        };
+
+        const openSkillModal = (boardIndex) => {
+            if (!state || !state.you || !Array.isArray(state.you.board)) return;
+            const c = state.you.board[boardIndex];
+            if (!c || !Array.isArray(c.skills)) return;
+            skillTargetBoardIndex = boardIndex;
+            skillList.innerHTML = c.skills.map((s, i) => `<button class="search-cancel" data-skill-idx="${i}" style="margin-bottom:6px;">${s.name} (${s.type})</button>`).join("");
+            const currentTarget = Number(c.target_index ?? -1);
+            targetList.innerHTML = `
+                <button class="search-cancel" data-target-idx="-1" style="${currentTarget < 0 ? "border-color:#8b5cf6;" : ""}">Otomatik</button>
+                ${Array.from({length: 5}).map((_, i) => `<button class="search-cancel" data-target-idx="${i}" style="${currentTarget === i ? "border-color:#8b5cf6;" : ""}">Hedef ${i+1}</button>`).join("")}
+            `;
+            skillList.querySelectorAll("button[data-skill-idx]").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const idx = Number(btn.getAttribute("data-skill-idx"));
+                    await apiPost("/api/abyss-legacy/arena/skill", { match_id: matchId, board_index: skillTargetBoardIndex, skill_index: idx });
+                    await refresh();
+                });
+            });
+            targetList.querySelectorAll("button[data-target-idx]").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                    const idx = Number(btn.getAttribute("data-target-idx"));
+                    await apiPost("/api/abyss-legacy/arena/target", { match_id: matchId, board_index: skillTargetBoardIndex, target_index: idx });
+                    await refresh();
+                });
+            });
+            skillModal.style.display = "flex";
+        };
+
+        skillCloseBtn.addEventListener("click", () => skillModal.style.display = "none");
+        skillModal.addEventListener("click", (e) => { if (e.target === skillModal) skillModal.style.display = "none"; });
+        finishHomeBtn.addEventListener("click", () => { window.location.href = "/abyss-legacy"; });
+
+        const renderLogs = (logs, animated) => {
+            if (!Array.isArray(logs) || !logs.length) {
+                battleLogList.innerHTML = "<div class=\"battle-log-item\">Log bekleniyor...</div>";
+                return;
+            }
+            if (logPlayback) clearInterval(logPlayback);
+            battleLogList.innerHTML = "";
+            if (!animated) {
+                battleLogList.innerHTML = logs.map((x) => `<div class="battle-log-item">${x}</div>`).join("");
+                battleLogList.scrollTop = battleLogList.scrollHeight;
+                return;
+            }
+            let i = 0;
+            logPlayback = setInterval(() => {
+                if (i >= logs.length) {
+                    clearInterval(logPlayback);
+                    logPlayback = null;
+                    return;
+                }
+                battleLogList.insertAdjacentHTML("beforeend", `<div class="battle-log-item">${logs[i]}</div>`);
+                battleLogList.scrollTop = battleLogList.scrollHeight;
+                i += 1;
+            }, 120);
+        };
+
+        const render = () => {
+            if (!state) return;
+            phaseEl.textContent = `Faz: ${state.phase}`;
+            turnEl.textContent = `Tur ${state.turn}`;
+            youInfo.textContent = `Sen - Kule: ${state.you.tower_hp} - Gold: ${state.you.gold}`;
+            oppInfo.textContent = `Rakip - Kule: ${state.opponent.tower_hp}`;
+            const canInteract = state.phase === "prep";
+            const end = state.phase_ends_at ? new Date(state.phase_ends_at).getTime() : 0;
+            const nowMs = Date.now();
+            const secLeft = end ? Math.max(0, Math.floor((end - nowMs) / 1000)) : 0;
+            if (state.phase === "battle" && secLeft <= 10) {
+                speedHint.textContent = "Hiz x2";
+                speedHint.classList.add("speed-x2");
+            } else {
+                speedHint.textContent = "Hiz x1";
+                speedHint.classList.remove("speed-x2");
+            }
+            shopGrid.innerHTML = (state.you.shop || []).map((c, i) => `<div class="arena-slot">${makeCard(c, { draggable: canInteract, shopIndex: i, showCost: true })}</div>`).join("");
+            const youSlots = Array.from({ length: 5 }).map((_, i) => {
+                const c = state.you.board?.[i] || null;
+                return `<div class="arena-slot" data-board-index="${i}">${c ? makeCard(c, { draggable: canInteract, boardIndex: i }) : "Bos Slot"}</div>`;
+            }).join("");
+            const oppSlots = Array.from({ length: 5 }).map((_, i) => {
+                const c = state.opponent.board?.[i] || null;
+                return `<div class="arena-slot">${c ? makeCard(c, { draggable: false, boardIndex: i }) : "Bos Slot"}</div>`;
+            }).join("");
+            youBoard.innerHTML = youSlots;
+            oppBoard.innerHTML = oppSlots;
+            bindDnD();
+            const logs = state.battle_result?.logs || [];
+            const animated = state.phase === "prep" && Number(state.turn || 0) !== lastBattleTurn && logs.length > 0;
+            renderLogs(logs, animated);
+            if (logs.length > 0 && animated) lastBattleTurn = Number(state.turn || 0);
+            if (state.phase === "finished" && state.match_end && !finishShown) {
+                finishShown = true;
+                if (countdown) clearInterval(countdown);
+                if (poll) clearInterval(poll);
+                const rp = Number(state.match_end.rp_delta || 0);
+                const won = rp >= 0;
+                finishTitle.textContent = won ? "Maci Kazandin" : "Maci Kaybettin";
+                finishRp.textContent = `${rp >= 0 ? "+" : ""}${rp} RP`;
+                finishRp.classList.remove("win", "loss");
+                finishRp.classList.add(won ? "win" : "loss");
+                finishModal.style.display = "flex";
+            }
+        };
+
+        const apiPost = async (url, body) => {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Requested-With": "fetch" },
+                body: JSON.stringify(body || {}),
+            });
+            return res.json();
+        };
+
+        const refresh = async () => {
+            const res = await fetch(`/api/abyss-legacy/arena/state?match_id=${matchId}`, { headers: { "X-Requested-With": "fetch" }, cache: "no-store" });
+            const data = await res.json();
+            if (!data || !data.ok) return;
+            state = data;
+            render();
+        };
+
+        const start = async () => {
+            const data = await apiPost("/api/abyss-legacy/arena/start", { match_id: matchId });
+            if (!data || !data.ok) return;
+            state = data;
+            render();
+            if (countdown) clearInterval(countdown);
+            if (poll) clearInterval(poll);
+            countdown = setInterval(() => {
+                if (!state) return;
+                const end = state.phase_ends_at ? new Date(state.phase_ends_at).getTime() : 0;
+                const now = Date.now();
+                const sec = end ? Math.max(0, Math.floor((end - now) / 1000)) : 0;
+                timerEl.textContent = fmt(sec);
+            }, 250);
+            poll = setInterval(refresh, 1000);
+        };
+        start();
+    })();
+    </script>
+
+    <script src="/pc/js/app.js?v={{ asset_v }}"></script>
+</body>
+</html>

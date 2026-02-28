@@ -390,6 +390,11 @@
           .orb-2 { width: 40vw; height: 40vw; background: #818cf8; bottom: -15%; right: -10%; animation: driftPurple 25s ease-in-out infinite alternate; }
           
           /* KUSURSUZ MOBİL UYUM (Alt menü barı) */
+          @media(min-width: 901px) {
+              .server-shell { display: grid !important; grid-template-columns: 85px 1fr !important; grid-template-rows: 1fr !important; height: 100vh !important; }
+              .server-rail { position: relative !important; left: auto !important; top: auto !important; right: auto !important; bottom: auto !important; transform: none !important; width: auto !important; height: auto !important; flex-direction: column !important; margin: 0 !important; border-right: 1px solid rgba(var(--line-rgb), 0.5) !important; border-top: none !important; }
+              .server-main { grid-row: 1 !important; grid-column: 2 !important; }
+          }
           @media(max-width: 900px) {
               body.shell-active { overflow: auto; padding-bottom: 75px !important; }
               .server-shell { display: block; height: auto; min-height: 100vh;}
@@ -445,6 +450,7 @@
       const isServers = p.startsWith('/servers') ? 'active' : '';
       const isCasino = p.startsWith('/casino') ? 'active' : '';
       const isFearOfAbyss = p.startsWith('/fear-of-abyss') ? 'active' : '';
+      const isAbyssLegacy = p.startsWith('/abyss-legacy') ? 'active' : '';
 
       rail.innerHTML = `
           <div class="rail-btn-wrapper">
@@ -458,6 +464,9 @@
           </div>
           <div class="rail-btn-wrapper">
               <a class="rail-btn ${isFearOfAbyss}" href="/fear-of-abyss" data-nav="soft" title="Fear of Abyss"><i class="fa-solid fa-skull"></i></a>
+          </div>
+          <div class="rail-btn-wrapper">
+              <a class="rail-btn ${isAbyssLegacy}" href="/abyss-legacy" data-nav="soft" title="Abyss Legacy"><i class="fa-solid fa-chess"></i></a>
           </div>
           <div class="rail-divider"></div>
           <div class="rail-btn-wrapper">
@@ -540,6 +549,9 @@
               </div>
               <div class="rail-btn-wrapper">
                   <a class="rail-btn" href="/fear-of-abyss" data-nav="soft" title="Fear of Abyss"><i class="fa-solid fa-skull"></i></a>
+              </div>
+              <div class="rail-btn-wrapper">
+                  <a class="rail-btn" href="/abyss-legacy" data-nav="soft" title="Abyss Legacy"><i class="fa-solid fa-chess"></i></a>
               </div>
               <div class="rail-divider"></div>
           `;
@@ -1281,3 +1293,4 @@
     return { run: run };
   };
 })();
+

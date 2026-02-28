@@ -148,5 +148,14 @@ class CaseManager:
         with self._lock:
             return list(self._history.get(uid, {}).get(key, []))
 
+    def top_wins(self, user_id: int, case_id: str, limit: int = 3) -> list[dict]:
+        uid = int(user_id)
+        key = str(case_id or "").strip().lower()
+        cap = max(1, int(limit))
+        with self._lock:
+            rows = list(self._history.get(uid, {}).get(key, []))
+        rows.sort(key=lambda r: int(r.get("payout", 0) or 0), reverse=True)
+        return rows[:cap]
+
 
 MANAGER = CaseManager()

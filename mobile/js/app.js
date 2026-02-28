@@ -473,8 +473,8 @@
           }
           .server-rail::-webkit-scrollbar { display: none; }
           .rail-btn-wrapper {
-              flex: 0 0 calc((100% - 20px) / 6) !important;
-              max-width: calc((100% - 20px) / 6) !important;
+              flex: 0 0 calc((100% - 24px) / 7) !important;
+              max-width: calc((100% - 24px) / 7) !important;
               min-width: 52px !important;
               display: flex;
               align-items: stretch;
@@ -595,6 +595,12 @@
               <a class="rail-btn" href="/fear-of-abyss" data-nav="soft" title="Fear of Abyss">
                   <i class="fa-solid fa-skull"></i>
                   <span class="rail-label">Abyss</span>
+              </a>
+          </div>
+          <div class="rail-btn-wrapper">
+              <a class="rail-btn" href="/abyss-legacy" data-nav="soft" title="Abyss Legacy">
+                  <i class="fa-solid fa-chess"></i>
+                  <span class="rail-label">Legacy</span>
               </a>
           </div>
           <div class="rail-btn-wrapper">

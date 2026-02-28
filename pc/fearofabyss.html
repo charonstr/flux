@@ -2,96 +2,56 @@
 <html lang="{{ current }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Fear of Abyss</title>
     <link rel="stylesheet" href="/pc/css/style.css?v={{ asset_v }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Genel Tipografi ve Renk Paleti */
         :root {
-            --ui-bg-dark: rgba(15, 23, 42, 0.85);
-            --ui-border: rgba(100, 116, 139, 0.5);
-            --ui-glow: rgba(56, 189, 248, 0.3);
-            --ui-text-main: #f8fafc;
-            --ui-text-muted: #94a3b8;
-            --ui-accent: #38bdf8;
             --font-title: 'Cinzel', serif;
             --font-main: 'Inter', sans-serif;
+            --ui-bg-dark: rgba(15, 23, 42, 0.85);
+            --ui-border: rgba(148, 163, 184, 0.35);
+            --ui-accent: #38bdf8;
         }
 
         body { 
             margin: 0; 
-            min-height: 100vh; 
+            min-height: 100dvh; 
             font-family: var(--font-main);
-            color: var(--ui-text-main);
+            color: #e2e8f0;
             background-color: #050608;
-            overflow: hidden;
+            -webkit-tap-highlight-color: transparent; /* Mobilde tıklama parlmasını kapatır */
         }
-        /* PC shell fallback: app.js stilleri yüklenmese de layout bozulmasın */
-        body.shell-active {
-            position: relative;
-            overflow: hidden;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0 !important;
-        }
-        .server-shell {
-            position: relative;
-            height: 100vh;
-            display: grid;
-            grid-template-columns: 85px 1fr;
-            grid-template-rows: 1fr;
-        }
-        .server-rail {
-            grid-row: 1;
-            grid-column: 1;
-            height: 100vh;
-        }
-        .server-main {
-            grid-row: 1;
-            grid-column: 2;
-            padding: 0 !important;
-            overflow: hidden !important;
-            max-width: none !important;
-            margin: 0 !important;
-            width: 100% !important;
-            height: 100vh !important;
-        }
-        .server-shell .server-main {
-            max-width: none !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        @media (max-width: 900px) {
-            body.shell-active { overflow: auto; padding-bottom: 75px !important; }
-            .server-shell { display: block; height: auto; min-height: 100vh; }
-            .server-main { height: auto !important; min-height: 100vh !important; }
-        }
-
-        .foa-page { min-height: 100vh; }
+        
+        .foa-page { min-height: 100dvh; }
         .foa-page-bg {
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 0;
-            background: #050608 url("/assets/game/tower/towerback1.png") center center / contain no-repeat;
-            filter: contrast(1.1) brightness(0.85); /* Arka planı biraz daha dramatik yapar */
+            background: #050608 url("/assets/game/tower/towerback1.png") center center / 80% auto no-repeat fixed;
+            filter: contrast(1.1) brightness(0.85);
         }
 
         .foa-grid-canvas {
             position: fixed;
-            inset: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: calc(var(--mobile-nav-height, var(--bottom-nav-height, 74px)) + var(--mobile-safe-bottom, env(safe-area-inset-bottom, 0px)));
             z-index: 1050;
             overflow: hidden;
             pointer-events: none;
+            visibility: hidden;
         }
-
-        /* Konumlandırma bozulmaması için base grid item */
+        .mobile-bottom-nav { z-index: 1600; }
+        
+        /* Grid Item - Boyutlar/Konumlar bozulmaz */
         .foa-grid-item {
             position: absolute;
             border: none;
@@ -101,58 +61,47 @@
             user-select: none;
             cursor: pointer;
             pointer-events: auto;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.1s ease;
         }
-
-        .foa-grid-item:hover {
-            transform: none; /* Hoverda hafif yukarı kalkma efekti */
-            z-index: 1051;
+        
+        .foa-grid-item:active {
+            transform: scale(0.98); /* Mobilde dokunma hissi */
         }
 
         .foa-grid-item.has-building {
-            border: 2px solid rgba(148, 163, 184, 0.4);
+            border: 2px solid rgba(148, 163, 184, 0.5);
             border-radius: 12px;
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.05);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
             backdrop-filter: blur(4px);
-            transition: all 0.3s ease;
         }
         
-        .foa-grid-item.has-building:hover {
-            border-color: rgba(56, 189, 248, 0.8);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 2px 10px rgba(255,255,255,0.1);
-        }
-
         .foa-grid-item-label {
             position: absolute;
-            left: 8px;
-            top: 8px;
-            right: 8px;
-            font-size: 13px;
+            left: 6px;
+            top: 6px;
+            right: 6px;
+            font-size: 11px;
             font-weight: 700;
             font-family: var(--font-title);
-            color: #f1f5f9;
+            color: #f8fafc;
             text-shadow: 0 2px 4px rgba(0,0,0,0.9);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             letter-spacing: 0.5px;
         }
-
-        .foa-grid-item-label i {
-            color: var(--ui-accent);
-            filter: drop-shadow(0 0 4px var(--ui-accent));
-        }
+        .foa-grid-item-label i { color: var(--ui-accent); }
 
         .foa-progress {
             position: absolute;
             left: 8px;
             right: 8px;
-            bottom: 8px;
-            height: 6px;
+            bottom: 3px;
+            height: 4px;
             border-radius: 999px;
             background: rgba(2, 6, 23, 0.8);
-            border: 1px solid rgba(148,163,184,0.2);
+            border: 1px solid rgba(148,163,184,0.22);
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
             overflow: hidden;
         }
@@ -161,308 +110,237 @@
             height: 100%;
             width: 0;
             background: linear-gradient(90deg, #38bdf8, #818cf8);
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+            box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
             border-radius: 999px;
             position: relative;
         }
-        .foa-progress > i::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: progressGlow 1.5s infinite linear;
+        
+        @keyframes foaLoot { 
+            0% { opacity: 0; transform: scale(.9) translateY(10px);} 
+            100% {opacity:1; transform:scale(1) translateY(0);} 
         }
 
-        @keyframes progressGlow {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        @keyframes foaLoot { from { opacity: 0; transform: scale(.9) translateY(10px);} to {opacity:1; transform:scale(1) translateY(0);} }
-
-        /* Üst Rozetler (Badges) */
-        .balance-badge, .foa-floor-badge, .foa-depot-badge {
+        /* Top Badges & Nav */
+        .balance-badge, .foa-floor-badge, .foa-depot-badge, .foa-top-nav {
             font-family: var(--font-title);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1);
-            backdrop-filter: blur(12px);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .balance-badge:hover, .foa-floor-badge:hover, .foa-depot-badge:hover {
-            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .balance-badge {
             position: fixed;
-            top: 16px;
-            right: 20px;
+            top: max(12px, env(safe-area-inset-top, 0px));
+            right: 12px;
             z-index: 1200;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 24px;
+            gap: 8px;
+            padding: 8px 16px;
             border-radius: 12px;
             border: 1px solid rgba(245, 158, 11, 0.5);
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
             color: #fbbf24;
             font-weight: 800;
-            font-size: 1.25rem;
-            letter-spacing: 1px;
-        }
-        .balance-badge i {
-            color: #f59e0b;
-            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
         }
 
         .foa-floor-badge {
             position: fixed;
-            top: 16px;
+            top: max(12px, env(safe-area-inset-top, 0px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 1200;
-            padding: 12px 32px;
+            padding: 8px 16px;
             border-radius: 12px;
             border: 1px solid rgba(125, 211, 252, 0.4);
             background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(8, 14, 26, 0.95) 100%);
             color: #e0f2fe;
             font-weight: 800;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
         }
-        .foa-floor-badge:hover { transform: translateX(-50%) scale(1.05) translateY(-2px); }
 
         .foa-depot-badge {
             position: fixed;
-            top: 16px;
-            right: 220px;
+            top: max(60px, calc(env(safe-area-inset-top, 0px) + 50px));
+            right: 12px;
             z-index: 1200;
             display: none;
             align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
+            gap: 8px;
+            padding: 8px 14px;
             border-radius: 12px;
             border: 1px solid rgba(96, 165, 250, 0.4);
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
             color: #93c5fd;
             font-weight: 800;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
-        .foa-depot-badge i { filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.6)); }
 
-        /* Navigasyon Barı */
         .foa-top-nav {
             position: fixed;
-            top: 76px;
+            top: max(50px, calc(env(safe-area-inset-top, 0px) + 40px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 1200;
             display: inline-flex;
-            gap: 10px;
-            padding: 8px;
-            border-radius: 16px;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 14px;
             border: 1px solid var(--ui-border);
-            background: var(--ui-bg-dark);
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: rgba(15, 23, 42, 0.75);
         }
         .foa-top-nav button {
-            font-family: var(--font-title);
+            font-family: var(--font-main);
             border: 1px solid rgba(148,163,184,0.2);
-            background: linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%);
-            color: var(--ui-text-main);
+            background: linear-gradient(180deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
+            color: #f8fafc;
             border-radius: 10px;
-            padding: 10px 20px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
             font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
+            transition: background 0.2s, transform 0.1s;
         }
-        .foa-top-nav button:hover {
-            background: linear-gradient(180deg, rgba(51,65,85,0.9) 0%, rgba(30,41,59,1) 100%);
-            border-color: rgba(148,163,184,0.5);
-            color: #fff;
+        .foa-top-nav button:active {
             transform: none;
-            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+            background: rgba(71, 85, 105, 1);
         }
-        .foa-top-nav button:active { transform: none; }
 
-        
-        /* Ana Menü Kartı */
+        /* Ana Menü Kartı (Mobile Uygun Büyük Boyut) */
         .foa-card-menu {
             position: fixed;
             z-index: 1400;
-            width: min(85vw, 800px);
-            height: min(85vh, 650px);
+            width: min(92vw, 460px);
+            height: min(80vh, 600px);
             border-radius: 20px;
             border: 1px solid rgba(148, 163, 184, 0.3);
             background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
             backdrop-filter: blur(16px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255,255,255,0.05);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255,255,255,0.05);
             display: none;
-            padding: 24px;
-            color: var(--ui-text-main);
+            padding: 20px 16px;
+            color: #f8fafc;
             overflow-y: auto;
-            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: mobileFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+        @keyframes mobileFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* Özel Scrollbar */
-        .foa-card-menu::-webkit-scrollbar { width: 8px; }
-        .foa-card-menu::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
-        .foa-card-menu::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 10px; border: 1px solid rgba(15,23,42,1); }
-        .foa-card-menu::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 1); }
+        /* Özel Scrollbar Mobilde gizli/ince kalmalı */
+        .foa-card-menu::-webkit-scrollbar { width: 4px; }
+        .foa-card-menu::-webkit-scrollbar-track { background: transparent; }
+        .foa-card-menu::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.8); border-radius: 10px; }
 
         .foa-menu-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
             border-bottom: 1px solid rgba(148, 163, 184, 0.15);
         }
         .foa-menu-title { 
-            font-size: 1.5rem; 
+            font-size: 1.25rem; 
             font-weight: 800; 
             font-family: var(--font-title);
             color: #f8fafc;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
-        /* Standart Menü Butonları */
         .foa-close-btn {
             border: 1px solid rgba(239, 68, 68, 0.3);
             background: rgba(127, 29, 29, 0.4);
             color: #fca5a5;
             border-radius: 10px;
-            padding: 8px 16px;
+            padding: 8px 12px;
             cursor: pointer;
             font-weight: 700;
-            font-family: var(--font-main);
-            transition: all 0.2s;
+            font-size: 0.9rem;
+            transition: transform 0.1s, background 0.2s;
         }
-        .foa-close-btn:hover {
-            background: rgba(220, 38, 38, 0.6);
-            color: #fff;
-            box-shadow: none;
-        }
+        .foa-close-btn:active { transform: none; background: rgba(220, 38, 38, 0.6); }
 
-        .foa-building-list {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-        }
-
+        .foa-building-list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        
         .foa-building-btn, .foa-primary-btn {
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.25);
             background: linear-gradient(180deg, rgba(51, 65, 85, 0.7) 0%, rgba(30, 41, 59, 0.9) 100%);
-            color: var(--ui-text-main);
+            color: #f8fafc;
             border-radius: 12px;
-            padding: 12px 16px;
+            padding: 14px 12px; /* Touch target büyütüldü */
             cursor: pointer;
             text-align: left;
             font-family: var(--font-main);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.05);
-            position: relative;
-            overflow: hidden;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.05);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        
-        .foa-primary-btn { text-align: center; font-weight: 600; display: inline-flex; justify-content: center; align-items: center; }
-
-        .foa-building-btn:hover:not(:disabled), .foa-primary-btn:hover:not(:disabled) {
-            border-color: rgba(56, 189, 248, 0.5);
-            background: linear-gradient(180deg, rgba(71, 85, 105, 0.8) 0%, rgba(51, 65, 85, 1) 100%);
-            transform: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.1);
-        }
+        .foa-primary-btn { flex-direction: row; align-items: center; justify-content: center; font-weight: 600; gap: 6px; }
         
         .foa-building-btn:active:not(:disabled), .foa-primary-btn:active:not(:disabled) {
             transform: none;
+            border-color: rgba(56, 189, 248, 0.5);
         }
 
-        .foa-building-btn b { 
-            display: block; 
-            margin-bottom: 6px; 
-            font-size: 1.1rem;
-            color: #e0f2fe;
-            font-family: var(--font-title);
-        }
-        .foa-building-btn small { 
-            opacity: 0.7; 
-            line-height: 1.4; 
-            display: block; 
-            font-size: 0.85rem;
-        }
-        .foa-building-btn:disabled, .foa-primary-btn:disabled { 
-            opacity: 0.4; 
-            cursor: not-allowed; 
-            filter: grayscale(1);
-        }
-
-        .foa-card-meta { 
-            margin-bottom: 16px; 
-            opacity: 0.6; 
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .foa-building-btn b { display: block; margin-bottom: 6px; font-size: 1.05rem; font-family: var(--font-title); color: #e0f2fe;}
+        .foa-building-btn small { opacity: 0.75; line-height: 1.4; display: block; font-size: 0.85rem; }
+        .foa-building-btn:disabled, .foa-primary-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
         
-        /* Listeleme/Kutu Tasarımları (${I18N.characters} ve Loglar vb. için) */
+        .foa-card-meta { margin-bottom: 16px; opacity: 0.7; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Mobil İçin Kart Tipi Liste Tasarımı */
         .foa-list-item {
             margin-bottom: 12px;
-            padding: 16px;
+            padding: 14px;
             background: rgba(15, 23, 42, 0.4);
             border: 1px solid rgba(148, 163, 184, 0.15);
             border-radius: 12px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
-            transition: border-color 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
         }
-        .foa-list-item:hover {
-            border-color: rgba(148, 163, 184, 0.3);
-            background: rgba(15, 23, 42, 0.6);
-        }
-        .foa-list-item b { color: #38bdf8; font-family: var(--font-title); font-size: 1.1rem;}
         
         .section-title {
             font-family: var(--font-title);
             color: #fbbf24;
-            font-size: 1.1rem;
-            margin: 20px 0 12px 0;
-            padding-bottom: 6px;
+            font-size: 1.05rem;
+            margin: 20px 0 10px 0;
+            padding-bottom: 4px;
             border-bottom: 1px dashed rgba(251, 191, 36, 0.3);
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .bg-texture, .ambient-orb { display: none !important; }
         #balanceBadge {
             position: fixed;
-            left: 81.62109851837158vw;
-            top: 2.857143376149288vh;
+            left: 84.60245394925459vw;
+            top: 3.1309913903379595vh;
             right: auto;
             bottom: auto;
             transform: translate(-50%, 0);
         }
         #foaFloorBadge {
             position: fixed;
-            left: 50vw;
-            top: 2.857143376149288vh;
+            left: 55.70145353264765vw;
+            top: 3.1309913903379595vh;
             right: auto;
             bottom: auto;
             transform: translate(-50%, 0);
         }
         #depotBadge {
             position: fixed;
-            left: 69.65901454289755vw;
-            top: 2.857143376149288vh;
+            left: 19.948379563264526vw;
+            top: 3.1309913903379595vh;
             right: auto;
             bottom: auto;
             transform: translate(-50%, 0);
@@ -470,9 +348,17 @@
         #foaTopNav {
             position: fixed;
             left: 50vw;
-            top: 86.99319229644983vh;
+            top: 78.17891276301667vh;
             right: auto;
             bottom: auto;
+            transform: translate(-50%, 0);
+        }
+        #gameNavBar {
+            position: fixed;
+            left: 50vw;
+            top: 90vh;
+            right: auto;
+            bottom: auto !important;
             transform: translate(-50%, 0);
         }
     </style>
@@ -480,23 +366,24 @@
 <body>
     <main class="foa-page">
         <div class="foa-page-bg"></div>
-        <div id="foaGridCanvas" class="foa-grid-canvas"></div>
+        <div id="foaGridCanvas" class="foa-grid-canvas"><div class="foa-grid-item edit-visible" data-card-id="slot-1" style="left: 419.515px; top: 138.953px; width: 153.289px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#1</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-2" style="left: 600.374px; top: 138.184px; width: 155.495px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#2</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-3" style="left: 782.336px; top: 139.784px; width: 155.495px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#3</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-4" style="left: 964.298px; top: 140.584px; width: 153.289px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#4</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-5" style="left: 419.515px; top: 254.184px; width: 152.186px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#5</div></div><div class="foa-grid-item edit-visible grid-selected" data-card-id="slot-6" style="left: 600.374px; top: 252.584px; width: 154.502px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#6</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-7" style="left: 782.336px; top: 252.584px; width: 156.598px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#7</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-8" style="left: 964.298px; top: 251.784px; width: 153.289px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#8</div></div><div class="foa-grid-item edit-visible" data-card-id="slot-9" style="left: 419.515px; top: 368.584px; width: 153.289px; height: 91.232px; border: none; border-radius: 0px; background: transparent; box-shadow: none;"><div class="foa-grid-slot-index">#9</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-10" style="left: 600.374px; top: 367.784px; width: 155.495px; height: 91.232px; border-color: rgb(245, 158, 11); background: linear-gradient(135deg, color-mix(in srgb, rgb(245, 158, 11) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-store"></i><span>Satıcı <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#10</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-11" style="left: 782.336px; top: 368.584px; width: 153.289px; height: 91.232px; border-color: rgb(249, 115, 22); background: linear-gradient(135deg, color-mix(in srgb, rgb(249, 115, 22) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-hammer"></i><span>Demirci <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#11</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-12" style="left: 964.298px; top: 366.984px; width: 153.289px; height: 91.232px; border-color: rgb(6, 182, 212); background: linear-gradient(135deg, color-mix(in srgb, rgb(6, 182, 212) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-shield-halved"></i><span>Zırhçı <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#12</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-13" style="left: 419.515px; top: 485.384px; width: 153.289px; height: 91.232px; border-color: rgb(34, 197, 94); background: linear-gradient(135deg, color-mix(in srgb, rgb(34, 197, 94) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-dumbbell"></i><span>Eğitim Arenası <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#13</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-14" style="left: 600.374px; top: 486.984px; width: 155.495px; height: 91.232px; border-color: rgb(139, 92, 246); background: linear-gradient(135deg, color-mix(in srgb, rgb(139, 92, 246) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-hat-wizard"></i><span>Büyü Kulesi <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#14</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-15" style="left: 782.336px; top: 485.384px; width: 153.289px; height: 91.232px; border-color: rgb(59, 130, 246); background: linear-gradient(135deg, color-mix(in srgb, rgb(59, 130, 246) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-warehouse"></i><span>Depo <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#15</div></div><div class="foa-grid-item edit-visible has-building" data-card-id="slot-16" style="left: 964.298px; top: 486.702px; width: 153.289px; height: 94.1056px; border-color: rgb(239, 68, 68); background: linear-gradient(135deg, color-mix(in srgb, rgb(239, 68, 68) 30%, rgba(15, 23, 42, 0.9)) 0%, rgba(15, 23, 42, 0.9) 100%);"><div class="foa-grid-item-label"><i class="fa-solid fa-house-medical"></i><span>Hastane <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">Lv.1</span></span></div><div class="foa-grid-slot-index">#16</div></div></div>
         <div id="foaCardMenu" class="foa-card-menu"></div>
 
         <div id="balanceBadge" class="balance-badge">
-        <i class="fa-solid fa-coins"></i>
-        <span id="balanceText">{{ balance or 0 }}</span>
+            <i class="fa-solid fa-coins"></i>
+            <span id="balanceText">{{ balance or 0 }}</span>
         </div>
-        <div id="foaFloorBadge" class="foa-floor-badge">{{ t.get("foa_floor", "Floor") }}: 1</div>
+        <div id="foaFloorBadge" class="foa-floor-badge"><i class="fa-solid fa-layer-group" style="margin-right:4px;"></i> {{ t.get("foa_floor", "Floor") }}: 1</div>
         <div id="foaTopNav" class="foa-top-nav">
-            <button id="towerNavBtn" type="button">{{ t.get("foa_tower", "Tower") }}</button>
-            <button id="charsNavBtn" type="button">{{ t.get("foa_characters", "Characters") }}</button>
-            <button id="depotNavBtn" type="button">{{ t.get("foa_depot", "Depot") }}</button>
+            <button id="towerNavBtn" type="button"><i class="fa-brands fa-fort-awesome" style="margin-right:4px;"></i> {{ t.get("foa_tower", "Tower") }}</button>
+            <button id="charsNavBtn" type="button"><i class="fa-solid fa-users" style="margin-right:4px;"></i> {{ t.get("foa_characters", "Characters") }}</button>
+            <button id="depotNavBtn" type="button"><i class="fa-solid fa-warehouse" style="margin-right:4px;"></i> {{ t.get("foa_depot", "Depot") }}</button>
         </div>
         <div id="depotBadge" class="foa-depot-badge">
             <i class="fa-solid fa-warehouse"></i>
             <span id="depotText">{{ t.get("foa_depot", "Depot") }} Lv.1 | 100</span>
         </div>
+
         <div class="modal-overlay" id="modalOverlay"></div>
         <div class="modal" id="profileModal">
             <div class="modal-content">
@@ -508,6 +395,7 @@
                 <a href="/logout" data-nav="soft" class="modal-link"><i class="fa-solid fa-right-from-bracket"></i><span>{{ t.get("logout", "Logout") }}</span></a>
             </div>
         </div>
+        <script id="foa-embedded-ui-layout" type="application/json">{"balanceBadge":{"x":0.8684203887204511,"y":0.06396296474774077},"floorBadge":{"x":0.5,"y":0.06396296474774077},"depotBadge":{"x":0.17240045832566891,"y":0.06396296474774077},"topNav":{"x":0.5,"y":0.8547143475228113},"gameNav":{"x":0.5,"y":0.9}}</script>
     </main>
 
     <script>
@@ -515,9 +403,8 @@
         if (window.__foaCleanup && typeof window.__foaCleanup === 'function') {
             try { window.__foaCleanup(); } catch (_) {}
         }
-        const storageKey = 'foa_layout_pc_v1';
-        const deviceKind = 'pc';
         const canvas = document.getElementById('foaGridCanvas');
+        const pageBg = document.querySelector('.foa-page-bg');
         const cardMenu = document.getElementById('foaCardMenu');
         const balanceText = document.getElementById('balanceText');
         const depotBadge = document.getElementById('depotBadge');
@@ -535,19 +422,23 @@
         let stateTimer = null;
         let menuMode = 'card';
         let lastChestTier = '';
+        const BOARD_ASPECT = 1366 / 1024;
         const uiDeviceKind = 'pc';
         const uiStorageKey = 'foa_ui_layout_pc_v1';
         const UI_LAYOUT_DEFAULT = {
-            balanceBadge: { x: 0.8162109851837158, y: 0.02857143376149288 },
-            floorBadge: { x: 0.5, y: 0.02857143376149288 },
-            depotBadge: { x: 0.6965901454289755, y: 0.02857143376149288 },
-            topNav: { x: 0.5, y: 0.8699319229644983 },
+            balanceBadge: { x: 0.8460245394925459, y: 0.031309913903379595 },
+            floorBadge: { x: 0.5570145353264765, y: 0.031309913903379595 },
+            depotBadge: { x: 0.19948379563264526, y: 0.031309913903379595 },
+            topNav: { x: 0.5, y: 0.7817891276301667 },
+            gameNav: { x: 0.50, y: 0.90 },
         };
         let uiDrag = null;
         let uiCleanupFns = [];
         function setGameNavVisible(show) {
             const top = document.getElementById('foaTopNav');
+            const game = document.getElementById('gameNavBar');
             if (top) top.style.display = show ? 'inline-flex' : 'none';
+            if (game) game.style.display = show ? '' : 'none';
         }
         const I18N = {
             floor: `{{ t.get("foa_floor", "Floor") }}`,
@@ -568,31 +459,28 @@
             partyStatus: `{{ t.get("foa_party_status", "Party Status") }}`,
             deadShort: `{{ t.get("foa_dead_short", "DEAD") }}`,
             startBattle: `{{ t.get("foa_start_battle", "Start Battle") }}`,
-            battleLogs: `{{ t.get("foa_battle_logs", "Battle Logs") }}`,
             summonTitle: `{{ t.get("foa_summon_title", "Hero Summon") }}`,
             summonSingle: `{{ t.get("foa_summon_single", "Single") }}`,
             summonTen: `{{ t.get("foa_summon_ten", "Ten") }}`,
             summonTowerRequired: `{{ t.get("foa_summon_tower_required", "Mage Tower must be active to summon heroes.") }}`,
             alive: `{{ t.get("foa_alive", "ALIVE") }}`,
             waiting: `{{ t.get("foa_waiting", "Waiting") }}`,
-            removeFromParty: `{{ t.get("foa_remove_from_party", "Remove from Party") }}`,
-            addToParty: `{{ t.get("foa_add_to_party", "Add to Party") }}`,
-            bestEquipment: `{{ t.get("foa_best_equipment", "Best Equipment") }}`,
-            train20m: `{{ t.get("foa_train_20m", "Train (20m)") }}`,
+            removeShort: `{{ t.get("foa_remove_short", "Remove") }}`,
+            addShort: `{{ t.get("foa_add_short", "Add") }}`,
+            equipmentShort: `{{ t.get("foa_equipment_short", "Equipment") }}`,
+            trainShort: `{{ t.get("foa_train_short", "Train") }}`,
             revive: `{{ t.get("foa_revive", "Revive") }}`,
             trainingNow: `{{ t.get("foa_training_now", "Training") }}`,
-            reward: `{{ t.get("foa_reward", "Reward") }}`,
             buildingConstruction: `{{ t.get("foa_building_construction", "Building Construction") }}`,
             built: `{{ t.get("foa_built", "Built") }}`,
             cost100: `{{ t.get("foa_cost_100", "Cost: 100") }}`,
-            upgradeStatus: `{{ t.get("foa_upgrade_status", "Upgrade Status") }}`,
+            upgradeStatusShort: `{{ t.get("foa_upgrade_status_short", "Upgrade") }}`,
             upgrading: `{{ t.get("foa_upgrading", "Upgrading") }}`,
             finishNow: `{{ t.get("foa_finish_now", "Finish Now") }}`,
             upgrade: `{{ t.get("foa_upgrade", "Upgrade") }}`,
             maxLevel: `{{ t.get("foa_max_level", "Maximum Level") }}`,
-            recipesAndCraft: `{{ t.get("foa_recipes_and_craft", "Recipes and Crafting") }}`,
+            productionCraft: `{{ t.get("foa_production_craft", "Production (Craft)") }}`,
             unlockAt: `{{ t.get("foa_unlock_at", "Unlock at") }}`,
-            buyRecipe: `{{ t.get("foa_buy_recipe", "Buy Recipe") }}`,
             craft: `{{ t.get("foa_craft", "Craft") }}`,
             vendorStock: `{{ t.get("foa_vendor_stock", "Vendor Stock") }}`,
             noStock: `{{ t.get("foa_no_stock", "No stock available.") }}`,
@@ -602,22 +490,22 @@
         };
 
         const frozenDefaults = [
-            { id: 'g1', x: 0.27270834922790527, y: 0.18870510580824384, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045755623', x: 0.39192705750465395, y: 0.18795432483304786, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045760289', x: 0.5096354226271311, y: 0.19013061166241352, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045766149', x: 0.6257812321186065, y: 0.19121871356787756, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045773521', x: 0.27317708134651186, y: 0.34573451807838557, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045778882', x: 0.39140627185503646, y: 0.3435581897398011, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045784659', x: 0.5096354226271311, y: 0.34355823124901985, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045796487', x: 0.6257813115914662, y: 0.34247006707972766, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045806259', x: 0.2731770813465118, y: 0.5013384244943576, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045811569', x: 0.3914062718550364, y: 0.5002502603250654, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045816566', x: 0.509635422627131, y: 0.5013384244943575, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045817721', x: 0.6263021369775136, y: 0.49916213766499185, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045818826', x: 0.27369790673255917, y: 0.6602067403997687, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045820112', x: 0.39192705750465395, y: 0.6623830687383531, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045821159', x: 0.5096354226271311, y: 0.66020669889055, w: 0.09947917064030966, h: 0.12409139184312304 },
-            { id: 'g1772045822030', x: 0.6263021369775136, y: 0.6612948630598421, w: 0.09947917064030966, h: 0.12409139184312304 }
+            { id: 'g1772050398048', x: 0.18451484941388305, y: 0.2253912992595082, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150957968', x: 0.3485301604893173, y: 0.22608804364967383, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150961757', x: 0.5135371897334473, y: 0.22735306400254796, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150972830', x: 0.6766476687877757, y: 0.22608799539224067, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150975625', x: 0.18352302271895404, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150981601', x: 0.3475817135612138, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150985156', x: 0.5125888875069882, y: 0.3652424057928875, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150988089', x: 0.6785443817669272, y: 0.3639773130538636, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150992894', x: 0.18352297749969015, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772150997265', x: 0.3475818039997416, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151000865', x: 0.5125888875069882, y: 0.5031316751970774, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151008001', x: 0.6775960071896459, y: 0.5043967438073846, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151013332', x: 0.18447132494541313, y: 0.6473461670092207, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151019464', x: 0.3485300881384951, y: 0.6448160780460392, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151023457', x: 0.5135372259088584, y: 0.6460811466563465, w: 0.13741185659295618, h: 0.10764586183987693 },
+            { id: 'g1772151027980', x: 0.6766476687877757, y: 0.6460811466563465, w: 0.13741185659295618, h: 0.10764586183987693 }
         ];
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 function normalizeItemsOrder(list) {
@@ -630,42 +518,92 @@ function normalizeItemsOrder(list) {
             }));
         }
 
-        function loadFrozenItems() {
-            try {
-                const raw = localStorage.getItem(storageKey);
-                if (!raw) return normalizeItemsOrder(frozenDefaults);
-                const parsed = JSON.parse(raw);
-                if (!Array.isArray(parsed) || !parsed.length) return normalizeItemsOrder(frozenDefaults);
-                return normalizeItemsOrder(parsed);
-            } catch {
-                return normalizeItemsOrder(frozenDefaults);
-            }
+        function parsePx(value) {
+            const n = Number.parseFloat(String(value || '').replace('px', '').trim());
+            return Number.isFinite(n) ? n : 0;
         }
-
+        function extractEmbeddedItemsFromCanvas() {
+            if (!canvas) return [];
+            const boardRect = getBoardRect();
+            const boardWidth = Math.max(1, Number(boardRect.width || 0));
+            const boardHeight = Math.max(1, Number(boardRect.height || 0));
+            const boardLeft = Number(boardRect.left || 0);
+            const boardTop = Number(boardRect.top || 0);
+            return Array.from(canvas.querySelectorAll('.foa-grid-item')).map((el, idx) => {
+                const style = el.getAttribute('style') || '';
+                const left = parsePx((style.match(/left:\s*([\d.\-]+px)/i) || [])[1]);
+                const top = parsePx((style.match(/top:\s*([\d.\-]+px)/i) || [])[1]);
+                const width = parsePx((style.match(/width:\s*([\d.\-]+px)/i) || [])[1]);
+                const height = parsePx((style.match(/height:\s*([\d.\-]+px)/i) || [])[1]);
+                return {
+                    id: `embedded-${idx + 1}`,
+                    x: clamp((left - boardLeft) / boardWidth, 0, 1),
+                    y: clamp((top - boardTop) / boardHeight, 0, 1),
+                    w: clamp(width / boardWidth, 0.02, 1),
+                    h: clamp(height / boardHeight, 0.02, 1),
+                };
+            }).filter((it) => Number.isFinite(it.x) && Number.isFinite(it.y));
+        }
+        const embeddedBootstrapItems = normalizeItemsOrder(extractEmbeddedItemsFromCanvas());
 
         function getBoardRect() {
-            const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
-            const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
-            const imgRatio = 1366 / 1024;
-            const viewRatio = vw / vh;
+            const host = pageBg ? pageBg.getBoundingClientRect() : canvas.getBoundingClientRect();
+            const hostW = Math.max(1, host.width);
+            const hostH = Math.max(1, host.height);
+            const sizeRaw = pageBg ? window.getComputedStyle(pageBg).backgroundSize : '150% auto';
+            const size = String(sizeRaw || '').trim().toLowerCase();
 
-            let width = vw;
-            let height = vh;
-            let left = 0;
-            let top = 0;
+            let width = hostW;
+            let height = hostH;
+            const parts = size.split(/\s+/).filter(Boolean);
+            const p0 = parts[0] || '150%';
+            const p1 = parts[1] || 'auto';
 
-            if (viewRatio > imgRatio) {
-                height = vh;
-                width = height * imgRatio;
-                left = (vw - width) / 2;
+            if (p0.endsWith('%') && (p1 === 'auto' || !p1)) {
+                const pct = Math.max(0.01, Number(p0.replace('%', '')) / 100);
+                width = hostW * pct;
+                height = width / BOARD_ASPECT;
             } else {
-                width = vw;
-                height = width / imgRatio;
-                top = (vh - height) / 2;
+                const hostAspect = hostW / hostH;
+                if (hostAspect > BOARD_ASPECT) {
+                    height = hostH;
+                    width = height * BOARD_ASPECT;
+                } else {
+                    width = hostW;
+                    height = width / BOARD_ASPECT;
+                }
             }
 
-            return { left, top, width, height };
+            return {
+                left: host.left + ((hostW - width) / 2),
+                top: host.top + ((hostH - height) / 2),
+                width,
+                height
+            };
         }
+
+        let items = normalizeItemsOrder(frozenDefaults.map((it) => ({ ...it })));
+        let selectedGridIndex = -1;
+
+        function normalizeItem(item) {
+            const minW = 0.06;
+            const minH = 0.06;
+            const out = {
+                ...item,
+                id: String(item?.id || `g${Date.now()}`),
+                x: Number(item?.x ?? 0),
+                y: Number(item?.y ?? 0),
+                w: Number(item?.w ?? 0.2),
+                h: Number(item?.h ?? 0.12),
+            };
+            if (out.w <= 0 || out.h <= 0) return out;
+            out.w = clamp(out.w, minW, 1);
+            out.h = clamp(out.h, minH, 1);
+            out.x = clamp(out.x, 0, 1 - out.w);
+            out.y = clamp(out.y, 0, 1 - out.h);
+            return out;
+        }
+
 
         function openCardMenu(force = false) {
             if (cardMenu.style.display === 'block' && !force) { return; }
@@ -706,7 +644,9 @@ function normalizeItemsOrder(list) {
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 return parsed && typeof parsed === 'object' ? parsed : null;
-            } catch (_) { return null; }
+            } catch (_) {
+                return null;
+            }
         }
         async function uiSaveRemote(layout) {
             try { await api('/api/fear-of-abyss/ui-layout', 'POST', { device: uiDeviceKind, layout, set_default: true }); } catch (_) {}
@@ -724,9 +664,10 @@ function normalizeItemsOrder(list) {
                 floorBadge: document.getElementById('foaFloorBadge'),
                 depotBadge: document.getElementById('depotBadge'),
                 topNav: document.getElementById('foaTopNav'),
+                gameNav: document.getElementById('gameNavBar'),
             };
         }
-        function uiApplyOne(el, pos, key) {
+        function uiApplyOne(el, pos) {
             if (!el || !pos) return;
             const vw = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
             const vh = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
@@ -740,7 +681,7 @@ function normalizeItemsOrder(list) {
             el.style.touchAction = 'none';
         }
         function uiBindDrag(el, key, layout) {
-            return;
+            return () => {};
         }
         function uiSnapPosition(key, x, y, layout, vw, vh) {
             const snapPx = 14;
@@ -749,8 +690,16 @@ function normalizeItemsOrder(list) {
             let sx = x;
             let sy = y;
             if (Math.abs(sx - 0.5) <= tX) sx = 0.5;
+            if (Math.abs(sy - 0.5) <= tY) sy = 0.5;
+            const others = Object.entries(layout || {}).filter(([k, p]) => k !== key && p && typeof p === 'object');
+            if (others.length) {
+                const avgX = others.reduce((a, [, p]) => a + Number(p.x || 0), 0) / others.length;
+                const avgY = others.reduce((a, [, p]) => a + Number(p.y || 0), 0) / others.length;
+                if (Math.abs(sx - avgX) <= tX) sx = avgX;
+                if (Math.abs(sy - avgY) <= tY) sy = avgY;
+            }
             Object.entries(layout || {}).forEach(([k, p]) => {
-                if (k === key || !p) return;
+                if (k === key || !p || typeof p !== 'object') return;
                 if (Math.abs(sx - Number(p.x || 0)) <= tX) sx = Number(p.x || 0);
                 if (Math.abs(sy - Number(p.y || 0)) <= tY) sy = Number(p.y || 0);
                 const mirrorX = 1 - Number(p.x || 0);
@@ -758,46 +707,30 @@ function normalizeItemsOrder(list) {
             });
             return { x: uiClamp01(sx), y: uiClamp01(sy) };
         }
+        function uiReadEmbeddedLayout() {
+            try {
+                const node = document.getElementById('foa-embedded-ui-layout');
+                if (!node) return null;
+                const parsed = JSON.parse(node.textContent || '{}');
+                return parsed && typeof parsed === 'object' ? parsed : null;
+            } catch (_) { return null; }
+        }
         async function initUiLayout() {
             uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
             uiCleanupFns = [];
             const layout = { ...UI_LAYOUT_DEFAULT };
+            const embedded = uiReadEmbeddedLayout();
+            const local = uiLoadLocal();
+            const remote = await uiLoadRemote();
+            Object.assign(layout, embedded || {}, local || {}, remote || {});
             const targets = uiResolveTargets();
-            Object.entries(targets).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key], key));
+            Object.entries(targets).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key]));
             const onResize = () => {
-                Object.entries(uiResolveTargets()).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key], key));
+                Object.entries(uiResolveTargets()).forEach(([key, el]) => uiApplyOne(el, layout[key] || UI_LAYOUT_DEFAULT[key]));
             };
             window.addEventListener('resize', onResize, { passive: true });
             uiCleanupFns.push(() => window.removeEventListener('resize', onResize));
         }
-        function persistLocalItems(items) {
-            try {
-                localStorage.setItem(storageKey, JSON.stringify(items || []));
-} catch (_) {}
-}
-function readLocalItems() {
-try {
-const raw = localStorage.getItem(storageKey);
-if (!raw) return [];
-const parsed = JSON.parse(raw);
-return Array.isArray(parsed) ? parsed : [];
-            } catch (_) {
-                return [];
-            }
-        }
-        async function syncLayoutWithServer() {
-            const localItems = normalizeItemsOrder(readLocalItems());
-            if (localItems.length > 0) {
-                await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: localItems, set_default: true });
-                return;
-            }
-            // HTML icine gomulu varsayim her zaman kaynak kabul edilir.
-            // Hostta eski DB kaydi olsa bile ilk acilista bunu ezmesine izin vermeyiz.
-            const embedded = normalizeItemsOrder(frozenDefaults);
-            persistLocalItems(embedded);
-            queueRender();
-            await api('/api/fear-of-abyss/layout', 'POST', { device: deviceKind, items: embedded, set_default: true });
-}
 function findCardBuilding(cardId) {
 if (!foaState || !Array.isArray(foaState.buildings)) return null;
 return foaState.buildings.find(x => String(x.card_id) === String(cardId)) || null;
@@ -834,42 +767,40 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
             const chests = items.filter((x) => String(x.item_key || '').startsWith('chest_'));
             let html = `
                 <div class="foa-menu-head">
-                    <div class="foa-menu-title"><i class="fa-solid fa-warehouse" style="margin-right:8px; color: #60a5fa;"></i> ${I18N.depot}</div>
-                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="foa-menu-title"><i class="fa-solid fa-warehouse" style="color: #60a5fa; margin-right:6px;"></i> ${I18N.depot}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i> ${I18N.close}</button>
                 </div>
             `;
             if (!items.length) html += `<div style="text-align:center; padding:20px; opacity:0.6;">${I18N.emptyDepot}</div>`;
             if (chests.length) {
-                html += `<div class="section-title">Kasalar</div><div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">`;
+                html += `<div class="section-title">Kasalar</div><div style="display:flex; flex-wrap:wrap; gap:8px;">`;
                 chests.forEach((c) => {
                     const tier = String(c.item_key || '').replace('chest_', '');
-                    html += `<button class="foa-primary-btn" data-open-chest="${esc(tier)}"><i class="fa-solid fa-box-open" style="margin-right:6px;"></i> ${esc(c.item_name)} <span style="margin-left:8px; background:rgba(0,0,0,0.3); padding:2px 8px; border-radius:6px;">x${Number(c.qty || 0)}</span></button>`;
+                    html += `<button class="foa-primary-btn" data-open-chest="${esc(tier)}"><i class="fa-solid fa-box-open"></i> ${esc(c.item_name)} <span style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:6px; margin-left:4px;">x${Number(c.qty || 0)}</span></button>`;
                 });
                 html += `</div>`;
             }
-            
             const standardItems = items.filter((x) => !String(x.item_key || '').startsWith('chest_'));
-            if(standardItems.length) {
-                html += `<div class="section-title">${I18N.items}</div><div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">`;
+            if (standardItems.length) {
+                html += `<div class="section-title">${I18N.items}</div><div style="display:flex; flex-direction:column; gap:6px;">`;
                 standardItems.forEach((it) => {
-                    html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0;">
+                    html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; margin-bottom:0; padding:10px 14px;">
                         <span>${esc(it.item_name)}</span>
-                        <b style="color:#f8fafc; background:rgba(56, 189, 248, 0.2); padding:4px 10px; border-radius:6px;">x${Number(it.qty || 0)}</b>
+                        <b style="color:#38bdf8;">x${Number(it.qty || 0)}</b>
                     </div>`;
                 });
                 html += `</div>`;
             }
-
             if (lastChestTier) {
                 html += `
-                    <div style="margin-top:24px;padding:20px;background:rgba(15,23,42,0.8);border:1px solid rgba(148,163,184,0.3);border-radius:12px;animation:foaLoot .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <div style="margin-top:16px;padding:14px;background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.3);border-radius:12px;animation:foaLoot .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
                         <div class="section-title" style="margin-top:0;">${esc(lastChestTier).toUpperCase()} ${I18N.chestOpen}</div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="foa-primary-btn" data-open-amount="1">1 Aç</button>
-                            <button class="foa-primary-btn" data-open-amount="2">2 Aç</button>
-                            <button class="foa-primary-btn" data-open-amount="3">3 Aç</button>
-                            <button class="foa-primary-btn" data-open-amount="5">5 Aç</button>
-                            <button class="foa-primary-btn" data-open-amount="all" style="border-color:#fbbf24; color:#fbbf24;">${I18N.all}</button>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            <button class="foa-primary-btn" style="flex:1;" data-open-amount="1">1</button>
+                            <button class="foa-primary-btn" style="flex:1;" data-open-amount="2">2</button>
+                            <button class="foa-primary-btn" style="flex:1;" data-open-amount="3">3</button>
+                            <button class="foa-primary-btn" style="flex:1;" data-open-amount="5">5</button>
+                            <button class="foa-primary-btn" style="flex:1; border-color:#fbbf24; color:#fbbf24;" data-open-amount="all">${I18N.all}</button>
                         </div>
                     </div>
                 `;
@@ -903,7 +834,6 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
                 if (res && res.ok) { towerState = res; foaState = res; updateTopBadges(); lastChestTier = ''; renderDepotPanel(); }
             });
         }
-
         function renderTowerPanel() {
             menuMode = 'tower';
             const t = towerState;
@@ -912,53 +842,42 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
             const active = t.active_battle;
             let html = `
                 <div class="foa-menu-head">
-                    <div class="foa-menu-title"><i class="fa-brands fa-fort-awesome" style="margin-right:8px; color: #a78bfa;"></i> ${I18N.tower} - ${I18N.floor} ${Number(t.floor || 1)}</div>
-                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="foa-menu-title"><i class="fa-brands fa-fort-awesome" style="color:#a78bfa; margin-right:6px;"></i> ${I18N.tower} - ${I18N.floor} ${Number(t.floor || 1)}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i> ${I18N.close}</button>
                 </div>
-                
-                <div style="display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">
-                    <div>${I18N.nextEnemy}: <b style="color:#ef4444;">${esc(t.enemy.enemy_name || '-')}</b> <span style="opacity:0.7">x${Number(t.enemy.enemy_count || 0)}</span></div>
-                    <div>${I18N.infinityStone}: <b style="color:#c084fc;"><i class="fa-solid fa-gem"></i> ${Number(t.infinity_stones || 0)}</b></div>
+                <div class="foa-list-item" style="display:flex; justify-content:space-between; margin-bottom:16px;">
+                    <div>${I18N.enemy}: <b style="color:#ef4444;">${esc(t.enemy.enemy_name || '-')}</b> <span style="opacity:0.8;">x${Number(t.enemy.enemy_count || 0)}</span></div>
+                    <div><i class="fa-solid fa-gem" style="color:#c084fc;"></i> <b>${Number(t.infinity_stones || 0)}</b></div>
                 </div>
             `;
             if (active) {
                 html += `
                     <div class="section-title" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-khanda"></i> ${I18N.activeBattle}</div>
                     <div class="foa-list-item">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-                            <div>${I18N.enemy}: <b>${esc(active.enemy_name)}</b></div>
-                            <div style="text-align:right;">${I18N.remainingTime}: <b style="color:#fbbf24;">${formatRemaining(Number(active.remaining_sec || 0) * 1000)}</b></div>
-                            <div>${I18N.partyPower}: <b style="color:#38bdf8;">${Number(active.party_power || 0)}</b></div>
-                            <div style="text-align:right;">${I18N.enemyPower}: <b style="color:#ef4444;">${Number(active.enemy_power || 0)}</b></div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span>${esc(active.enemy_name)}</span>
+                            <b style="color:#fbbf24;">${formatRemaining(Number(active.remaining_sec || 0) * 1000)}</b>
                         </div>
-                        <div style="background:rgba(0,0,0,0.4); height:8px; border-radius:4px; overflow:hidden; margin-bottom:16px;">
+                        <div style="background:rgba(0,0,0,0.5); height:8px; border-radius:4px; margin-bottom:12px; overflow:hidden;">
                             <div style="width:${Math.round(Number(active.progress || 0) * 100)}%; height:100%; background:linear-gradient(90deg, #ef4444, #f97316);"></div>
                         </div>
-                        <div style="font-weight:700; margin-bottom:8px; opacity:0.8;">${I18N.partyStatus}</div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:12px; color:#cbd5e1;">
+                            <span>${I18N.partyPower}: <b style="color:#38bdf8;">${Number(active.party_power || 0)}</b></span>
+                            <span>${I18N.enemyPower}: <b style="color:#ef4444;">${Number(active.enemy_power || 0)}</b></span>
+                        </div>
+                        <div style="font-weight:700; margin-bottom:8px; opacity:0.8; font-size:0.9rem;">${I18N.partyStatus}</div>
                 `;
                 (active.party || []).forEach((p) => {
                     const isDead = p.is_dead;
-                    html += `<div style="display:flex; justify-content:space-between; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px; border-left:3px solid ${isDead ? '#ef4444' : '#22c55e'};">
-                        <span>${esc(p.hero_name)} ${isDead ? '<span style="color:#ef4444;font-size:0.8em;">(${I18N.deadShort})</span>' : ''}</span>
-                        <span style="font-family:var(--font-main);"><i class="fa-solid fa-heart" style="color:#ef4444; font-size:0.9em;"></i> ${Number(p.hp || 0)}/${Number(p.max_hp || 0)}</span>
+                    html += `<div style="display:flex; justify-content:space-between; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px; border-left:3px solid ${isDead ? '#ef4444' : '#22c55e'}; font-size:0.9rem;">
+                        <span>${esc(p.hero_name)} ${isDead ? '<span style="color:#ef4444;font-size:0.8em;">(ÖLÜ)</span>' : ''}</span>
+                        <span><i class="fa-solid fa-heart" style="color:#ef4444; font-size:0.85em;"></i> ${Number(p.hp || 0)}/${Number(p.max_hp || 0)}</span>
                     </div>`;
                 });
                 html += `</div>`;
             } else {
-                html += `<button class="foa-primary-btn" id="foaStartBattleBtn" style="width:100%; padding:16px; font-size:1.1rem; background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;"><i class="fa-solid fa-khanda" style="margin-right:8px;"></i> ${I18N.startBattle}</button>`;
+                html += `<button class="foa-primary-btn" id="foaStartBattleBtn" style="width:100%; padding:16px; font-size:1.05rem; background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;"><i class="fa-solid fa-khanda"></i> ${I18N.startBattle}</button>`;
             }
-            
-            html += `<div class="section-title"><i class="fa-solid fa-scroll"></i> ${I18N.battleLogs}</div>`;
-            (t.battle_logs || []).forEach((l) => {
-                const isWin = l.result.toLowerCase().includes('win') || l.result.toLowerCase().includes('kazan');
-                html += `<div class="foa-list-item" style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px;">
-                    <div>Kat ${Number(l.floor || 0)} - <span style="color:${isWin ? '#4ade80' : '#f87171'}; font-weight:bold;">${esc(l.result)}</span></div>
-                    <div style="display:flex; gap:16px; opacity:0.8; font-size:0.9rem;">
-                        <span><i class="fa-solid fa-coins" style="color:#fbbf24;"></i> ${Number(l.reward_gold || 0)}</span>
-                        <span>${esc(l.created_at || '')}</span>
-                    </div>
-                </div>`;
-            });
             cardMenu.innerHTML = html;
             const closeBtn = document.getElementById('foaCloseBtn');
             if (closeBtn) closeBtn.onclick = (ev) => { ev.stopPropagation(); closeCardMenu(); };
@@ -966,13 +885,9 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
             if (startBtn) startBtn.onclick = async (ev) => {
                 ev.stopPropagation();
                 const res = await api('/api/fear-of-abyss/tower/start_battle', 'POST', {});
-                if (res && res.ok) {
-                    towerState = res;
-                    renderTowerPanel();
-                }
+                if (res && res.ok) { towerState = res; renderTowerPanel(); }
             };
         }
-
         function renderCharactersPanel() {
             menuMode = 'characters';
             const t = towerState;
@@ -980,72 +895,67 @@ const items = Array.isArray(t.depot_items) ? t.depot_items : [];
             openCardMenu();
             let html = `
                 <div class="foa-menu-head">
-                    <div class="foa-menu-title"><i class="fa-solid fa-users" style="margin-right:8px; color: #34d399;"></i> ${I18N.characters}</div>
-                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+                    <div class="foa-menu-title"><i class="fa-solid fa-users" style="color:#34d399; margin-right:6px;"></i> ${I18N.characters}</div>
+                    <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i> ${I18N.close}</button>
                 </div>
             `;
             if (t.mage_tower && t.mage_tower.ready) {
                 html += `
-                    <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(52, 211, 153, 0.3); padding:16px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div style="font-family:var(--font-title); font-weight:bold; color:#34d399; margin-bottom:4px;">${I18N.summonTitle}</div>
-                            <div style="font-size:0.9rem; opacity:0.8;">Maliyet: ${I18N.summonSingle} ${Number(t.summon.single_cost || 500)} <i class="fa-solid fa-coins"></i> | ${I18N.summonTen} ${Number(t.summon.ten_cost || 5000)} <i class="fa-solid fa-coins"></i></div>
-                        </div>
+                    <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(52, 211, 153, 0.3); padding:12px; border-radius:12px; margin-bottom:16px;">
+                        <div style="font-size:0.85rem; opacity:0.8; margin-bottom:8px;">${I18N.summonTitle}: Tekli ${Number(t.summon.single_cost || 500)} <i class="fa-solid fa-coins"></i> | 10'lu ${Number(t.summon.ten_cost || 5000)} <i class="fa-solid fa-coins"></i></div>
                         <div style="display:flex; gap:8px;">
-                            <button class="foa-primary-btn" id="foaSummonOneBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%);"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i> 1 ${I18N.summonSingle}</button>
-                            <button class="foa-primary-btn" id="foaSummonTenBtn" style="background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;"><i class="fa-solid fa-users-rays" style="margin-right:6px;"></i> 10 Çağrı</button>
+                            <button class="foa-primary-btn" id="foaSummonOneBtn" style="flex:1; background:linear-gradient(180deg, #059669 0%, #064e3b 100%);"><i class="fa-solid fa-user-plus"></i> 1 ${I18N.summonSingle}</button>
+                            <button class="foa-primary-btn" id="foaSummonTenBtn" style="flex:1; background:linear-gradient(180deg, #059669 0%, #064e3b 100%); border-color:#34d399;"><i class="fa-solid fa-users-rays"></i> 10 ${I18N.summonTen}</button>
                         </div>
                     </div>
                 `;
             } else {
-                html += `<div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:20px; text-align:center; opacity:.7;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${I18N.summonTowerRequired}</div>`;
-            }
-
-            html += `<div style="display:grid; grid-template-columns:1fr; gap:16px;">`;
+                html += `<div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:16px; text-align:center; font-size:0.9rem; opacity:.8;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${I18N.summonTowerRequired}</div>`;
+}
 (t.heroes || []).forEach((h) => {
 const dead = Boolean(h.is_dead);
 const block = Boolean(h.hospital_block);
 const rarityColor = h.rarity === 'legendary' ? '#f59e0b' : h.rarity === 'epic' ? '#a855f7' : h.rarity === 'rare' ? '#3b82f6' : '#94a3b8';
-                
+
                 html += `<div class="foa-list-item" style="position:relative; overflow:hidden; border-left:4px solid ${rarityColor};">`;
                 if(dead) html += `<div style="position:absolute; inset:0; background:rgba(220, 38, 38, 0.1); pointer-events:none;"></div>`;
                 
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                        <div>
-                            <div style="font-family:var(--font-title); font-size:1.2rem; font-weight:bold; color:#fff;">${esc(h.hero_name)} <span style="font-size:0.7em; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.1); color:${rarityColor}; vertical-align:middle; text-transform:uppercase;">${esc(h.rarity || 'common')}</span></div>
-                            <div style="font-size:0.9rem; margin-top:4px; color:#cbd5e1;">Seviye ${Number(h.level || 1)} • XP: ${Number(h.xp || 0)}/${Number(h.next_level_xp || 100)}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-weight:bold; color:${dead ? '#ef4444' : '#22c55e'};">${dead ? `<i class="fa-solid fa-skull"></i> ${I18N.deadShort}` : I18N.alive} ${block ? `<span style="color:#fbbf24;font-size:0.8em;">(${I18N.waiting})</span>` : ''}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; margin-bottom:12px; text-align:center; font-size:0.9rem;">
-                        <div><i class="fa-solid fa-sword" style="color:#f87171;"></i> ATK<br><b>${Number(h.total_attack || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.attack || 0)})</span></div>
-                        <div style="border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-shield" style="color:#60a5fa;"></i> DEF<br><b>${Number(h.total_defense || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.defense || 0)})</span></div>
-                        <div><i class="fa-solid fa-heart" style="color:#ef4444;"></i> HP<br><b style="color:#e2e8f0;">${Number(h.total_hp || 0)} / ${Number(h.total_max_hp || 0)}</b></div>
-                    </div>
-                    
-                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
-<button class="foa-primary-btn" data-toggle-party="${esc(h.hero_id)}" ${dead ? 'disabled' : ''} style="${h.in_party ? 'background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;' : ''}"> ${h.in_party ? `<i class="fa-solid fa-minus"></i> ${I18N.removeFromParty}` : `<i class="fa-solid fa-plus"></i> ${I18N.addToParty}`}
-</button>
-<button class="foa-primary-btn" data-equip-best="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}><i class="fa-solid fa-shirt"></i> ${I18N.bestEquipment}</button>
-<button class="foa-primary-btn" data-train-hero="${esc(h.hero_id)}" ${dead || block ? 'disabled' : ''}><i class="fa-solid fa-dumbbell"></i> ${I18N.train20m}</button>`;
-if (dead) {
-html += `<button class="foa-primary-btn" data-revive-hero="${esc(h.hero_id)}" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'} style="background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;"><i class="fa-solid fa-gem"></i> Canlandır</button>
-                        <button class="foa-primary-btn" data-delete-hero="${esc(h.hero_id)}" style="background:rgba(220, 38, 38, 0.2); color:#fca5a5;"><i class="fa-solid fa-trash"></i></button>
-                    `;
+                html += `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                            <div>
+                                <div style="font-family:var(--font-title); font-size:1.1rem; font-weight:bold; color:#fff;">${esc(h.hero_name)} <span style="font-size:0.7em; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:${rarityColor}; text-transform:uppercase;">${esc(h.rarity || 'common')}</span></div>
+                                <div style="font-size:0.85rem; margin-top:4px; color:#cbd5e1;">Seviye ${Number(h.level || 1)} • XP: ${Number(h.xp || 0)}/${Number(h.next_level_xp || 100)}</div>
+                            </div>
+                            <div style="text-align:right; font-size:0.85rem;">
+                                <div style="font-weight:bold; color:${dead ? '#ef4444' : '#22c55e'};">${dead ? `<i class="fa-solid fa-skull"></i> ${I18N.deadShort}` : I18N.alive}</div>
+                                ${block ? `<div style="color:#fbbf24;font-size:0.8em; margin-top:2px;">(${I18N.waiting})</div>` : ''}
+                            </div>
+                        </div>`;
+                
+                html += `<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px; margin-bottom:10px; text-align:center; font-size:0.85rem;">
+                            <div><i class="fa-solid fa-sword" style="color:#f87171;"></i> ATK<br><b>${Number(h.total_attack || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.attack || 0)})</span></div>
+                            <div style="border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1);"><i class="fa-solid fa-shield" style="color:#60a5fa;"></i> DEF<br><b>${Number(h.total_defense || 0)}</b> <span style="color:#4ade80;font-size:0.8em;">(+${Number(h.equipment_bonus.defense || 0)})</span></div>
+                            <div><i class="fa-solid fa-heart" style="color:#ef4444;"></i> HP<br><b>${Number(h.total_hp || 0)} / ${Number(h.total_max_hp || 0)}</b></div>
+                        </div>`;
+                
+                html += `<div style="display:flex; flex-wrap:wrap; gap:6px;">
+                            <button class="foa-primary-btn" style="flex:1; padding:10px 6px; font-size:0.85rem; ${h.in_party ? 'background:linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%); border-color:#ef4444;' : ''}" data-toggle-party="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}> ${h.in_party ? `<i class="fa-solid fa-minus"></i> ${I18N.removeShort}` : `<i class="fa-solid fa-plus"></i> ${I18N.addShort}`}
+                            </button>
+                            <button class="foa-primary-btn" style="flex:1; padding:10px 6px; font-size:0.85rem;" data-equip-best="${esc(h.hero_id)}" ${dead ? 'disabled' : ''}><i class="fa-solid fa-shirt"></i> ${I18N.equipmentShort}</button>
+                            <button class="foa-primary-btn" style="flex:1; padding:10px 6px; font-size:0.85rem;" data-train-hero="${esc(h.hero_id)}" ${dead || block ? 'disabled' : ''}><i class="fa-solid fa-dumbbell"></i> ${I18N.trainShort}</button>`;
+                
+                if (dead) {
+                    html += `<button class="foa-primary-btn" style="flex:1; padding:10px 6px; font-size:0.85rem; background:linear-gradient(180deg, #7e22ce 0%, #581c87 100%); border-color:#c084fc;" data-revive-hero="${esc(h.hero_id)}" ${Number(t.infinity_stones || 0) > 0 ? '' : 'disabled'}><i class="fa-solid fa-gem"></i> Canlandır</button>
+                             <button class="foa-primary-btn" style="flex:0 0 40px; background:rgba(220, 38, 38, 0.2); color:#fca5a5; padding:10px 6px;" data-delete-hero="${esc(h.hero_id)}"><i class="fa-solid fa-trash"></i></button>`;
                 }
                 html += `</div>`;
+                
                 if (h.training) {
-                    html += `<div style="margin-top:12px; padding:8px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:6px; color:#fbbf24; text-align:center; font-size:0.9rem;">
-                        <i class="fa-solid fa-person-running"></i> ${I18N.trainingNow}: <b>${formatRemaining(msRemaining(h.training.ends_at))}</b> | ${I18N.reward}: XP +${Number(h.training.xp_gain || 0)}
+                    html += `<div style="margin-top:10px; padding:6px; background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); border-radius:6px; color:#fbbf24; text-align:center; font-size:0.85rem;">
+                        <i class="fa-solid fa-person-running"></i> ${I18N.trainingNow}: <b>${formatRemaining(msRemaining(h.training.ends_at))}</b> | +${Number(h.training.xp_gain || 0)} XP
                     </div>`;
                 }
                 html += `</div>`;
             });
-            html += `</div>`;
             cardMenu.innerHTML = html;
             const closeBtn = document.getElementById('foaCloseBtn');
             if (closeBtn) closeBtn.onclick = (ev) => { ev.stopPropagation(); closeCardMenu(); };
@@ -1097,7 +1007,6 @@ html += `<button class="foa-primary-btn" data-revive-hero="${esc(h.hero_id)}" ${
                 if (res && res.ok) { towerState = res; renderCharactersPanel(); }
             });
         }
-
         function msRemaining(iso) {
             if (!iso) return 0;
             const end = new Date(iso).getTime();
@@ -1130,14 +1039,13 @@ const defs = Array.isArray(foaState.building_defs) ? foaState.building_defs : []
 const balance = Number(foaState.balance || 0);
 const builtKeys = new Set((foaState.buildings || []).map((b) => String(b.building_key || '')));
 const titleIcon = current ? (current.visual.icon || 'fa-solid fa-building') : 'fa-solid fa-hammer';
-            const titleText = current ? `${esc(current.building_name)} <span style="font-size:0.7em; opacity:0.8; vertical-align:middle;">(Lv.${Number(current.level || 1)})</span>` : I18N.buildingConstruction;
-            
+            const titleText = current ? `${esc(current.building_name)} <span style="font-size:0.7em; opacity:0.8; font-weight:normal;">(Lv.${Number(current.level || 1)})</span>` : 'Bina İnşası';
             let content = `
                 <div class="foa-menu-head">
-                    <div class="foa-menu-title"><i class="${titleIcon}" style="margin-right:8px; color: var(--ui-accent);"></i> ${titleText}</div>
+                    <div class="foa-menu-title"><i class="${titleIcon}" style="color:var(--ui-accent); margin-right:6px;"></i> ${titleText}</div>
                     <button type="button" class="foa-close-btn" id="foaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="foa-card-meta"><i class="fa-solid fa-location-dot"></i> Parsel: ${esc(selectedCardId)}</div>
+                <div class="foa-card-meta"><i class="fa-solid fa-location-dot"></i> Alan: ${esc(selectedCardId)}</div>
             `;
 if (!current) {
 content += '<div class="foa-building-list">';
@@ -1148,7 +1056,7 @@ const disabled = alreadyBuilt || !enough;
 content += `<button class="foa-building-btn" data-build-key="${esc(d.key)}" ${disabled ? 'disabled' : ''}>
                             <b>${esc(d.name)}</b>
                             <small style="margin-bottom:8px;">${esc(d.desc)}</small>
-                            <div style="margin-top:auto; font-weight:600; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};"> ${alreadyBuilt ? '<i class="fa-solid fa-check"></i> ${I18N.built}' : `<i class="fa-solid fa-coins"></i> ${I18N.cost100}`}
+                            <div style="margin-top:auto; font-weight:600; font-size:0.9rem; color:${alreadyBuilt ? '#94a3b8' : (enough ? '#fbbf24' : '#ef4444')};"> ${alreadyBuilt ? '<i class="fa-solid fa-check"></i> İnşa Edildi' : `<i class="fa-solid fa-coins"></i> ${I18N.cost100}`}
                             </div>
 </button>`;
 });
@@ -1158,46 +1066,46 @@ const upgrading = Boolean(current.is_upgrading);
 const maxed = Number(current.level || 1) >= Number(current.max_level || 10);
 const rem = upgrading ? msRemaining(current.upgrade_ends_at) : 0;
                 
-                content += `<div style="background:rgba(0,0,0,0.2); padding:16px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">`;
-                content += `<div style="margin-bottom:12px; font-size:1.05rem; line-height:1.5;">${esc((defs.find(d => d.key === current.building_key) || {}).desc || '')}</div>`;
-                content += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <span>${I18N.upgradeStatus}</span>
-                                <b style="font-size:1.2rem; color:#38bdf8;">Lv. ${Number(current.level || 1)} <span style="opacity:0.5;font-size:0.8em;">/ ${Number(current.max_level || 10)}</span></b>
+                content += `<div class="foa-list-item" style="border-color:rgba(56, 189, 248, 0.3);">`;
+                content += `<div style="margin-bottom:12px; font-size:0.9rem; opacity:0.9;">${esc((defs.find(d => d.key === current.building_key) || {}).desc || '')}</div>`;
+                content += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <span>${I18N.upgradeStatusShort}:</span>
+                                <b style="font-size:1.1rem; color:#38bdf8;">Lv. ${Number(current.level || 1)} <span style="opacity:0.5;font-size:0.8em;">/ ${Number(current.max_level || 10)}</span></b>
                             </div>`;
                             
                 if (upgrading) {
-                    content += `<div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); padding:12px; border-radius:8px; margin-bottom:16px; color:#fbbf24; display:flex; justify-content:space-between; align-items:center;">
+                    content += `<div style="background:rgba(245, 158, 11, 0.1); border:1px solid rgba(245, 158, 11, 0.3); padding:10px; border-radius:8px; margin-bottom:12px; color:#fbbf24; display:flex; justify-content:space-between; align-items:center; font-size:0.9rem;">
 <span><i class="fa-solid fa-hammer"></i> ${I18N.upgrading} (Lv.${Number(current.upgrading_to || 0)})</span>
 <b>${formatRemaining(rem)}</b>
 </div>`;
 const instant = Number(current.quick_finish_cost || 0);
 const canFinish = balance >= instant;
-content += `<button class="foa-primary-btn" data-finish-now="${esc(selectedCardId)}" ${canFinish ? '' : 'disabled'} style="width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;"><i class="fa-solid fa-bolt"></i> ${I18N.finishNow} (${instant} Altın)</button>`;
+content += `<button class="foa-primary-btn" data-finish-now="${esc(selectedCardId)}" ${canFinish ? '' : 'disabled'} style="width:100%; margin-bottom:10px; background:linear-gradient(180deg, #d97706 0%, #b45309 100%); border-color:#f59e0b;"><i class="fa-solid fa-bolt"></i> ${I18N.finishNow} (${instant} <i class="fa-solid fa-coins"></i>)</button>`;
 } else if (!maxed) {
 const price = Number(current.next_upgrade_cost || 0);
 const canBuy = !upgrading && balance >= price;
-content += `<button class="foa-primary-btn" data-upgrade-card="${esc(selectedCardId)}" ${canBuy ? '' : 'disabled'} style="width:100%;"><i class="fa-solid fa-arrow-up-right-dots"></i> ${I18N.upgrade} (<i class="fa-solid fa-coins" style="color:#fbbf24; margin:0 4px;"></i> ${price})</button>`;
+content += `<button class="foa-primary-btn" data-upgrade-card="${esc(selectedCardId)}" ${canBuy ? '' : 'disabled'} style="width:100%;"><i class="fa-solid fa-arrow-up-right-dots"></i> ${I18N.upgrade} (<i class="fa-solid fa-coins" style="color:#fbbf24;"></i> ${price})</button>`;
                 } else {
-                    content += `<div style="text-align:center; padding:12px; background:rgba(34, 197, 94, 0.1); color:#4ade80; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.3);"><i class="fa-solid fa-star"></i> ${I18N.maxLevel}</div>`;
+                    content += `<div style="text-align:center; padding:10px; background:rgba(34, 197, 94, 0.1); color:#4ade80; border-radius:8px; border:1px solid rgba(34, 197, 94, 0.3); font-size:0.9rem;"><i class="fa-solid fa-star"></i> ${I18N.maxLevel}</div>`;
                 }
                 content += `</div>`;
 
                 const recipeRows = recipesForBuilding(current.building_key);
                 if (recipeRows.length > 0) {
-                    content += `<div class="section-title"><i class="fa-solid fa-book-journal-whills"></i> ${I18N.recipesAndCraft}</div>`;
-                    content += `<div style="display:grid; gap:10px;">`;
+                    content += `<div class="section-title"><i class="fa-solid fa-book-journal-whills"></i> ${I18N.productionCraft}</div>`;
+                    content += `<div style="display:flex; flex-direction:column; gap:8px;">`;
                     recipeRows.forEach((r) => {
                         if (!r.unlocked) {
-                            content += `<div class="foa-list-item" style="opacity:0.6; display:flex; justify-content:space-between; margin-bottom:0;">
-                                <span><i class="fa-solid fa-lock" style="margin-right:6px;"></i> ${esc(r.name)}</span>
-                                <span>${I18N.unlockAt}: Lv.${Number(r.min_level || 1)}</span>
+                            content += `<div class="foa-list-item" style="opacity:0.6; display:flex; justify-content:space-between; margin-bottom:0; padding:10px;">
+                                <span><i class="fa-solid fa-lock"></i> ${esc(r.name)}</span>
+                                <span style="font-size:0.85rem;">${I18N.unlockAt}: Lv.${Number(r.min_level || 1)}</span>
 </div>`;
 return;
 }
 if (!r.owned) {
 const canBuyRecipe = balance >= Number(r.recipe_cost || 0);
 content += `<button class="foa-primary-btn" data-buy-recipe="${esc(r.key)}" ${canBuyRecipe ? '' : 'disabled'} style="justify-content:space-between;">
-                                <span><i class="fa-solid fa-scroll"></i> ${I18N.buyRecipe}: ${esc(r.name)}</span>
+                                <span><i class="fa-solid fa-scroll"></i> Tarif: ${esc(r.name)}</span>
                                 <span style="color:#fbbf24;">${Number(r.recipe_cost || 0)} <i class="fa-solid fa-coins"></i></span>
 </button>`;
 return;
@@ -1213,14 +1121,14 @@ content += `</div>`;
 if (current.building_key === 'vendor') {
 content += `<div class="section-title"><i class="fa-solid fa-store"></i> ${I18N.vendorStock}</div>`;
 const stock = Array.isArray(towerState.vendor_stock) ? towerState.vendor_stock : [];
-                    if (!stock.length) content += `<div style="opacity:0.7; text-align:center; padding:10px;">${I18N.noStock}</div>`;
+                    if (!stock.length) content += `<div style="opacity:0.7; text-align:center; padding:10px; font-size:0.9rem;">${I18N.noStock}</div>`;
                     else {
-                        content += `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">`;
+                        content += `<div style="display:grid; grid-template-columns:1fr; gap:8px;">`;
 stock.forEach((s) => {
 const canBuy = Number(s.qty || 0) > 0 && balance >= Number(s.price || 0);
-content += `<button class="foa-primary-btn" data-vendor-buy="${Number(s.slot_idx || 0)}" ${canBuy ? '' : 'disabled'} style="flex-direction:column; align-items:flex-start; gap:8px;">
-                                <div style="font-weight:bold;">${esc(s.item_name)} <span style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-size:0.8em; margin-left:4px;">x${Number(s.qty || 0)}</span></div>
-                                <div style="color:#fbbf24; font-size:0.9rem;"><i class="fa-solid fa-coins"></i> ${Number(s.price || 0)}</div>
+content += `<button class="foa-primary-btn" data-vendor-buy="${Number(s.slot_idx || 0)}" ${canBuy ? '' : 'disabled'} style="justify-content:space-between;">
+                                <span>${esc(s.item_name)} <span style="background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; font-size:0.8em; margin-left:4px;">x${Number(s.qty || 0)}</span></span>
+                                <span style="color:#fbbf24;"><i class="fa-solid fa-coins"></i> ${Number(s.price || 0)}</span>
 </button>`;
 });
 content += `</div>`;
@@ -1230,7 +1138,7 @@ if (current.building_key === 'blacksmith' || current.building_key === 'armorer')
 const slot = current.building_key === 'blacksmith' ? 'weapon' : 'armor';
 const icon = current.building_key === 'blacksmith' ? 'fa-khanda' : 'fa-shield-halved';
                     content += `<div class="section-title"><i class="fa-solid ${icon}"></i> ${I18N.equipmentUpgrade} (${slot.toUpperCase()})</div>`;
-                    content += `<div style="display:grid; gap:10px;">`;
+                    content += `<div style="display:flex; flex-direction:column; gap:8px;">`;
 let foundAny = false;
 (towerState.heroes || []).forEach((h) => {
 const inv = Array.isArray(h.inventory) ? h.inventory : [];
@@ -1242,13 +1150,13 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
                         const canUp = balance >= cost;
                         content += `<button class="foa-primary-btn" data-gear-up="${esc(h.hero_id)}:${slot}" ${canUp ? '' : 'disabled'} style="justify-content:space-between; align-items:center;">
                             <div style="text-align:left;">
-                                <div style="font-size:0.85rem; opacity:0.8; margin-bottom:2px;">${esc(h.hero_name)}</div>
-                                <b>${esc(eq.item_name)} <span style="color:#38bdf8;">Lv.${ilvl}</span></b>
+                                <div style="font-size:0.8rem; opacity:0.8; margin-bottom:2px;">${esc(h.hero_name)}</div>
+                                <div>${esc(eq.item_name)} <span style="color:#38bdf8;">Lv.${ilvl}</span></div>
                             </div>
-                            <div style="color:#fbbf24;"><i class="fa-solid fa-arrow-up"></i> ${cost} <i class="fa-solid fa-coins"></i></div>
+                            <div style="color:#fbbf24;"><i class="fa-solid fa-arrow-up"></i> ${cost}</div>
                         </button>`;
                     });
-                    if(!foundAny) content += `<div style="opacity:0.7; text-align:center; padding:10px;">${I18N.noUpgradeableEquipped}</div>`;
+                    if(!foundAny) content += `<div style="opacity:0.7; text-align:center; padding:10px; font-size:0.9rem;">${I18N.noUpgradeableEquipped}</div>`;
                     content += `</div>`;
                 }
             }
@@ -1339,7 +1247,6 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
                 });
             });
         }
-
         async function refreshState() {
             const res = await api('/api/fear-of-abyss/state', 'GET');
             if (!res || !res.ok) return;
@@ -1359,48 +1266,46 @@ const inv = Array.isArray(h.inventory) ? h.inventory : [];
             const tw = await api('/api/fear-of-abyss/tower/state', 'GET');
             if (tw && tw.ok) {
                 towerState = tw;
-                floorBadge.innerHTML = `<i class="fa-solid fa-layer-group" style="margin-right:6px;"></i> ${I18N.floor}: ${Number(tw.floor || 1)}`;
-                const nextTowerLabel = `<i class="fa-brands fa-fort-awesome" style="margin-right:6px;"></i> ${I18N.tower} <span style="opacity:0.7;font-size:0.85em;margin-left:4px;">K${Number(tw.floor || 1)}</span>`;
-                if (towerNavBtn.innerHTML !== nextTowerLabel) towerNavBtn.innerHTML = nextTowerLabel;
+                floorBadge.innerHTML = `<i class="fa-solid fa-layer-group" style="margin-right:4px;"></i> ${I18N.floor}: ${Number(tw.floor || 1)}`;
             }
         }
 
         function render() {
-            const items = loadFrozenItems();
             const boardRect = getBoardRect();
             const boardLeft = boardRect.left;
             const boardTop = boardRect.top;
             const boardWidth = Math.max(1, boardRect.width);
             const boardHeight = Math.max(1, boardRect.height);
             canvas.innerHTML = '';
-
             items.forEach((it, idx) => {
-                const x = clamp(Number(it.x ?? 0), 0, 1);
-                const y = clamp(Number(it.y ?? 0), 0, 1);
-                const iw = clamp(Number(it.w ?? 0.2), 0.02, 1);
-                const ih = clamp(Number(it.h ?? 0.12), 0.02, 1);
-
+                const current = normalizeItem(it);
+                items[idx] = current;
+                if (Number(current.w || 0) <= 0 || Number(current.h || 0) <= 0) return;
                 const el = document.createElement('div');
                 el.className = 'foa-grid-item';
+                const x = clamp(Number(current.x ?? 0), 0, 1);
+                const y = clamp(Number(current.y ?? 0), 0, 1);
+                const iw = clamp(Number(current.w ?? 0.2), 0.02, 1);
+                const ih = clamp(Number(current.h ?? 0.12), 0.02, 1);
                 el.style.left = (boardLeft + (x * boardWidth)) + 'px';
                 el.style.top = (boardTop + (y * boardHeight)) + 'px';
                 el.style.width = (iw * boardWidth) + 'px';
                 el.style.height = (ih * boardHeight) + 'px';
+                el.style.touchAction = 'none';
                 el.dataset.cardId = `slot-${idx + 1}`;
-                
                 const st = findCardBuilding(el.dataset.cardId);
                 if (st) {
                     const visual = st.visual || {};
                     el.classList.add('has-building');
 if (visual.color) {
 el.style.borderColor = String(visual.color);
-el.style.background = `linear-gradient(135deg, color-mix(in srgb, ${String(visual.color)} 30%, rgba(15,23,42,0.9)) 0%, rgba(15,23,42,0.9) 100%)`;
+el.style.background = `linear-gradient(135deg, color-mix(in srgb, ${String(visual.color)} 30%, rgba(30,41,59,0.85)) 0%, rgba(15,23,42,0.95) 100%)`;
 }
 const label = document.createElement('div');
 label.className = 'foa-grid-item-label';
 const icon = String(visual.icon || 'fa-solid fa-building');
 const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `İnşa Lv.${Number(st.upgrading_to || 1)}`;
-                    label.innerHTML = `<i class="${icon}"></i><span>${esc(st.building_name)} <span style="opacity:0.8; font-weight:normal; font-family:var(--font-main); font-size:0.85em; margin-left:4px;">${levelText}</span></span>`;
+                    label.innerHTML = `<i class="${icon}"></i><span>${esc(st.building_name)} <span style="font-family:var(--font-main); font-weight:normal; font-size:0.85em; opacity:0.8; margin-left:2px;">${levelText}</span></span>`;
                     el.appendChild(label);
                     if (st.is_upgrading) {
                         const prog = Math.max(0, Math.min(1, Number(st.progress || 0)));
@@ -1412,17 +1317,14 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
                         el.appendChild(bar);
                     }
                 } else {
-                    // Boş slotlar için (isteğe bağlı) hafif bir çerçeve veya işaret eklenebilir.
-                    el.style.border = "2px dashed rgba(100, 116, 139, 0.2)";
+                    // Mobilde boş alanların belli olması için hafif şeffaf kutu
+                    el.style.border = "2px dashed rgba(100, 116, 139, 0.3)";
                     el.style.borderRadius = "12px";
                     el.style.background = "rgba(15, 23, 42, 0.2)";
-                    el.style.transition = "all 0.2s";
-                    el.addEventListener('mouseenter', () => { el.style.borderStyle = 'solid'; el.style.borderColor = 'rgba(100, 116, 139, 0.5)'; el.style.background = 'rgba(15, 23, 42, 0.4)'; });
-                    el.addEventListener('mouseleave', () => { el.style.borderStyle = 'dashed'; el.style.borderColor = 'rgba(100, 116, 139, 0.2)'; el.style.background = 'rgba(15, 23, 42, 0.2)'; });
                 }
-                
                 el.addEventListener('click', (ev) => {
                     ev.stopPropagation();
+                    selectedGridIndex = idx;
                     selectedCardId = String(el.dataset.cardId || '');
                     menuMode = 'card';
                     openCardMenu(true);
@@ -1430,6 +1332,7 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
                 });
                 canvas.appendChild(el);
             });
+            canvas.style.visibility = 'visible';
         }
 
         function queueRender() {
@@ -1441,17 +1344,10 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
             });
         }
 
+
         const onDocClick = () => closeCardMenu();
-        const onBeforeUnload = () => {
-            const items = normalizeItemsOrder(loadFrozenItems());
-            navigator.sendBeacon(
-                '/api/fear-of-abyss/layout',
-                new Blob([JSON.stringify({ device: deviceKind, items, set_default: true })], { type: 'application/json' })
-            );
-        };
         window.addEventListener('resize', queueRender, { passive: true });
         document.addEventListener('click', onDocClick);
-        window.addEventListener('beforeunload', onBeforeUnload);
         cardMenu.addEventListener('click', (ev) => ev.stopPropagation());
         window.addEventListener('orientationchange', queueRender, { passive: true });
         if (window.visualViewport) {
@@ -1463,29 +1359,24 @@ const levelText = Number(st.level || 0) > 0 ? `Lv.${Number(st.level || 0)}` : `�
             ro.observe(canvas);
         }
 
+        // Initial draw + delayed redraws for server-shell reflow after full refresh.
         lastGridSignature = gridSignatureFromState(foaState);
         render();
-        syncLayoutWithServer();
         refreshState();
         stateTimer = setInterval(refreshState, 1000);
         initUiLayout();
         setTimeout(initUiLayout, 400);
-        
-        towerNavBtn.innerHTML = `<i class="fa-brands fa-fort-awesome" style="margin-right:6px;"></i> ${I18N.tower}`;
-        charsNavBtn.innerHTML = `<i class="fa-solid fa-users" style="margin-right:6px;"></i> ${I18N.characters}`;
-        depotNavBtn.innerHTML = `<i class="fa-solid fa-warehouse" style="margin-right:6px;"></i> ${I18N.depot}`;
-        
         towerNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderTowerPanel(); });
         charsNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderCharactersPanel(); });
         depotNavBtn.addEventListener('click', (ev) => { ev.stopPropagation(); renderDepotPanel(); });
         setTimeout(queueRender, 60);
         setTimeout(queueRender, 220);
+
         window.__foaCleanup = function () {
             if (stateTimer) clearInterval(stateTimer);
             stateTimer = null;
             window.removeEventListener('resize', queueRender);
             window.removeEventListener('orientationchange', queueRender);
-            window.removeEventListener('beforeunload', onBeforeUnload);
             document.removeEventListener('click', onDocClick);
             uiCleanupFns.forEach((fn) => { try { fn(); } catch (_) {} });
             uiCleanupFns = [];

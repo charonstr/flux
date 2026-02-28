@@ -77,6 +77,17 @@ def setup() -> None:
             db.execute("ALTER TABLE accounts ADD COLUMN lastseen TEXT DEFAULT ''")
         db.execute(
             """
+            CREATE TABLE IF NOT EXISTS tactics_rank (
+                user_id INTEGER PRIMARY KEY,
+                rp INTEGER NOT NULL DEFAULT 0,
+                eternal_stars INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    with connect("casino/player") as db:
+        db.execute(
+            """
             CREATE TABLE IF NOT EXISTS wallets (
                 user_id INTEGER PRIMARY KEY,
                 balance INTEGER NOT NULL DEFAULT 0,
@@ -179,7 +190,6 @@ def setup() -> None:
             )
             """
         )
-
     with connect("casino/rewards") as db:
         db.execute(
             """
@@ -202,6 +212,39 @@ def setup() -> None:
             )
             """
         )
+
+    with connect("casino/achievements") as db:
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS casino_achievement_progress (
+                user_id INTEGER PRIMARY KEY,
+                gold_collector_level INTEGER NOT NULL DEFAULT 1,
+                net_profit_level INTEGER NOT NULL DEFAULT 1,
+                games_played_level INTEGER NOT NULL DEFAULT 1,
+                roulette_player_level INTEGER NOT NULL DEFAULT 1,
+                blackjack_player_level INTEGER NOT NULL DEFAULT 1,
+                multiplier_player_level INTEGER NOT NULL DEFAULT 1,
+                case_opener_level INTEGER NOT NULL DEFAULT 1,
+                balance_keeper_level INTEGER NOT NULL DEFAULT 1,
+                high_roller_level INTEGER NOT NULL DEFAULT 1,
+                profitable_games_level INTEGER NOT NULL DEFAULT 1,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        for col in (
+            "net_profit_level",
+            "games_played_level",
+            "roulette_player_level",
+            "blackjack_player_level",
+            "multiplier_player_level",
+            "case_opener_level",
+            "balance_keeper_level",
+            "high_roller_level",
+            "profitable_games_level",
+        ):
+            if not hascolumn(db, "casino_achievement_progress", col):
+                db.execute(f"ALTER TABLE casino_achievement_progress ADD COLUMN {col} INTEGER NOT NULL DEFAULT 1")
 
     with connect("social") as db:
         db.execute(
@@ -495,8 +538,8 @@ def createaccount(username: str, passwordhash: str) -> bool:
             db.execute("BEGIN IMMEDIATE")
             db.execute("INSERT INTO accounts (username, passwordhash) VALUES (?, ?)", (username, passwordhash))
             user_id = int(db.execute("SELECT last_insert_rowid()").fetchone()[0])
-            _applyledger(db, user_id, 1000, "initial_grant", "signup bonus", f"signup:{user_id}:initial_grant")
             db.execute("COMMIT")
+        applyledger(user_id, 1000, "initial_grant", "signup bonus", f"signup:{user_id}:initial_grant")
         return True
     except sqlite3.IntegrityError:
         return False
@@ -534,7 +577,7 @@ def _applyledger(
 
 
 def applyledger(user_id: int, amount: int, tx_type: str, description: str, reference_id: str | None = None) -> bool:
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("BEGIN IMMEDIATE")
         applied = _applyledger(db, user_id, amount, tx_type, description, reference_id)
         if applied:
@@ -545,14 +588,14 @@ def applyledger(user_id: int, amount: int, tx_type: str, description: str, refer
 
 
 def walletbalance(user_id: int) -> int:
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         _ensurewallet(db, user_id)
         row = db.execute("SELECT balance FROM wallets WHERE user_id = ?", (int(user_id),)).fetchone()
     return int(row[0]) if row else 0
 
 
 def syncwallet(user_id: int) -> int:
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("BEGIN IMMEDIATE")
         _ensurewallet(db, user_id)
         row = db.execute("SELECT COALESCE(SUM(amount), 0) FROM ledger WHERE user_id = ?", (int(user_id),)).fetchone()
@@ -566,12 +609,12 @@ def syncwallet(user_id: int) -> int:
 
 
 def ensurelevel(user_id: int) -> None:
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
 
 
 def levelstate(user_id: int):
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
         return db.execute(
             "SELECT level, xp, total_xp, updated_at FROM user_level WHERE user_id = ?",
@@ -591,7 +634,7 @@ def applyxp(
     value = int(amount)
     if value <= 0:
         raise ValueError("amount must be positive")
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("BEGIN IMMEDIATE")
         db.execute("INSERT OR IGNORE INTO user_level (user_id, level, xp, total_xp) VALUES (?, 1, 0, 0)", (int(user_id),))
         try:
@@ -627,7 +670,7 @@ def applyxp(
 
 
 def casinosummary(user_id: int):
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         row = db.execute(
             """
             SELECT
@@ -653,10 +696,11 @@ def casinoleaderboard(period: str, limit: int = 5):
     elif period == "monthly":
         where = "AND created_at >= datetime('now', '-30 day')"
     with connect("accounts") as db:
+        db.execute("ATTACH DATABASE ? AS casino_player", (str(path("casino/player")),))
         rows = db.execute(
             f"""
             SELECT a.username, COALESCE(SUM(CASE WHEN g.delta_amount > 0 THEN g.delta_amount ELSE 0 END), 0) AS total_win
-            FROM casino_games g
+            FROM casino_player.casino_games g
             JOIN accounts a ON a.id = g.user_id
             WHERE 1=1 {where}
             GROUP BY g.user_id, a.username
@@ -671,12 +715,13 @@ def casinoleaderboard(period: str, limit: int = 5):
 
 def casinorichest(limit: int = 5):
     with connect("accounts") as db:
+        db.execute("ATTACH DATABASE ? AS casino_player", (str(path("casino/player")),))
         rows = db.execute(
             """
             SELECT a.username, w.balance
-            FROM wallets w
+            FROM casino_player.wallets w
             JOIN accounts a ON a.id = w.user_id
-            WHERE EXISTS (SELECT 1 FROM casino_games g WHERE g.user_id = w.user_id)
+            WHERE EXISTS (SELECT 1 FROM casino_player.casino_games g WHERE g.user_id = w.user_id)
             ORDER BY w.balance DESC, a.username ASC
             LIMIT ?
             """,
@@ -686,7 +731,7 @@ def casinorichest(limit: int = 5):
 
 
 def casinolastgames(user_id: int, limit: int = 10):
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         rows = db.execute(
             """
             SELECT game_name, delta_amount, created_at
@@ -701,15 +746,150 @@ def casinolastgames(user_id: int, limit: int = 10):
 
 
 def recordcasinogame(user_id: int, game_name: str, delta_amount: int) -> None:
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute(
             "INSERT INTO casino_games (user_id, game_name, delta_amount) VALUES (?, ?, ?)",
             (int(user_id), str(game_name), int(delta_amount)),
         )
 
 
+CASINO_ACHIEVEMENTS = [
+    {"key": "gold_collector", "title": "Altın Toplayıcı", "base_target": 1000, "metric": "wins_total"},
+    {"key": "games_played", "title": "Masa Müdavimi", "base_target": 10, "metric": "games_total"},
+    {"key": "roulette_player", "title": "Rulet Oyuncusu", "base_target": 5, "metric": "roulette_games"},
+    {"key": "blackjack_player", "title": "Blackjack Oyuncusu", "base_target": 5, "metric": "blackjack_games"},
+    {"key": "multiplier_player", "title": "Çarpan Oyuncusu", "base_target": 5, "metric": "multiplier_games"},
+    {"key": "case_opener", "title": "Kasa Avcısı", "base_target": 3, "metric": "case_opened"},
+]
+def _achievement_column(key: str) -> str:
+    return f"{key}_level"
+
+
+def _achievement_target(base_target: int, level: int) -> int:
+    return max(1, int(base_target)) * max(1, int(level))
+
+
+def _achievement_reward(level: int) -> int:
+    return 10 + max(0, int(level) - 1) * 10
+
+
+def _casino_metrics(user_id: int) -> dict[str, int]:
+    with connect("casino/player") as db:
+        row = db.execute(
+            """
+            SELECT
+                COALESCE(SUM(CASE WHEN delta_amount > 0 THEN delta_amount ELSE 0 END), 0),
+                COALESCE(SUM(delta_amount), 0),
+                COALESCE(COUNT(*), 0),
+                COALESCE(SUM(CASE WHEN game_name = 'roulette' THEN 1 ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN game_name = 'blackjack' THEN 1 ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN game_name = 'multiplier' THEN 1 ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN game_name LIKE 'case:%' THEN 1 ELSE 0 END), 0),
+                COALESCE(MAX(CASE WHEN delta_amount > 0 THEN delta_amount ELSE 0 END), 0),
+                COALESCE(SUM(CASE WHEN delta_amount > 0 THEN 1 ELSE 0 END), 0)
+            FROM casino_games
+            WHERE user_id = ?
+            """,
+            (int(user_id),),
+        ).fetchone()
+    balance = int(syncwallet(int(user_id)))
+    wins_total = int(row[0] if row else 0)
+    net_profit = max(0, int(row[1] if row else 0))
+    return {
+        "wins_total": wins_total,
+        "net_profit": net_profit,
+        "games_total": int(row[2] if row else 0),
+        "roulette_games": int(row[3] if row else 0),
+        "blackjack_games": int(row[4] if row else 0),
+        "multiplier_games": int(row[5] if row else 0),
+        "case_opened": int(row[6] if row else 0),
+        "max_single_win": int(row[7] if row else 0),
+        "profitable_games": int(row[8] if row else 0),
+        "balance": balance,
+    }
+
+
+def _ensure_casino_achievement_row(db: sqlite3.Connection, user_id: int) -> dict[str, int]:
+    db.execute("INSERT OR IGNORE INTO casino_ach.casino_achievement_progress (user_id) VALUES (?)", (int(user_id),))
+    columns = [_achievement_column(item["key"]) for item in CASINO_ACHIEVEMENTS]
+    row = db.execute(
+        f"SELECT {', '.join(columns)} FROM casino_ach.casino_achievement_progress WHERE user_id = ?",
+        (int(user_id),),
+    ).fetchone()
+    if not row:
+        return {item["key"]: 1 for item in CASINO_ACHIEVEMENTS}
+    levels: dict[str, int] = {}
+    for idx, item in enumerate(CASINO_ACHIEVEMENTS):
+        levels[item["key"]] = max(1, int(row[idx] or 1))
+    return levels
+
+
+def casinoachievementstate(user_id: int) -> dict:
+    metrics = _casino_metrics(int(user_id))
+    with connect("casino/player") as db:
+        db.execute("ATTACH DATABASE ? AS casino_ach", (str(path("casino/achievements")),))
+        levels = _ensure_casino_achievement_row(db, int(user_id))
+    items = []
+    for item in CASINO_ACHIEVEMENTS:
+        key = item["key"]
+        level = int(levels.get(key, 1))
+        progress_total = int(metrics.get(str(item["metric"]), 0))
+        target = _achievement_target(int(item["base_target"]), level)
+        items.append(
+            {
+                "key": key,
+                "title": f"{item['title']} Sv{level}",
+                "description": f"Hedef: {target}",
+                "level": level,
+                "progress_value": min(progress_total, target),
+                "progress_total_value": progress_total,
+                "target_value": target,
+                "reward_gold": _achievement_reward(level),
+                "can_claim": bool(progress_total >= target),
+            }
+        )
+    return {"achievements": items}
+
+
+def claimcasinoachievement(user_id: int, achievement_key: str) -> dict:
+    key = str(achievement_key or "").strip().lower()
+    target_item = next((a for a in CASINO_ACHIEVEMENTS if a["key"] == key), None)
+    if not target_item:
+        return {"ok": False, "error": "invalid_achievement", "state": casinoachievementstate(int(user_id))}
+    metrics = _casino_metrics(int(user_id))
+    with connect("casino/player") as db:
+        db.execute("ATTACH DATABASE ? AS casino_ach", (str(path("casino/achievements")),))
+        db.execute("BEGIN IMMEDIATE")
+        levels = _ensure_casino_achievement_row(db, int(user_id))
+        level = int(levels.get(key, 1))
+        target = _achievement_target(int(target_item["base_target"]), level)
+        progress_total = int(metrics.get(str(target_item["metric"]), 0))
+        if progress_total < target:
+            db.execute("ROLLBACK")
+            return {"ok": False, "error": "not_ready", "state": casinoachievementstate(int(user_id))}
+        reward = _achievement_reward(level)
+        ref = f"casino_achievement:{key}:sv{level}"
+        applied = _applyledger(
+            db,
+            int(user_id),
+            int(reward),
+            "casino_achievement_reward",
+            f"casino achievement {key} sv{level}",
+            ref,
+        )
+        if not applied:
+            db.execute("ROLLBACK")
+            return {"ok": False, "error": "idempotent", "state": casinoachievementstate(int(user_id))}
+        db.execute(
+            f"UPDATE casino_ach.casino_achievement_progress SET {_achievement_column(key)} = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?",
+            (int(level) + 1, int(user_id)),
+        )
+        db.execute("COMMIT")
+    return {"ok": True, "claimed_amount": int(reward), "state": casinoachievementstate(int(user_id))}
+
+
 def getcasinoaction(user_id: int, game_name: str, action_name: str, idempotency_key: str):
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         row = db.execute(
             """
             SELECT status_code, response_json
@@ -735,7 +915,7 @@ def savecasinoaction(user_id: int, game_name: str, action_name: str, idempotency
     if not idempotency_key:
         return
     body = response if isinstance(response, dict) else {}
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute(
             """
             INSERT OR IGNORE INTO casino_actions (user_id, game_name, action_name, idempotency_key, status_code, response_json)
@@ -791,7 +971,7 @@ def dailyrewardstate(user_id: int):
     start = _week_start(now)
     week_start_text = start.date().isoformat()
     day_index = (now.date() - start.date()).days + 1
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("ATTACH DATABASE ? AS casino", (str(path("casino/rewards")),))
         row = _ensure_reward_row(db, int(user_id), week_start_text)
         rewards = [int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]), int(row[6])]
@@ -830,7 +1010,7 @@ def claimdailyreward(user_id: int):
     day_index = (now.date() - start.date()).days + 1
     if day_index < 1 or day_index > 7:
         return {"ok": False, "error": "invalid_day"}
-    with connect("accounts") as db:
+    with connect("casino/player") as db:
         db.execute("ATTACH DATABASE ? AS casino", (str(path("casino/rewards")),))
         db.execute("BEGIN IMMEDIATE")
         row = _ensure_reward_row(db, int(user_id), week_start_text)
@@ -934,6 +1114,39 @@ def updatepassword(accountid: int, passwordhash: str) -> None:
 def heartbeat(accountid: int, when: str) -> None:
     with connect("accounts") as db:
         db.execute("UPDATE accounts SET lastseen = ? WHERE id = ?", (when, accountid))
+
+
+def ensure_tactics_rank(user_id: int) -> None:
+    with connect("accounts") as db:
+        db.execute(
+            "INSERT OR IGNORE INTO tactics_rank (user_id, rp, eternal_stars) VALUES (?, 0, 0)",
+            (int(user_id),),
+        )
+
+
+def tactics_rank_get(user_id: int) -> tuple[int, int]:
+    ensure_tactics_rank(int(user_id))
+    with connect("accounts") as db:
+        row = db.execute(
+            "SELECT rp, eternal_stars FROM tactics_rank WHERE user_id = ?",
+            (int(user_id),),
+        ).fetchone()
+    if not row:
+        return (0, 0)
+    return (int(row[0] or 0), int(row[1] or 0))
+
+
+def tactics_rank_set(user_id: int, rp: int, eternal_stars: int) -> None:
+    ensure_tactics_rank(int(user_id))
+    with connect("accounts") as db:
+        db.execute(
+            """
+            UPDATE tactics_rank
+            SET rp = ?, eternal_stars = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+            """,
+            (max(0, int(rp)), max(0, int(eternal_stars)), int(user_id)),
+        )
 
 
 def arefriends(a: int, b: int) -> bool:
@@ -1405,5 +1618,4 @@ def getvoicesignals(serverid: int, channelid: int, userid: int, afterid: int):
             "SELECT id, sender, target, kind, payload FROM voicesignals WHERE serverid = ? AND channelid = ? AND id > ? AND (target = ? OR target = 0) ORDER BY id ASC",
             (serverid, channelid, afterid, userid),
         ).fetchall()
-
 

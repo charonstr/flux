@@ -8,6 +8,6 @@ def load():
         "host": os.getenv("HOST", "0.0.0.0"),
         "port": int(os.getenv("PORT", "24705")),
         "debug": os.getenv("DEBUG", "false").lower() == "true",
-        "baseurl": os.getenv("BASEURL", "http://jacob.hidencloud.com:24705"),
+        "baseurl": os.getenv("BASEURL", "http://fluxnet.hidenfree.com:24705"),
         "secret": os.getenv("SECRET", "devsecret"),
     }

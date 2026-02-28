@@ -160,6 +160,10 @@
         <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Son Çıkanlar</h3>
         <div id="history"></div>
       </section>
+      <section class="panel-box">
+        <h3><i class="fa-solid fa-trophy" style="color:var(--primary);"></i> En Yüksek Kazançlar</h3>
+        <div id="topWins"></div>
+      </section>
     </div>
   </main>
 
@@ -173,6 +177,7 @@
       const titleEl = document.getElementById('title');
       const oddsEl = document.getElementById('odds');
       const historyEl = document.getElementById('history');
+      const topWinsEl = document.getElementById('topWins');
       const qtyPicker = document.getElementById('qtyPicker');
       const sumWinEl = document.getElementById('sumWin');
       const sumLoseEl = document.getElementById('sumLose');
@@ -243,6 +248,11 @@
         historyEl.innerHTML = rows.slice(0, 3).map(function(r){ return '<div class="history-row"><div><img src="'+r.item.img+'" alt=""></div><div class="history-row-name" style="color:'+r.item.color+'">'+r.item.name+'</div><div class="history-row-price">+' + Number(r.payout||0) + '</div></div>'; }).join('');
       }
 
+      function renderTopWins(rows){
+        if(!rows || !rows.length){ topWinsEl.innerHTML = '<div style="padding:10px; color:var(--muted);">Kazanç yok</div>'; return; }
+        topWinsEl.innerHTML = rows.slice(0, 3).map(function(r){ return '<div class="history-row"><div><img src="'+r.item.img+'" alt=""></div><div class="history-row-name" style="color:'+r.item.color+'">'+r.item.name+'</div><div class="history-row-price">+' + Number(r.payout||0) + '</div></div>'; }).join('');
+      }
+
       async function waitTrackImages(track, maxWaitMs){
         const imgs = Array.from(track.querySelectorAll('img'));
         if(!imgs.length) return;
@@ -270,6 +280,7 @@
         titleEl.textContent = String(constants.case?.name || 'Kasa');
         renderOdds();
         renderHistory(data.history || []);
+        renderTopWins(data.top_wins || []);
         buildLanes(quantity);
         syncButton();
       }

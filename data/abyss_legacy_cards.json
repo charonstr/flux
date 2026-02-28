@@ -1,0 +1,152 @@
+[
+  {
+    "id": "aeir",
+    "name": "Aeir",
+    "rarity": "common",
+    "generation": "sniper",
+    "image": "/assets/game/flux legacy/characters/aeir.png",
+    "hp": 120,
+    "atk": 28,
+    "def": 12,
+    "skills": [
+      {"name": "Pierce Shot", "type": "damage", "multiplier": 1.2},
+      {"name": "Guard Stance", "type": "defense", "def_bonus": 12},
+      {"name": "Quick Shift", "type": "utility", "atk_bonus": 8, "shield": 6}
+    ]
+  },
+  {
+    "id": "amon",
+    "name": "Amon",
+    "rarity": "common",
+    "generation": "fire",
+    "image": "/assets/game/flux legacy/characters/amon.png",
+    "hp": 130,
+    "atk": 24,
+    "def": 16,
+    "skills": [
+      {"name": "Shadow Slash", "type": "damage", "multiplier": 1.15},
+      {"name": "Dark Wall", "type": "defense", "def_bonus": 14},
+      {"name": "Night Surge", "type": "utility", "atk_bonus": 7, "shield": 8}
+    ]
+  },
+  {
+    "id": "brau",
+    "name": "Brau",
+    "rarity": "common",
+    "generation": "tank",
+    "image": "/assets/game/flux legacy/characters/brau.png",
+    "hp": 140,
+    "atk": 22,
+    "def": 18,
+    "skills": [
+      {"name": "Hammer Drop", "type": "damage", "multiplier": 1.1},
+      {"name": "Iron Skin", "type": "defense", "def_bonus": 16},
+      {"name": "Forge Pulse", "type": "utility", "atk_bonus": 6, "shield": 10}
+    ]
+  },
+  {
+    "id": "ethan",
+    "name": "Ethan",
+    "rarity": "common",
+    "generation": "sniper",
+    "image": "/assets/game/flux legacy/characters/ethan.png",
+    "hp": 118,
+    "atk": 30,
+    "def": 10,
+    "skills": [
+      {"name": "Rush Strike", "type": "damage", "multiplier": 1.25},
+      {"name": "Parry", "type": "defense", "def_bonus": 10},
+      {"name": "Combat Tempo", "type": "utility", "atk_bonus": 10, "shield": 4}
+    ]
+  },
+  {
+    "id": "ethara",
+    "name": "Ethara",
+    "rarity": "rare",
+    "generation": "fire",
+    "image": "/assets/game/flux legacy/characters/ethara.png",
+    "hp": 142,
+    "atk": 34,
+    "def": 14,
+    "skills": [
+      {"name": "Lunar Bolt", "type": "damage", "multiplier": 1.35},
+      {"name": "Silver Aegis", "type": "defense", "def_bonus": 18},
+      {"name": "Moon Bless", "type": "utility", "atk_bonus": 12, "shield": 12}
+    ]
+  },
+  {
+    "id": "hestia",
+    "name": "Hestia",
+    "rarity": "rare",
+    "generation": "tank",
+    "image": "/assets/game/flux legacy/characters/hestia.png",
+    "hp": 155,
+    "atk": 30,
+    "def": 20,
+    "skills": [
+      {"name": "Solar Flare", "type": "damage", "multiplier": 1.3},
+      {"name": "Radiant Shell", "type": "defense", "def_bonus": 20},
+      {"name": "Sun Charge", "type": "utility", "atk_bonus": 10, "shield": 16}
+    ]
+  },
+  {
+    "id": "lin",
+    "name": "Lin",
+    "rarity": "rare",
+    "generation": "sniper",
+    "image": "/assets/game/flux legacy/characters/lin.png",
+    "hp": 136,
+    "atk": 38,
+    "def": 12,
+    "skills": [
+      {"name": "Blade Dance", "type": "damage", "multiplier": 1.4},
+      {"name": "Flow Guard", "type": "defense", "def_bonus": 15},
+      {"name": "Wind Step", "type": "utility", "atk_bonus": 14, "shield": 8}
+    ]
+  },
+  {
+    "id": "luna",
+    "name": "Luna",
+    "rarity": "rare",
+    "generation": "fire",
+    "image": "/assets/game/flux legacy/characters/luna.png",
+    "hp": 148,
+    "atk": 32,
+    "def": 18,
+    "skills": [
+      {"name": "Starfall", "type": "damage", "multiplier": 1.32},
+      {"name": "Nebula Guard", "type": "defense", "def_bonus": 19},
+      {"name": "Astral Gift", "type": "utility", "atk_bonus": 11, "shield": 14}
+    ]
+  },
+  {
+    "id": "nyx",
+    "name": "Nyx",
+    "rarity": "legendary",
+    "generation": "fire",
+    "image": "/assets/game/flux legacy/characters/nyx.png",
+    "hp": 175,
+    "atk": 44,
+    "def": 20,
+    "skills": [
+      {"name": "Void Burst", "type": "damage", "multiplier": 1.55},
+      {"name": "Abyss Ward", "type": "defense", "def_bonus": 24},
+      {"name": "Dark Oath", "type": "utility", "atk_bonus": 18, "shield": 18}
+    ]
+  },
+  {
+    "id": "salvador",
+    "name": "Salvador",
+    "rarity": "eternal",
+    "generation": "tank",
+    "image": "/assets/game/flux legacy/characters/salvador.png",
+    "hp": 210,
+    "atk": 52,
+    "def": 26,
+    "skills": [
+      {"name": "Eternal Judgement", "type": "damage", "multiplier": 1.7},
+      {"name": "Titan Aegis", "type": "defense", "def_bonus": 30},
+      {"name": "Overdrive Sigil", "type": "utility", "atk_bonus": 24, "shield": 22}
+    ]
+  }
+]

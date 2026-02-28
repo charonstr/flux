@@ -18,7 +18,7 @@ RNG = random.SystemRandom()
 # - 0.4x -> 30 weight
 # - 2.5x -> 0.3 weight (typo fix for duplicate 2.3 line)
 MULTIPLIER_WEIGHTS: list[tuple[str, float]] = [
-    ("0.1", 500),
+    ("0.1", 300),
     ("0.2", 85),
     ("0.3", 20),
     ("0.4", 10),

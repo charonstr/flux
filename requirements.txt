@@ -2,3 +2,4 @@
 python-dotenv==1.0.1
 pillow==11.1.0
 tzdata==2025.2
+python-socketio==5.11.4

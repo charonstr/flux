@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="{{ current }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Abyss Legacy</title>
+    <link rel="stylesheet" href="/mobile/css/style.css?v={{ asset_v }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100dvh;
+            background: radial-gradient(circle at 10% 10%, rgba(var(--primary-rgb), 0.18), transparent 40%), var(--bg);
+            color: var(--text);
+        }
+
+        .abyss-wrap {
+            min-height: calc(100dvh - 90px);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .abyss-stage {
+            position: relative;
+            width: 100%;
+            min-height: 72dvh;
+            border: 1px solid rgba(var(--line-rgb), 0.6);
+            border-radius: 18px;
+            background: rgba(var(--panel-rgb), 0.62);
+            backdrop-filter: blur(12px);
+            padding: 16px;
+        }
+
+        .player-box {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .player-profile {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(var(--line-rgb), 0.7);
+            background: rgba(var(--bg-rgb), 0.35);
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .player-profile img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+        }
+
+        .player-rank {
+            padding: 7px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--line-rgb), 0.7);
+            background: rgba(var(--bg-rgb), 0.35);
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.84rem;
+        }
+
+        .center-actions {
+            min-height: 62dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .abyss-btn {
+            width: min(260px, 88vw);
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid rgba(var(--line-rgb), 0.8);
+            background: rgba(var(--bg-rgb), 0.42);
+            color: var(--text);
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <div class="abyss-wrap">
+        <section class="abyss-stage">
+            <div class="player-box">
+                <div class="player-profile">
+                    <img src="{{ avatar }}" alt="avatar">
+                    <span>{{ username or "Oyuncu" }}</span>
+                </div>
+                <div class="player-rank">
+                    Rank: Bronze IV
+                </div>
+            </div>
+
+            <div class="center-actions">
+                <button type="button" class="abyss-btn">Maç Başlat</button>
+                <button type="button" class="abyss-btn">1v1</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/mobile/js/app.js?v={{ asset_v }}"></script>
+</body>
+</html>
